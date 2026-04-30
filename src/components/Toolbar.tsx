@@ -6,10 +6,45 @@ interface ToolbarProps {
   brush: BrushState;
   onBrushChange: (brush: BrushState) => void;
   onCanvasResize: (width: number, height: number) => void;
+  compact?: boolean;
 }
 
-const Toolbar: React.FC<ToolbarProps> = ({ brush, onBrushChange, onCanvasResize }) => {
+const Toolbar: React.FC<ToolbarProps> = ({ brush, onBrushChange, onCanvasResize, compact = false }) => {
   const tools: BrushHandler[] = getAllBrushes();
+
+  if (compact) {
+    return (
+      <div className="flex items-center gap-2 flex-wrap">
+        {tools.map(tool => (
+          <button
+            key={tool.tool}
+            onClick={() => onBrushChange({ ...brush, tool: tool.tool })}
+            className={`px-2 py-1 rounded text-xs ${
+              brush.tool === tool.tool
+                ? 'bg-cyan-600 text-white'
+                : 'bg-gray-700 text-gray-300'
+            }`}
+          >
+            {tool.name}
+          </button>
+        ))}
+        <input
+          type="color"
+          value={brush.color.slice(0, 7)}
+          onChange={(e) => onBrushChange({ ...brush, color: e.target.value })}
+          className="w-8 h-8 rounded cursor-pointer border-0"
+        />
+        <input
+          type="range"
+          min={1}
+          max={8}
+          value={brush.size}
+          onChange={(e) => onBrushChange({ ...brush, size: parseInt(e.target.value) })}
+          className="w-24 h-2"
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">

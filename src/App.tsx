@@ -510,182 +510,356 @@ function App() {
     }, []);
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mobileTab, setMobileTab] = useState<'draw' | 'palette' | 'layers' | '3d'>('draw');
+  const [showBottomSheet, setShowBottomSheet] = useState(false);
+  const [touchStart, setTouchStart] = useState({ x: 0, y: 0 });
+  const [activeView, setActiveView] = useState<'main' | 'front' | 'left' | 'right' | 'top' | 'bottom'>('main');
+
+  // Handle swipe to switch views on mobile
+  const handleTouchStartMobile = (e: React.TouchEvent) => {
+    setTouchStart({
+      x: e.touches[0].clientX,
+      y: e.touches[0].clientY
+    });
+  };
+
+  const handleTouchEndMobile = (e: React.TouchEvent) => {
+    if (!touchStart.x || !touchStart.y) return;
+    const deltaX = e.changedTouches[0].clientX - touchStart.x;
+    const deltaY = e.changedTouches[0].clientY - touchStart.y;
+
+    // Only consider horizontal swipes
+    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 50) {
+      const views: ('main' | 'front' | 'left' | 'right' | 'top' | 'bottom')[] = ['main', 'front', 'left', 'right', 'top', 'bottom'];
+      const currentIndex = views.indexOf(activeView);
+      if (deltaX > 0 && currentIndex > 0) {
+        // Swipe right -> previous view
+        setActiveView(views[currentIndex - 1]);
+      } else if (deltaX < 0 && currentIndex < views.length - 1) {
+        // Swipe left -> next view
+        setActiveView(views[currentIndex + 1]);
+      }
+    }
+    setTouchStart({ x: 0, y: 0 });
+  };
 
   return (
-    <div className="flex flex-col md:flex-row h-screen bg-gray-900 text-white">
-      {/* Mobile header with menu toggle */}
-      <div className="md:hidden flex items-center justify-between p-2 bg-gray-800 border-b border-gray-700">
-        <h1 className="text-lg font-bold text-cyan-400">PixVox</h1>
+    <div className="flex flex-col h-screen bg-gray-900 text-white overflow-hidden">
+      {/* Mobile Bottom Tab Bar - Native Style */}
+      <div className="md:hidden flex items-center justify-around bg-gray-800 border-t border-gray-700 safe-area-inset-bottom">
+        <button
+          onClick={() => { setMobileTab('draw'); setRenderMode('2d'); }}
+          className={`flex-1 py-3 flex flex-col items-center gap-1 ${
+            mobileTab === 'draw' ? 'text-cyan-400' : 'text-gray-400'
+          }`}
+        >
+          <span className="text-xl">🎨</span>
+          <span className="text-xs">Draw</span>
+        </button>
+        <button
+          onClick={() => setMobileTab('palette')}
+          className={`flex-1 py-3 flex flex-col items-center gap-1 ${
+            mobileTab === 'palette' ? 'text-cyan-400' : 'text-gray-400'
+          }`}
+        >
+          <span className="text-xl">🎨</span>
+          <span className="text-xs">Palette</span>
+        </button>
+        <button
+          onClick={() => setMobileTab('layers')}
+          className={`flex-1 py-3 flex flex-col items-center gap-1 ${
+            mobileTab === 'layers' ? 'text-cyan-400' : 'text-gray-400'
+          }`}
+        >
+          <span className="text-xl">📚</span>
+          <span className="text-xs">Layers</span>
+        </button>
+        <button
+          onClick={() => { setMobileTab('3d'); setRenderMode('3d'); }}
+          className={`flex-1 py-3 flex flex-col items-center gap-1 ${
+            mobileTab === '3d' ? 'text-cyan-400' : 'text-gray-400'
+          }`}
+        >
+          <span className="text-xl">🧊</span>
+          <span className="text-xs">3D</span>
+        </button>
         <button
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="p-2 text-white"
+          className="flex-1 py-3 flex flex-col items-center gap-1 text-gray-400"
         >
-          {mobileMenuOpen ? '✕' : '☰'}
+          <span className="text-xl">☰</span>
+          <span className="text-xs">Menu</span>
         </button>
       </div>
 
-      {/* Left sidebar - Tools (hidden on mobile unless menu is open) */}
-      <div className={`${mobileMenuOpen ? 'block' : 'hidden'} md:block w-full md:w-64 bg-gray-800 p-4 flex flex-col gap-4 border-r border-gray-700 overflow-y-auto md:relative absolute top-12 left-0 z-50 md:z-auto h-[calc(100vh-3rem)] md:h-auto`}>
-        <h1 className="hidden md:block text-xl font-bold text-cyan-400">PixVox</h1>
-        <Toolbar brush={brush} onBrushChange={handleBrushChange} onCanvasResize={handleCanvasResize} />
-        <PaletteManager
-          currentColors={brush.palette || []}
-          onLoadPalette={handleLoadPalette}
-        />
-        <ControlsHelp />
-
-
-        <div className="space-y-2">
-          <button
-            onClick={() => setRenderMode(renderMode === '2d' ? '3d' : '2d')}
-            className="w-full px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded"
-          >
-            Switch to {renderMode === '2d' ? '3D View' : '2D Canvas'}
-          </button>
-
-          <div className="flex gap-1">
-            <button
-              onClick={() => setVoxelMode('fast-draft')}
-              className={`flex-1 px-2 py-1 rounded text-xs ${
-                voxelMode === 'fast-draft' ? 'bg-cyan-600' : 'bg-gray-700 hover:bg-gray-600'
-              }`}
-            >
-              Fast Draft
-            </button>
-            <button
-              onClick={() => setVoxelMode('final-bake')}
-              className={`flex-1 px-2 py-1 rounded text-xs ${
-                voxelMode === 'final-bake' ? 'bg-cyan-600' : 'bg-gray-700 hover:bg-gray-600'
-              }`}
-            >
-              Final Bake
-            </button>
-          </div>
-
-          <button
-            onClick={handleExportGLTF}
-            className="w-full px-4 py-2 bg-green-600 hover:bg-green-700 rounded"
-          >
-            Export GLTF
-          </button>
-
-          <button
-            onClick={handleSave}
-            className="w-full px-4 py-2 bg-cyan-600 hover:bg-cyan-700 rounded"
-          >
-            Save Project
-          </button>
-
-          <button
-            onClick={handleClear}
-            className="w-full px-4 py-2 bg-red-600 hover:bg-red-700 rounded"
-          >
-            Clear Canvas
-          </button>
-        </div>
-
-        <div className="mt-auto text-xs text-gray-500">
-          <div>Grid: {canvasState.width}×{canvasState.height}</div>
-          <div>Layer: {canvasState.activeLayer + 1}/{canvasState.layers}</div>
-          <div>Voxels: {canvasState.pixels.size}</div>
-          <div>Mode: {voxelMode}</div>
-        </div>
-
-        <div className="mt-4 space-y-1">
-          <button
-            onClick={handleSaveProject}
-            className="w-full px-3 py-2 md:py-1 bg-indigo-600 hover:bg-indigo-700 rounded text-sm md:text-xs"
-          >
-            Save Project
-          </button>
-          <button
-            onClick={handleLoadProject}
-            className="w-full px-3 py-2 md:py-1 bg-indigo-600 hover:bg-indigo-700 rounded text-sm md:text-xs"
-          >
-            Load Project
-          </button>
-        </div>
-      </div>
-
-      {/* Overlay to close mobile menu */}
-      {mobileMenuOpen && (
-        <div
-          className="md:hidden fixed inset-0 bg-black/50 z-40"
-          onClick={() => setMobileMenuOpen(false)}
-        />
-      )}
-
-       {/* Main canvas area with 3D preview */}
-       <div className="flex-1 flex flex-col md:flex-row relative min-h-0 overflow-hidden">
-           {renderMode === '2d' ? (
-             <div className="flex-1 flex flex-col min-h-0">
-                <div className="bg-gray-800 px-4 py-2 border-b border-gray-700 flex items-center gap-4 flex-shrink-0">
-                   <span className="text-sm text-gray-300">Active Layer: {canvasState.activeLayer + 1}</span>
-                   <LayerNavigator
-                     layers={canvasState.layers}
-                     activeLayer={canvasState.activeLayer}
-                     onLayerChange={(layer) => setCanvasState(prev => ({ ...prev, activeLayer: layer }))}
-                     onAddLayer={handleAddLayer}
-                     onDuplicateLayer={handleDuplicateLayer}
-                     onMoveLayerUp={handleMoveLayerUp}
-                     onMoveLayerDown={handleMoveLayerDown}
-                     onImportImage={handleImportImage}
-                   />
-                 </div>
-                <div className="flex-1 min-h-0 p-1 md:p-2">
-                  <MultiCanvasView
-                    canvasState={canvasState}
-                    brush={brush}
-                    onPixelChange={handlePixelChange}
-                  />
-                </div>
-             </div>
-           ) : (
-             <div className="flex-1 relative">
-               <VoxelScene canvasState={canvasState} mode={voxelMode} />
-             </div>
-           )}
-
-           {/* Persistent 3D Preview Panel (shows in both 2D and 3D modes) */}
-           <div className="w-full md:w-80 bg-gray-800 border-t md:border-t-0 md:border-l border-gray-700 flex flex-col">
-             <div className="p-2 border-b border-gray-700 flex items-center justify-between flex-shrink-0">
-               <span className="text-sm text-gray-300">3D Preview</span>
-               <button
-                 onClick={() => setVoxelMode(voxelMode === 'fast-draft' ? 'final-bake' : 'fast-draft')}
-                 className="text-xs px-2 py-1 bg-gray-700 hover:bg-gray-600 rounded"
-               >
-                 {voxelMode === 'fast-draft' ? 'Draft' : 'Final'}
-               </button>
-             </div>
-             <div className="flex-1 min-h-48 md:min-h-0 relative">
-               <VoxelScene canvasState={canvasState} mode={voxelMode} />
-             </div>
-             {/* Layer quick view */}
-             <div className="p-2 border-t border-gray-700 flex-shrink-0">
-               <div className="text-xs text-gray-400 mb-1">Layers (Active: {canvasState.activeLayer + 1})</div>
-               <div className="flex gap-1 flex-wrap">
-                 {Array.from({ length: Math.min(canvasState.layers, 8) }, (_, i) => (
-                   <button
-                     key={i}
-                     onClick={() => setCanvasState(prev => ({ ...prev, activeLayer: i }))}
-                     className={`w-6 h-6 text-xs rounded ${
-                       i === canvasState.activeLayer
-                         ? 'bg-cyan-600 text-white'
-                         : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                     }`}
-                   >
-                     {i + 1}
-                   </button>
-                 ))}
-                 {canvasState.layers > 8 && (
-                   <span className="text-xs text-gray-500 self-center">+{canvasState.layers - 8} more</span>
-                 )}
-               </div>
+      {/* Mobile Content Area */}
+      <div
+        className="flex-1 md:hidden relative overflow-hidden"
+        onTouchStart={handleTouchStartMobile}
+        onTouchEnd={handleTouchEndMobile}
+      >
+        {/* Draw Tab */}
+        {mobileTab === 'draw' && (
+          <div className="h-full flex flex-col">
+            <div className="bg-gray-800 px-4 py-2 border-b border-gray-700 flex items-center justify-between flex-shrink-0">
+              <span className="text-sm text-gray-300">Layer: {canvasState.activeLayer + 1}/{canvasState.layers}</span>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setRenderMode('3d')}
+                  className="px-3 py-1 bg-purple-600 rounded text-xs"
+                >
+                  3D View
+                </button>
               </div>
             </div>
+            <div className="flex-1 min-h-0 p-1">
+              <MultiCanvasView
+                canvasState={canvasState}
+                brush={brush}
+                onPixelChange={handlePixelChange}
+              />
+            </div>
+            {/* Floating brush controls */}
+            <div className="absolute bottom-20 left-2 right-2 bg-gray-800/95 backdrop-blur rounded-lg p-3 border border-gray-700">
+              <Toolbar brush={brush} onBrushChange={handleBrushChange} onCanvasResize={handleCanvasResize} compact />
+            </div>
           </div>
+        )}
+
+        {/* Palette Tab */}
+        {mobileTab === 'palette' && (
+          <div className="h-full overflow-y-auto p-4">
+            <PaletteManager
+              currentColors={brush.palette || []}
+              onLoadPalette={handleLoadPalette}
+            />
+          </div>
+        )}
+
+        {/* Layers Tab */}
+        {mobileTab === 'layers' && (
+          <div className="h-full overflow-y-auto p-4">
+            <LayerNavigator
+              layers={canvasState.layers}
+              activeLayer={canvasState.activeLayer}
+              onLayerChange={(layer) => setCanvasState(prev => ({ ...prev, activeLayer: layer }))}
+              onAddLayer={handleAddLayer}
+              onDuplicateLayer={handleDuplicateLayer}
+              onMoveLayerUp={handleMoveLayerUp}
+              onMoveLayerDown={handleMoveLayerDown}
+              onImportImage={handleImportImage}
+            />
+          </div>
+        )}
+
+        {/* 3D Tab */}
+        {mobileTab === '3d' && (
+          <div className="h-full">
+            <VoxelScene canvasState={canvasState} mode={voxelMode} />
+          </div>
+        )}
       </div>
-    );
-}
+
+       {/* Desktop Layout - Sidebar + Canvas */}
+       <div className="hidden md:flex flex-1 flex-row min-h-0 overflow-hidden">
+
+        {/* Left sidebar - Tools */}
+        <div className="w-64 bg-gray-800 p-4 flex flex-col gap-4 border-r border-gray-700 overflow-y-auto">
+          <h1 className="text-xl font-bold text-cyan-400">PixVox</h1>
+          <Toolbar brush={brush} onBrushChange={handleBrushChange} onCanvasResize={handleCanvasResize} />
+          <PaletteManager
+            currentColors={brush.palette || []}
+            onLoadPalette={handleLoadPalette}
+          />
+          <ControlsHelp />
+
+          <div className="space-y-2">
+            <button
+              onClick={() => setRenderMode(renderMode === '2d' ? '3d' : '2d')}
+              className="w-full px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded"
+            >
+              Switch to {renderMode === '2d' ? '3D View' : '2D Canvas'}
+            </button>
+
+            <div className="flex gap-1">
+              <button
+                onClick={() => setVoxelMode('fast-draft')}
+                className={`flex-1 px-2 py-1 rounded text-xs ${
+                  voxelMode === 'fast-draft' ? 'bg-cyan-600' : 'bg-gray-700 hover:bg-gray-600'
+                }`}
+              >
+                Fast Draft
+              </button>
+              <button
+                onClick={() => setVoxelMode('final-bake')}
+                className={`flex-1 px-2 py-1 rounded text-xs ${
+                  voxelMode === 'final-bake' ? 'bg-cyan-600' : 'bg-gray-700 hover:bg-gray-600'
+                }`}
+              >
+                Final Bake
+              </button>
+            </div>
+
+            <button
+              onClick={handleExportGLTF}
+              className="w-full px-4 py-2 bg-green-600 hover:bg-green-700 rounded"
+            >
+              Export GLTF
+            </button>
+
+            <button
+              onClick={handleSave}
+              className="w-full px-4 py-2 bg-cyan-600 hover:bg-cyan-700 rounded"
+            >
+              Save Project
+            </button>
+
+            <button
+              onClick={handleClear}
+              className="w-full px-4 py-2 bg-red-600 hover:bg-red-700 rounded"
+            >
+              Clear Canvas
+            </button>
+          </div>
+
+          <div className="mt-auto text-xs text-gray-500">
+            <div>Grid: {canvasState.width}×{canvasState.height}</div>
+            <div>Layer: {canvasState.activeLayer + 1}/{canvasState.layers}</div>
+            <div>Voxels: {canvasState.pixels.size}</div>
+          </div>
+
+          <div className="space-y-1">
+            <button
+              onClick={handleSaveProject}
+              className="w-full px-3 py-1 bg-indigo-600 hover:bg-indigo-700 rounded text-xs"
+            >
+              Save Project
+            </button>
+            <button
+              onClick={handleLoadProject}
+              className="w-full px-3 py-1 bg-indigo-600 hover:bg-indigo-700 rounded text-xs"
+            >
+              Load Project
+            </button>
+          </div>
+        </div>
+
+        {/* Main canvas area with 3D preview */}
+        <div className="flex-1 flex flex-col md:flex-row relative min-h-0 overflow-hidden">
+            {renderMode === '2d' ? (
+              <div className="flex-1 flex flex-col min-h-0">
+                 <div className="bg-gray-800 px-4 py-2 border-b border-gray-700 flex items-center gap-4 flex-shrink-0">
+                    <span className="text-sm text-gray-300">Active Layer: {canvasState.activeLayer + 1}</span>
+                    <LayerNavigator
+                      layers={canvasState.layers}
+                      activeLayer={canvasState.activeLayer}
+                      onLayerChange={(layer) => setCanvasState(prev => ({ ...prev, activeLayer: layer }))}
+                      onAddLayer={handleAddLayer}
+                      onDuplicateLayer={handleDuplicateLayer}
+                      onMoveLayerUp={handleMoveLayerUp}
+                      onMoveLayerDown={handleMoveLayerDown}
+                      onImportImage={handleImportImage}
+                    />
+                  </div>
+                 <div className="flex-1 min-h-0 p-1 md:p-2">
+                   <MultiCanvasView
+                     canvasState={canvasState}
+                     brush={brush}
+                     onPixelChange={handlePixelChange}
+                   />
+                 </div>
+              </div>
+            ) : (
+              <div className="flex-1 relative">
+                <VoxelScene canvasState={canvasState} mode={voxelMode} />
+              </div>
+            )}
+
+            {/* Persistent 3D Preview Panel (shows in both 2D and 3D modes) */}
+            <div className="w-full md:w-80 bg-gray-800 border-t md:border-t-0 md:border-l border-gray-700 flex flex-col">
+              <div className="p-2 border-b border-gray-700 flex items-center justify-between flex-shrink-0">
+                <span className="text-sm text-gray-300">3D Preview</span>
+                <button
+                  onClick={() => setVoxelMode(voxelMode === 'fast-draft' ? 'final-bake' : 'fast-draft')}
+                  className="text-xs px-2 py-1 bg-gray-700 hover:bg-gray-600 rounded"
+                >
+                  {voxelMode === 'fast-draft' ? 'Draft' : 'Final'}
+                </button>
+              </div>
+              <div className="flex-1 min-h-48 md:min-h-0 relative">
+                <VoxelScene canvasState={canvasState} mode={voxelMode} />
+              </div>
+              {/* Layer quick view */}
+              <div className="p-2 border-t border-gray-700 flex-shrink-0">
+                <div className="text-xs text-gray-400 mb-1">Layers (Active: {canvasState.activeLayer + 1})</div>
+                <div className="flex gap-1 flex-wrap">
+                  {Array.from({ length: Math.min(canvasState.layers, 8) }, (_, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setCanvasState(prev => ({ ...prev, activeLayer: i }))}
+                      className={`w-6 h-6 text-xs rounded ${
+                        i === canvasState.activeLayer
+                          ? 'bg-cyan-600 text-white'
+                          : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                      }`}
+                    >
+                      {i + 1}
+                    </button>
+                  ))}
+                  {canvasState.layers > 8 && (
+                    <span className="text-xs text-gray-500 self-center">+{canvasState.layers - 8} more</span>
+                  )}
+                </div>
+               </div>
+             </div>
+           </div>
+       </div>
+
+       {/* Mobile Menu Overlay */}
+       {mobileMenuOpen && (
+         <div className="md:hidden fixed inset-0 bg-black/50 z-50 flex items-end">
+           <div className="w-full bg-gray-800 rounded-t-2xl p-4 max-h-[80vh] overflow-y-auto">
+             <div className="flex justify-between items-center mb-4">
+               <h2 className="text-lg font-bold text-cyan-400">Menu</h2>
+               <button onClick={() => setMobileMenuOpen(false)} className="text-2xl">✕</button>
+             </div>
+             <div className="space-y-2">
+               <button
+                 onClick={() => { handleExportGLTF(); setMobileMenuOpen(false); }}
+                 className="w-full px-4 py-3 bg-green-600 hover:bg-green-700 rounded text-left"
+               >
+                 Export GLTF
+               </button>
+               <button
+                 onClick={() => { handleSave(); setMobileMenuOpen(false); }}
+                 className="w-full px-4 py-3 bg-cyan-600 hover:bg-cyan-700 rounded text-left"
+               >
+                 Save Project
+               </button>
+               <button
+                 onClick={() => { handleClear(); setMobileMenuOpen(false); }}
+                 className="w-full px-4 py-3 bg-red-600 hover:bg-red-700 rounded text-left"
+               >
+                 Clear Canvas
+               </button>
+               <button
+                 onClick={() => { handleSaveProject(); setMobileMenuOpen(false); }}
+                 className="w-full px-4 py-3 bg-indigo-600 hover:bg-indigo-700 rounded text-left"
+               >
+                 Save to File
+               </button>
+               <button
+                 onClick={() => { handleLoadProject(); setMobileMenuOpen(false); }}
+                 className="w-full px-4 py-3 bg-indigo-600 hover:bg-indigo-700 rounded text-left"
+               >
+                 Load from File
+               </button>
+             </div>
+           </div>
+         </div>
+       )}
+     </div>
+   );
+ }
 
 export default App;

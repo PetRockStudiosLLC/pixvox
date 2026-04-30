@@ -3,6 +3,8 @@
 🎨 **Transform 2D pixel art into 3D voxel models** - A browser-based pixel art editor with real-time 3D preview and GLTF/OBJ export.
 
 ![PixVox Banner](https://img.shields.io/badge/PixVox-1.0.0-cyan?style=for-the-badge)
+![License](https://img.shields.io/github/license/PetRockStudiosLLC/pixvox?style=for-the-badge)
+![Stars](https://img.shields.io/github/stars/PetRockStudiosLLC/pixvox?style=for-the-badge)
 
 ## ✨ Features
 
@@ -21,7 +23,7 @@
 
 ```bash
 # Clone the repository
-git clone https://github.com/YOUR_USERNAME/pixvox.git
+git clone https://github.com/PetRockStudiosLLC/pixvox.git
 cd pixvox
 
 # Install dependencies
@@ -127,8 +129,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 🔗 Links
 
 - **Live Demo**: [Coming Soon]
-- **Issue Tracker**: [GitHub Issues](https://github.com/YOUR_USERNAME/pixvox/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/YOUR_USERNAME/pixvox/discussions)
+- **Issue Tracker**: [GitHub Issues](https://github.com/PetRockStudiosLLC/pixvox/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/PetRockStudiosLLC/pixvox/discussions)
 
 ---
 

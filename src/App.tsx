@@ -615,10 +615,10 @@ function App() {
         />
       )}
 
-       {/* Main canvas area */}
-       <div className="flex-1 flex flex-col relative min-h-0 overflow-hidden">
+       {/* Main canvas area with 3D preview */}
+       <div className="flex-1 flex flex-col md:flex-row relative min-h-0 overflow-hidden">
            {renderMode === '2d' ? (
-             <>
+             <div className="flex-1 flex flex-col min-h-0">
                 <div className="bg-gray-800 px-4 py-2 border-b border-gray-700 flex items-center gap-4 flex-shrink-0">
                    <span className="text-sm text-gray-300">Active Layer: {canvasState.activeLayer + 1}</span>
                    <LayerNavigator
@@ -639,30 +639,53 @@ function App() {
                     onPixelChange={handlePixelChange}
                   />
                 </div>
-             </>
+             </div>
            ) : (
-            <div className="flex-1 relative">
-              <VoxelScene canvasState={canvasState} mode={voxelMode} />
-              
-              {/* 3D Preview Overlay (Bottom Right) */}
-              <div ref={previewRef} className="absolute bottom-4 right-4 w-24 h-24 border-2 border-gray-600 bg-gray-800">
-                {/* 3D preview will be rendered here */}
-              </div>
-              
-              {/* Layer Previews (Above 3D Preview) */}
-              <div ref={layerPreviewsRef} className="absolute bottom-4 right-4 w-24 h-32 mb-28 border-2 border-gray-600 bg-gray-800 flex flex-col gap-1 p-1">
-                <div className="text-xs text-gray-400 text-center mb-1">Layers</div>
-                {Array.from({ length: canvasState.layers }, (_, i) => (
-                  <div key={i} className={`flex-1 border border-gray-700 ${i === canvasState.activeLayer ? 'border-cyan-400' : ''} flex items-center justify-center text-xs ${i === canvasState.activeLayer ? 'text-white' : 'text-gray-300'}`}>
-                    L{i + 1}
-                  </div>
-                ))}
+             <div className="flex-1 relative">
+               <VoxelScene canvasState={canvasState} mode={voxelMode} />
+             </div>
+           )}
+
+           {/* Persistent 3D Preview Panel (shows in both 2D and 3D modes) */}
+           <div className="w-full md:w-64 bg-gray-800 border-t md:border-t-0 md:border-l border-gray-700 flex flex-col">
+             <div className="p-2 border-b border-gray-700 flex items-center justify-between flex-shrink-0">
+               <span className="text-sm text-gray-300">3D Preview</span>
+               <button
+                 onClick={() => setVoxelMode(voxelMode === 'fast-draft' ? 'final-bake' : 'fast-draft')}
+                 className="text-xs px-2 py-1 bg-gray-700 hover:bg-gray-600 rounded"
+               >
+                 {voxelMode === 'fast-draft' ? 'Draft' : 'Final'}
+               </button>
+             </div>
+             <div className="flex-1 min-h-48 md:min-h-0 relative">
+               <VoxelScene canvasState={canvasState} mode={voxelMode} />
+             </div>
+             {/* Layer quick view */}
+             <div className="p-2 border-t border-gray-700 flex-shrink-0">
+               <div className="text-xs text-gray-400 mb-1">Layers (Active: {canvasState.activeLayer + 1})</div>
+               <div className="flex gap-1 flex-wrap">
+                 {Array.from({ length: Math.min(canvasState.layers, 8) }, (_, i) => (
+                   <button
+                     key={i}
+                     onClick={() => setCanvasState(prev => ({ ...prev, activeLayer: i }))}
+                     className={`w-6 h-6 text-xs rounded ${
+                       i === canvasState.activeLayer
+                         ? 'bg-cyan-600 text-white'
+                         : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                     }`}
+                   >
+                     {i + 1}
+                   </button>
+                 ))}
+                 {canvasState.layers > 8 && (
+                   <span className="text-xs text-gray-500 self-center">+{canvasState.layers - 8} more</span>
+                 )}
+               </div>
               </div>
             </div>
-          )}
-        </div>
-    </div>
-  );
+          </div>
+      </div>
+    );
 }
 
 export default App;

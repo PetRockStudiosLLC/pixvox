@@ -83,7 +83,6 @@ const CanvasView: React.FC<{
   canvasState: CanvasState;
   brush: BrushState;
   onPixelChange: (x: number, y: number, z: number, color: string) => void;
-  pixelSize: number;
   scale: number;
   setScale: React.Dispatch<React.SetStateAction<number>>;
   layerValue: number;
@@ -91,18 +90,45 @@ const CanvasView: React.FC<{
   isActive: boolean;
   viewType: ViewType;
   onActivate: (type: ViewType) => void;
-}> = ({ config, canvasState, brush, onPixelChange, pixelSize, scale, setScale, layerValue, setLayerValue, isActive, viewType, onActivate }) => {
+}> = ({ config, canvasState, brush, onPixelChange, scale, setScale, layerValue, setLayerValue, isActive, viewType, onActivate }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const isDrawing = useRef(false);
   const lastPixel = useRef<{ x: number; y: number } | null>(null);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const [isPanning, setIsPanning] = useState(false);
   const lastPanPoint = useRef({ x: 0, y: 0 });
+  const [containerSize, setContainerSize] = useState({ width: 300, height: 300 });
+
+  // Track actual container size
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const { width, height } = entry.contentRect;
+        if (width > 0 && height > 0) {
+          setContainerSize({ width, height });
+        }
+      }
+    });
+
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, []);
 
   const [rangeXStart, rangeXEnd] = config.getRangeX(canvasState);
   const [rangeYStart, rangeYEnd] = config.getRangeY(canvasState);
   const viewWidth = rangeXEnd - rangeXStart;
   const viewHeight = rangeYEnd - rangeYStart;
+
+  // Calculate pixelSize based on ACTUAL view dimensions (not canvasState)
+  const pixelSize = Math.min(
+    containerSize.width / viewWidth,
+    containerSize.height / viewHeight,
+    20
+  ) * scale;
 
   const drawCanvas = useCallback(() => {
     const canvas = canvasRef.current;
@@ -354,11 +380,7 @@ const MultiCanvasView: React.FC<MultiCanvasViewProps> = ({ canvasState, brush, o
     return () => observer.disconnect();
   }, []);
 
-  const pixelSize = Math.min(
-    containerSize.width / canvasState.width,
-    containerSize.height / canvasState.height,
-    20
-  ) * scale;
+  // pixelSize is now calculated inside CanvasView based on actual view dimensions
 
   useEffect(() => { activeViewRef.current = activeView; }, [activeView]);
   useEffect(() => { canvasStateRef.current = canvasState; }, [canvasState]);
@@ -460,7 +482,6 @@ const MultiCanvasView: React.FC<MultiCanvasViewProps> = ({ canvasState, brush, o
             canvasState={canvasState}
             brush={brush}
             onPixelChange={onPixelChange}
-            pixelSize={pixelSize}
             scale={scale}
             setScale={setScale}
             layerValue={layerProps.layerValue}

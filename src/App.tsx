@@ -647,7 +647,7 @@ function App() {
            )}
 
            {/* Persistent 3D Preview Panel (shows in both 2D and 3D modes) */}
-           <div className="w-full md:w-64 bg-gray-800 border-t md:border-t-0 md:border-l border-gray-700 flex flex-col">
+           <div className="w-full md:w-80 bg-gray-800 border-t md:border-t-0 md:border-l border-gray-700 flex flex-col">
              <div className="p-2 border-b border-gray-700 flex items-center justify-between flex-shrink-0">
                <span className="text-sm text-gray-300">3D Preview</span>
                <button

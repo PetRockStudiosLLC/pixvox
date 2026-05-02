@@ -7,6 +7,11 @@ interface MultiCanvasViewProps {
   canvasState: CanvasState;
   brush: BrushState;
   onPixelChange: (x: number, y: number, z: number, color: string) => void;
+  onColorPick?: (color: string) => void;
+  isCtrlPressed?: React.RefObject<boolean>;
+  onToggleVisibility?: (layer: number) => void;
+  onToggleLock?: (layer: number) => void;
+  onRenameLayer?: (layer: number, name: string) => void;
 }
 
 type ViewType = 'main' | 'front' | 'left' | 'right' | 'top' | 'bottom';
@@ -90,7 +95,12 @@ const CanvasView: React.FC<{
   isActive: boolean;
   viewType: ViewType;
   onActivate: (type: ViewType) => void;
-}> = ({ config, canvasState, brush, onPixelChange, scale, setScale, layerValue, setLayerValue, isActive, viewType, onActivate }) => {
+  onColorPick?: (color: string) => void;
+  isCtrlPressed?: React.RefObject<boolean>;
+  onToggleVisibility?: (layer: number) => void;
+  onToggleLock?: (layer: number) => void;
+  onRenameLayer?: (layer: number, name: string) => void;
+}> = ({ config, canvasState, brush, onPixelChange, scale, setScale, layerValue, setLayerValue, isActive, viewType, onActivate, onColorPick, isCtrlPressed, onToggleVisibility, onToggleLock, onRenameLayer }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const isDrawing = useRef(false);
@@ -233,8 +243,22 @@ const CanvasView: React.FC<{
       lastPanPoint.current = { x: e.clientX - rect.left, y: e.clientY - rect.top };
       return;
     }
+    
     const coords = getPixelCoords(e);
     if (!coords) return;
+    
+    // CTRL+click: pick color and add to palette
+    if (isCtrlPressed?.current && onColorPick) {
+      const canvasX = coords.x + rangeXStart;
+      const canvasY = coords.y + rangeYStart;
+      const coords3D = config.to3D(canvasX, canvasY, canvasState, layerValue);
+      const color = getPixel(canvasState, coords3D.x, coords3D.y, coords3D.z);
+      if (color && color !== '#00000000') {
+        onColorPick(color.length === 9 ? color.slice(0, 7) : color);
+      }
+      return;
+    }
+    
     isDrawing.current = true;
 
     // Apply brush BEFORE updating lastPixel (so line brush has access to previous position)
@@ -347,7 +371,8 @@ const CanvasView: React.FC<{
   );
 };
 
-const MultiCanvasView: React.FC<MultiCanvasViewProps> = ({ canvasState, brush, onPixelChange }) => {
+  const MultiCanvasView: React.FC<MultiCanvasViewProps> = ({ canvasState, brush, onPixelChange, onColorPick, isCtrlPressed,
+    onToggleVisibility, onToggleLock, onRenameLayer }) => {
   const [scale, setScale] = useState(1);
   const [activeView, setActiveView] = useState<ViewType>('main');
   const [containerSize, setContainerSize] = useState({ width: 600, height: 600 });
@@ -457,39 +482,43 @@ const MultiCanvasView: React.FC<MultiCanvasViewProps> = ({ canvasState, brush, o
   const layerProps = getLayerProps(activeView);
 
   return (
-    <div ref={containerRef} className="w-full flex-1 flex flex-col bg-gray-900 min-h-0">
-      <div className="flex items-center gap-1 p-2 bg-gray-800 border-b border-gray-700 flex-shrink-0">
+    <div ref={containerRef} className="w-full flex-1 flex flex-col bg-gray-950 min-h-0">
+      <div className="flex items-center gap-1 p-2 bg-gray-900 border-b border-gray-800 flex-shrink-0 overflow-x-auto no-scrollbar">
         {views.map((v, index) => (
           <button
             key={v.type}
             onClick={() => setActiveView(v.type)}
-            className={`px-3 py-1 rounded-md text-xs font-medium transition-all duration-150 ${
+            className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest whitespace-nowrap transition-all duration-200 ${
               activeView === v.type
-                ? 'bg-cyan-600 text-white shadow-lg shadow-cyan-600/30'
-                : 'bg-gray-700 text-gray-300 hover:bg-gray-600 hover:text-white'
+                ? 'bg-cyan-500 text-white shadow-lg shadow-cyan-500/40 scale-105'
+                : 'bg-gray-800 text-gray-500 hover:bg-gray-700 active:scale-95'
             }`}
           >
-            <span className="mr-1 text-cyan-400">{index + 1}</span>
-            {v.label}
+            {v.label.split(' ')[0]}
           </button>
         ))}
       </div>
 
-      <div className="flex-1 p-1 md:p-2 flex items-center justify-center overflow-hidden min-h-0">
+      <div className="flex-1 p-2 md:p-4 flex items-center justify-center overflow-hidden min-h-0 relative">
         {activeViewConfig && (
           <CanvasView
-            config={activeViewConfig}
-            canvasState={canvasState}
-            brush={brush}
-            onPixelChange={onPixelChange}
-            scale={scale}
-            setScale={setScale}
-            layerValue={layerProps.layerValue}
-            setLayerValue={layerProps.setLayerValue}
-            isActive={true}
-            viewType={activeView}
-            onActivate={setActiveView}
-          />
+              config={activeViewConfig}
+              canvasState={canvasState}
+              brush={brush}
+              onPixelChange={onPixelChange}
+              scale={scale}
+              setScale={setScale}
+              layerValue={layerProps.layerValue}
+              setLayerValue={layerProps.setLayerValue}
+              isActive={true}
+              viewType={activeView}
+              onActivate={setActiveView}
+              onColorPick={onColorPick}
+              isCtrlPressed={isCtrlPressed}
+              onToggleVisibility={onToggleVisibility}
+              onToggleLock={onToggleLock}
+              onRenameLayer={onRenameLayer}
+            />
         )}
       </div>
     </div>

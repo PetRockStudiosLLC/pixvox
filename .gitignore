@@ -41,5 +41,10 @@ output/*.gltf
 output/*.glb
 !output/.gitkeep
 
+# Android build artifacts
+android-home/
+gradle-home/
+temp/
+
 # OS files
 Thumbs.db

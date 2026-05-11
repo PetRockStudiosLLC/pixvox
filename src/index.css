@@ -2,15 +2,352 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
+:root {
+  --blender-bg: #1d1d1d;
+  --blender-panel: #2d2d2d;
+  --blender-panel-header: #353535;
+  --blender-panel-hover: #3f3f3f;
+  --blender-panel-active: #4a4a4a;
+  --blender-border: #1a1a1a;
+  --blender-border-light: #444444;
+  --blender-text: #cccccc;
+  --blender-text-dim: #888888;
+  --blender-text-bright: #eeeeee;
+  --blender-accent: #4a9eff;
+  --blender-accent-hover: #5aabff;
+  --blender-accent-dim: #2a7ecf;
+  --blender-warning: #e67e22;
+  --blender-danger: #e74c3c;
+  --blender-success: #2ecc71;
+  --radius-sm: 3px;
+  --radius-md: 4px;
+  --shadow-subtle: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+html, body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', 'Roboto', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #1a1a2e;
-  color: #eee;}
+  background-color: var(--blender-bg);
+  color: var(--blender-text);
+  font-size: 12px;
+  user-select: none;
+}
 
+/* Mobile-first: proper viewport handling for Android WebView */
 #root {
-  width: 100vw;
-  height: 100vh;
-  overflow: hidden;}
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+body.ctrl-pressed canvas {
+  cursor: crosshair !important;
+}
+
+@layer components {
+  .blender-panel {
+    background-color: var(--blender-panel);
+    border: 1px solid var(--blender-border);
+  }
+
+  .blender-panel-header {
+    background-color: var(--blender-panel-header);
+    border-bottom: 1px solid var(--blender-border);
+    padding: 6px 8px;
+    font-weight: 600;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--blender-text-dim);
+  }
+
+  .blender-btn {
+    background-color: var(--blender-panel);
+    border: 1px solid var(--blender-border);
+    color: var(--blender-text);
+    padding: 4px 8px;
+    border-radius: var(--radius-sm);
+    font-size: 11px;
+    transition: all 0.1s ease;
+    cursor: pointer;
+  }
+
+  .blender-btn:hover {
+    background-color: var(--blender-panel-hover);
+    border-color: var(--blender-border-light);
+  }
+
+  .blender-btn:active {
+    background-color: var(--blender-panel-active);
+  }
+
+  .blender-btn-active {
+    background-color: var(--blender-accent-dim);
+    border-color: var(--blender-accent);
+    color: var(--blender-text-bright);
+  }
+
+  .blender-btn-accent {
+    background-color: var(--blender-accent-dim);
+    border-color: var(--blender-accent);
+    color: var(--blender-text-bright);
+  }
+
+  .blender-btn-accent:hover {
+    background-color: var(--blender-accent);
+  }
+
+  .blender-input {
+    background-color: var(--blender-bg);
+    border: 1px solid var(--blender-border);
+    color: var(--blender-text);
+    padding: 4px 6px;
+    border-radius: var(--radius-sm);
+    font-size: 11px;
+    outline: none;
+    transition: border-color 0.1s ease;
+  }
+
+  .blender-input:focus {
+    border-color: var(--blender-accent);
+  }
+
+  .blender-section {
+    border-bottom: 1px solid var(--blender-border);
+    padding: 8px;
+  }
+
+  .blender-section-title {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--blender-text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .blender-section-title:hover {
+    color: var(--blender-text);
+  }
+
+  .blender-icon-btn {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm);
+    color: var(--blender-text-dim);
+    cursor: pointer;
+    transition: all 0.1s ease;
+  }
+
+  .blender-icon-btn:hover {
+    background-color: var(--blender-panel-hover);
+    border-color: var(--blender-border-light);
+    color: var(--blender-text);
+  }
+
+  .blender-icon-btn-active {
+    background-color: var(--blender-accent-dim);
+    border-color: var(--blender-accent);
+    color: var(--blender-text-bright);
+  }
+
+  .blender-topbar {
+    background-color: var(--blender-panel-header);
+    border-bottom: 1px solid var(--blender-border);
+    height: 27px;
+    display: flex;
+    align-items: center;
+    padding: 0 8px;
+    gap: 4px;
+  }
+
+  .blender-statusbar {
+    background-color: var(--blender-panel-header);
+    border-top: 1px solid var(--blender-border);
+    height: 24px;
+    display: flex;
+    align-items: center;
+    padding: 0 8px;
+    gap: 12px;
+    font-size: 11px;
+    color: var(--blender-text-dim);
+  }
+
+  .blender-workspace-tab {
+    padding: 4px 12px;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--blender-text-dim);
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all 0.1s ease;
+  }
+
+  .blender-workspace-tab:hover {
+    color: var(--blender-text);
+    background-color: var(--blender-panel-hover);
+  }
+
+  .blender-workspace-tab-active {
+    color: var(--blender-text-bright);
+    background-color: var(--blender-panel-hover);
+    border-color: var(--blender-border-light);
+  }
+
+  .blender-viewport {
+    background-color: #1a1a1a;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .blender-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 4px;
+    background: var(--blender-bg);
+    border-radius: 2px;
+    outline: none;
+  }
+
+  .blender-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--blender-accent);
+    cursor: pointer;
+    border: 2px solid var(--blender-panel);
+  }
+
+  .blender-slider::-moz-range-thumb {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--blender-accent);
+    cursor: pointer;
+    border: 2px solid var(--blender-panel);
+  }
+}
+
+@layer utilities {
+  /* Safe area utilities — capped so they don't push content off-screen */
+  .safe-pt {
+    padding-top: min(env(safe-area-inset-top, 0px), 24px);
+  }
+  .safe-pb {
+    padding-bottom: min(env(safe-area-inset-bottom, 0px), 24px);
+  }
+  .safe-pl {
+    padding-left: min(env(safe-area-inset-left, 0px), 16px);
+  }
+  .safe-pr {
+    padding-right: min(env(safe-area-inset-right, 0px), 16px);
+  }
+  .safe-inset-top {
+    padding-top: min(env(safe-area-inset-top, 0px), 24px);
+  }
+  .safe-inset-bottom {
+    padding-bottom: min(env(safe-area-inset-bottom, 0px), 24px);
+  }
+  .safe-inset-left {
+    padding-left: min(env(safe-area-inset-left, 0px), 16px);
+  }
+  .safe-inset-right {
+    padding-right: min(env(safe-area-inset-right, 0px), 16px);
+  }
+  /* Minimum touch target sizes (Android guideline: 48px) */
+  .touch-target-min {
+    min-width: 48px;
+    min-height: 48px;
+  }
+  .touch-target-sm {
+    min-width: 40px;
+    min-height: 40px;
+  }
+  /* Canvas container with proper overflow handling */
+  .canvas-container {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  /* Floating toolbar with proper z-index and positioning */
+  .floating-toolbar {
+    position: absolute;
+    bottom: min(env(safe-area-inset-bottom, 0px), 16px);
+    left: 50%;
+    transform: translateX(-50%);
+    max-width: calc(100% - 32px);
+  }
+  /* Bottom navigation with gesture navigation support */
+  .mobile-nav {
+    min-height: 56px;
+    padding-bottom: min(env(safe-area-inset-bottom, 0px), 16px);
+  }
+  /* Header with status bar handling */
+  .mobile-header {
+    min-height: 48px;
+    padding-top: min(env(safe-area-inset-top, 0px), 16px);
+  }
+  /* Safe padding for bottom nav - handles gesture nav */
+  .pb-safe {
+    padding-bottom: min(env(safe-area-inset-bottom, 0px), 16px);
+  }
+}
+
+@keyframes slide-up {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+.animate-slide-up {
+  animation: slide-up 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--blender-panel);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--blender-panel-hover);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--blender-panel-active);
+}

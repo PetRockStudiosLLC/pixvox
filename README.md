@@ -1,6 +1,6 @@
 # PixVox
 
-🎨 **Transform 2D pixel art into 3D voxel models** - A browser-based pixel art editor with real-time 3D preview and GLTF/OBJ export.
+🎨 **Transform 2D pixel art into 3D voxel models** - A cross-platform pixel art editor with real-time 3D preview and GLTF/OBJ export.
 
 ![PixVox Banner](https://img.shields.io/badge/PixVox-1.0.0-cyan?style=for-the-badge)
 ![License](https://img.shields.io/github/license/PetRockStudiosLLC/pixvox?style=for-the-badge)
@@ -9,18 +9,20 @@
 ## ✨ Features
 
 - **Multi-View Canvas**: Six synchronized views (Main, Front, Left, Right, Top, Bottom) with keyboard shortcuts (1-6)
-- **Real-time 3D Preview**: Watch your voxel model update as you paint
+- **Real-time 3D Preview**: Watch your voxel model update as you paint - persistent 3D panel (320px desktop, full-width mobile)
 - **Modular Brush System**: Point, Line, Bucket Fill, and Eraser tools
 - **Smart Palette Management**: Save/load palettes, generate random color schemes (complementary, analogous, triadic)
 - **Layer System**: Add, duplicate, reorder, and navigate layers
 - **Import Images**: Convert existing pixel art images directly into voxels
 - **Export Options**: GLTF with vertex colors or OBJ format for Blender/Maya/Unity
-- **Mobile Support**: Touch-friendly UI with responsive design
+- **Mobile-First Design**: Native bottom tab bar (Draw, Palette, Layers, 3D, Menu), swipe gestures, floating brush controls
 - **Undo/Redo**: Full history support with Ctrl+Z / Ctrl+Y
+- **Native Apps**: Desktop (Windows) and Mobile (Android) apps via Tauri v2
 - **Local Storage**: Auto-save projects to browser storage
 
 ## 🚀 Quick Start
 
+### Web Version
 ```bash
 # Clone the repository
 git clone https://github.com/PetRockStudiosLLC/pixvox.git
@@ -34,6 +36,23 @@ npm run dev
 
 # Build for production
 npm run build
+```
+
+### Desktop App (Windows)
+```bash
+# Install Rust and Tauri dependencies first
+# Then run Tauri dev
+npm run tauri:dev
+
+# Build Windows installer (MSI + NSIS)
+npm run tauri:build
+```
+
+### Android
+```bash
+npx tauri android init
+npx tauri android build
+# Output: PixVox-v1.0.0-signed.apk
 ```
 
 ## 🎮 Controls
@@ -53,15 +72,18 @@ npm run build
 ### Touch Controls (Mobile)
 - **Tap**: Paint pixel
 - **Drag**: Paint continuously
+- **Swipe Left/Right**: Switch views
 - **Pinch**: Zoom (coming soon)
 
 ## 🛠️ Tech Stack
 
-- **React 18** with TypeScript
+- **React 18** with TypeScript (strict mode)
 - **Three.js** for 3D rendering
 - **Vite** for build tooling
 - **Tailwind CSS** for styling
+- **Tauri v2** for native Windows/Android/iOS apps
 - **Canvas API** for 2D pixel editing
+- **Rust** backend for native apps
 
 ## 📦 Export Formats
 
@@ -73,6 +95,28 @@ npm run build
 ### OBJ + MTL
 - Traditional format with material files
 - Easy import into any 3D software
+
+## 🖥️ Desktop App
+
+### Windows (Working ✓)
+- MSI installer: `src-tauri/target/release/bundle/msi/PixVox_1.0.0_x64_en-US.msi`
+- NSIS installer: `src-tauri/target/release/bundle/nsis/`
+- Auto-updater support via Vercel Blob
+
+### Android (✓ Build Working)
+```bash
+# Requires: Android SDK (API 36), NDK 30.0.14904198
+npx tauri android init
+npx tauri android build
+
+# Sign APK:
+# keytool -genkeypair -v -keystore android-key.keystore -alias pixvox ...
+# apksigner sign --ks android-key.keystore PixVox-v1.0.0-signed.apk
+```
+
+### iOS (Planned)
+- Requires macOS for building
+- Tauri v2 iOS support ready
 
 ## 🌐 Self-Hosting
 
@@ -90,10 +134,10 @@ Access from any device on your Tailscale network at `http://your-device:5173`
 pixvox/
 ├── src/
 │   ├── components/       # React components
-│   │   ├── Canvas2D.tsx          # Main 2D canvas
-│   │   ├── MultiCanvasView.tsx   # Multi-view layout
-│   │   ├── VoxelScene.tsx        # 3D preview
-│   │   ├── Toolbar.tsx           # Brush/tools UI
+│   │   ├── Canvas2D.tsx          # Main 2D canvas with responsive sizing
+│   │   ├── MultiCanvasView.tsx   # Multi-view layout with per-view pixelSize
+│   │   ├── VoxelScene.tsx        # 3D preview with Three.js
+│   │   ├── Toolbar.tsx           # Brush/tools UI (compact mode for mobile)
 │   │   ├── PaletteManager.tsx    # Color palette UI
 │   │   └── ...
 │   ├── utils/            # Core logic
@@ -102,9 +146,13 @@ pixvox/
 │   │   ├── objExporter.ts        # GLTF/OBJ export
 │   │   └── ...
 │   ├── types/            # TypeScript definitions
-│   └── App.tsx           # Main application
+│   └── App.tsx           # Main app with mobile tab bar
+├── src-tauri/          # Tauri native app
+│   ├── src/              # Rust backend code
+│   ├── gen/              # Generated Android/iOS projects
+│   └── tauri.conf.json   # Tauri v2 config
 ├── public/               # Static assets
-└── output/               # Export directory
+└── dist/                 # Production build output
 ```
 
 ## 🤝 Contributing
@@ -119,18 +167,23 @@ Contributions welcome! Please feel free to submit a Pull Request.
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the **PixVox Hybrid License**:
+- **BSL 1.1** (Business Source License) for the initial period
+- **MIT License** conversion on **January 1, 2030**
+
+See the [LICENSE](LICENSE) file for full details.
 
 ## 🌟 Acknowledgments
 
-- Inspired by voxel art tools like MagicaVoxel and Qubicle
 - Built with modern web technologies for accessibility and ease of use
+- Tauri framework for lightweight native apps
 
 ## 🔗 Links
 
 - **Live Demo**: [Coming Soon]
 - **Issue Tracker**: [GitHub Issues](https://github.com/PetRockStudiosLLC/pixvox/issues)
 - **Discussions**: [GitHub Discussions](https://github.com/PetRockStudiosLLC/pixvox/discussions)
+- **Releases**: [GitHub Releases](https://github.com/PetRockStudiosLLC/pixvox/releases)
 
 ---
 

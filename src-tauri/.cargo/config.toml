@@ -1,0 +1,26 @@
+[target.aarch64-linux-android]
+ar = "G:\\1_CURRENT\\PixelArtMaker\\android-home\\ndk\\30.0.14904198\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\llvm-ar.exe"
+linker = "G:\\1_CURRENT\\PixelArtMaker\\android-home\\ndk\\30.0.14904198\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\aarch64-linux-android21-clang++.exe"
+
+[target.armv7-linux-androideabi]
+ar = "G:\\1_CURRENT\\PixelArtMaker\\android-home\\ndk\\30.0.14904198\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\llvm-ar.exe"
+linker = "G:\\1_CURRENT\\PixelArtMaker\\android-home\\ndk\\30.0.14904198\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\armv7a-linux-androideabi21-clang++.exe"
+
+[target.i686-linux-android]
+ar = "G:\\1_CURRENT\\PixelArtMaker\\android-home\\ndk\\30.0.14904198\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\llvm-ar.exe"
+linker = "G:\\1_CURRENT\\PixelArtMaker\\android-home\\ndk\\30.0.14904198\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\i686-linux-android21-clang++.exe"
+
+[target.x86_64-linux-android]
+ar = "G:\\1_CURRENT\\PixelArtMaker\\android-home\\ndk\\30.0.14904198\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\llvm-ar.exe"
+linker = "G:\\1_CURRENT\\PixelArtMaker\\android-home\\ndk\\30.0.14904198\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\x86_64-linux-android21-clang++.exe"
+
+[env]
+ANDROID_NDK_HOME = "G:\\1_CURRENT\\PixelArtMaker\\android-home\\ndk\\30.0.14904198"
+CC_aarch64_linux_android = "G:\\1_CURRENT\\PixelArtMaker\\android-home\\ndk\\30.0.14904198\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\aarch64-linux-android21-clang.exe"
+CC_armv7_linux_androideabi = "G:\\1_CURRENT\\PixelArtMaker\\android-home\\ndk\\30.0.14904198\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\armv7a-linux-androideabi21-clang.exe"
+CC_i686_linux_android = "G:\\1_CURRENT\\PixelArtMaker\\android-home\\ndk\\30.0.14904198\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\i686-linux-android21-clang.exe"
+CC_x86_64_linux_android = "G:\\1_CURRENT\\PixelArtMaker\\android-home\\ndk\\30.0.14904198\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\x86_64-linux-android21-clang.exe"
+CXX_aarch64_linux_android = "G:\\1_CURRENT\\PixelArtMaker\\android-home\\ndk\\30.0.14904198\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\aarch64-linux-android21-clang++.exe"
+CXX_armv7_linux_androideabi = "G:\\1_CURRENT\\PixelArtMaker\\android-home\\ndk\\30.0.14904198\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\armv7a-linux-androideabi21-clang++.exe"
+CXX_i686_linux_android = "G:\\1_CURRENT\\PixelArtMaker\\android-home\\ndk\\30.0.14904198\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\i686-linux-android21-clang++.exe"
+CXX_x86_64_linux_android = "G:\\1_CURRENT\\PixelArtMaker\\android-home\\ndk\\30.0.14904198\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\x86_64-linux-android21-clang++.exe"

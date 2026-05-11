@@ -4,11 +4,29 @@ interface GLTF {
   asset: { version: string };
   scenes: { nodes: number[] }[];
   nodes: { mesh: number; translation?: [number, number, number] }[];
-  meshes: { primitives: { attributes: { POSITION: number; COLOR_0: number }; indices: number; material: number }[] }[];
-  accessors: { bufferView: number; componentType: number; count: number; type: string; max?: number[]; min?: number[] }[];
+  meshes: {
+    primitives: {
+      attributes: { POSITION: number; COLOR_0: number };
+      indices: number;
+      material: number;
+      targets?: { POSITION: number; COLOR_0: number }[];
+    }[];
+  }[];
+  accessors: {
+    bufferView: number;
+    componentType: number;
+    count: number;
+    type: string;
+    max?: number[];
+    min?: number[];
+  }[];
   bufferViews: { buffer: number; byteOffset: number; byteLength: number; target?: number }[];
   buffers: { byteLength: number; uri: string }[];
   materials: { pbrMetallicRoughness: { baseColorFactor: number[]; metallicFactor: number; roughnessFactor: number } }[];
+  animations?: {
+    channels: { sampler: number; target: { node: number; path: string } }[];
+    samplers: { input: number; output: number; interpolation?: string }[];
+  }[];
 }
 
 export function exportGLTF(canvasState: CanvasState, mode: 'fast-draft' | 'final-bake'): { content: string; filename: string; mimeType: string } {
@@ -32,12 +50,12 @@ export function exportGLTF(canvasState: CanvasState, mode: 'fast-draft' | 'final
   ];
 
   const faces = [
-    [0, 2, 1, 0, 3, 2], // Front (flipped)
-    [5, 7, 4, 5, 6, 7], // Back (flipped)
-    [4, 3, 0, 4, 7, 3], // Left (flipped)
-    [1, 6, 5, 1, 2, 6], // Right (flipped)
-    [3, 6, 2, 3, 7, 6], // Top (flipped)
-    [4, 1, 5, 4, 0, 1]  // Bottom (flipped)
+    [0, 2, 1, 0, 3, 2],
+    [5, 7, 4, 5, 6, 7],
+    [4, 3, 0, 4, 7, 3],
+    [1, 6, 5, 1, 2, 6],
+    [3, 6, 2, 3, 7, 6],
+    [4, 1, 5, 4, 0, 1]
   ];
 
   const positions: number[] = [];

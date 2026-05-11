@@ -3,25 +3,54 @@ import * as THREE from 'three';
 import { CanvasState, BrushState } from '../types/voxel';
 import { getPixel } from '../utils/canvasBuffer';
 import { getBrush, BrushContext } from '../utils/brushSystem';
+import { SpatialHash } from '../utils/spatialHash';
+import { greedyMesh } from '../utils/greedyMesher';
+import { buildMergedGeometry } from '../utils/meshBuilder';
 
 interface Canvas2DProps {
   canvasState: CanvasState;
   brush: BrushState;
   onPixelChange: (x: number, y: number, z: number, color: string) => void;
-  previewRef?: React.RefObject<HTMLDivElement>; // Ref for 3D preview container (from App.tsx)
+  previewRef?: React.RefObject<HTMLDivElement>;
+  onColorPick?: (color: string) => void;
+  isCtrlPressed?: React.RefObject<boolean>;
 }
 
-const Canvas2D: React.FC<Canvas2DProps> = ({ canvasState, brush, onPixelChange, previewRef }) => {
+const Canvas2D: React.FC<Canvas2DProps> = ({ canvasState, brush, onPixelChange, previewRef, onColorPick, isCtrlPressed }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const isDrawing = useRef(false);
   const lastPixel = useRef<{ x: number; y: number } | null>(null);
-  const [offset, setOffset] = useState({ x: 0, y: 0 });
+  const [offset, setOffset] = useState({ x:0, y:0 });
   const [scale, setScale] = useState(1);
   const [isPanning, setIsPanning] = useState(false);
-  const lastPanPoint = useRef({ x: 0, y: 0 });
+  const lastPanPoint = useRef({ x:0, y:0 });
 
   const canvasContainerRef = useRef<HTMLDivElement>(null);
   const [containerSize, setContainerSize] = useState({ width: 600, height: 600 });
+
+  // Layer cache using OffscreenCanvas for fast redraws
+  const layerCacheRef = useRef<Map<number, { canvas: OffscreenCanvas; dirty: boolean }>>(new Map());
+  const prevLayerDataRef = useRef<Map<number, string>>(new Map());
+  // Dirty rectangle tracking per layer: tracks bounds of changed pixels
+  const dirtyRectsRef = useRef<Map<number, { minX: number; minY: number; maxX: number; maxY: number }>>(new Map());
+
+  // Mark a region as dirty (call this when pixels change)
+  const markDirty = useCallback((layer: number, x: number, y: number) => {
+    const rect = dirtyRectsRef.current.get(layer);
+    if (!rect) {
+      dirtyRectsRef.current.set(layer, { minX: x, minY: y, maxX: x, maxY: y });
+    } else {
+      rect.minX = Math.min(rect.minX, x);
+      rect.minY = Math.min(rect.minY, y);
+      rect.maxX = Math.max(rect.maxX, x);
+      rect.maxY = Math.max(rect.maxY, y);
+    }
+  }, []);
+
+  // Clear dirty rect after redraw
+  const clearDirty = useCallback((layer: number) => {
+    dirtyRectsRef.current.delete(layer);
+  }, []);
 
   // Track actual container size
   useEffect(() => {
@@ -47,6 +76,67 @@ const Canvas2D: React.FC<Canvas2DProps> = ({ canvasState, brush, onPixelChange, 
     20
   ) * scale;
 
+  // Helper: build or update a single layer's OffscreenCanvas cache
+  const updateLayerCache = useCallback((layerIdx: number, useDirtyRegion?: boolean) => {
+    const { width, height } = canvasState;
+    const key = layerIdx;
+    let entry = layerCacheRef.current.get(key);
+    
+    // Check dirty rectangle for partial update
+    const dirtyRect = useDirtyRegion ? dirtyRectsRef.current.get(layerIdx) : undefined;
+    
+    if (!entry || !dirtyRect) {
+      // Full rebuild needed
+      const parts: string[] = [];
+      for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+          parts.push(getPixel(canvasState, x, y, layerIdx));
+        }
+      }
+      const hash = parts.join(',');
+      const prevHash = prevLayerDataRef.current.get(key);
+      if (hash === prevHash && entry) {
+        return entry.canvas;
+      }
+      prevLayerDataRef.current.set(key, hash);
+      
+      const offscreen = new OffscreenCanvas(width, height);
+      const offCtx = offscreen.getContext('2d');
+      if (!offCtx) return null;
+      offCtx.clearRect(0, 0, width, height);
+      for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+          const color = getPixel(canvasState, x, y, layerIdx);
+          if (color === '#00000000' || (color.length === 9 && color.endsWith('00'))) continue;
+          offCtx.fillStyle = color.length === 9 ? color.slice(0, 7) : color;
+          offCtx.fillRect(x, y, 1, 1);
+        }
+      }
+      layerCacheRef.current.set(key, { canvas: offscreen, dirty: false });
+      clearDirty(layerIdx);
+      return offscreen;
+    } else {
+      // Partial update using dirty rectangle
+      const offscreen = entry.canvas;
+      const offCtx = offscreen.getContext('2d');
+      if (!offCtx) return null;
+      const { minX, minY, maxX, maxY } = dirtyRect;
+      for (let y = minY; y <= maxY; y++) {
+        for (let x = minX; x <= maxX; x++) {
+          const color = getPixel(canvasState, x, y, layerIdx);
+          if (color === '#00000000' || (color.length === 9 && color.endsWith('00'))) {
+            offCtx.clearRect(x, y, 1, 1);
+          } else {
+            offCtx.fillStyle = color.length === 9 ? color.slice(0, 7) : color;
+            offCtx.fillRect(x, y, 1, 1);
+          }
+        }
+      }
+      clearDirty(layerIdx);
+      return offscreen;
+    }
+  }, [canvasState, clearDirty]);
+
   const drawCanvas = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -54,100 +144,86 @@ const Canvas2D: React.FC<Canvas2DProps> = ({ canvasState, brush, onPixelChange, 
     if (!ctx) return;
 
     const { width, height, activeLayer } = canvasState;
-    canvas.width = width * pixelSize;
-    canvas.height = height * pixelSize;
+    const pw = width * pixelSize;
+    const ph = height * pixelSize;
+    if (canvas.width !== pw) canvas.width = pw;
+    if (canvas.height !== ph) canvas.height = ph;
 
     ctx.fillStyle = '#2a2a3e';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillRect(0, 0, pw, ph);
 
-      // Draw onion skins (adjacent layers) with reduced opacity
-      const onionSkinOpacity = 0.3;
-      
-      // Draw previous layer (if exists)
-      if (activeLayer > 0) {
-        for (let y = 0; y < height; y++) {
-          for (let x = 0; x < width; x++) {
-            const color = getPixel(canvasState, x, y, activeLayer - 1);
-            // Skip if fully transparent
-            if (color === '#00000000' || (color.length === 9 && color.endsWith('00'))) {
-              continue;
-            }
-            ctx.fillStyle = color.length === 9 ? `${color.slice(0, 7)}${Math.floor(255 * onionSkinOpacity).toString(16).padStart(2, '0')}` : `${color}${Math.floor(255 * onionSkinOpacity).toString(16).padStart(2, '0')}`;
-            ctx.fillRect(x * pixelSize, y * pixelSize, pixelSize, pixelSize);
-          }
-        }
+    const onionSkinOpacity = 0.3;
+
+    // Draw previous layer (if exists) using cache with dirty region optimization
+    if (activeLayer > 0) {
+      const prevCanvas = updateLayerCache(activeLayer - 1, true);
+      if (prevCanvas) {
+        ctx.globalAlpha = onionSkinOpacity;
+        ctx.imageSmoothingEnabled = false;
+        ctx.drawImage(prevCanvas, 0, 0, pw, ph);
+        ctx.globalAlpha = 1.0;
       }
-      
-      // Draw next layer (if exists)
-      if (activeLayer < canvasState.layers - 1) {
-        for (let y = 0; y < height; y++) {
-          for (let x = 0; x < width; x++) {
-            const color = getPixel(canvasState, x, y, activeLayer + 1);
-            // Skip if fully transparent
-            if (color === '#00000000' || (color.length === 9 && color.endsWith('00'))) {
-              continue;
-            }
-            ctx.fillStyle = color.length === 9 ? `${color.slice(0, 7)}${Math.floor(255 * onionSkinOpacity).toString(16).padStart(2, '0')}` : `${color}${Math.floor(255 * onionSkinOpacity).toString(16).padStart(2, '0')}`;
-            ctx.fillRect(x * pixelSize, y * pixelSize, pixelSize, pixelSize);
-          }
-        }
+    }
+
+    // Draw next layer (if exists) using cache with dirty region optimization
+    if (activeLayer < canvasState.layers - 1) {
+      const nextCanvas = updateLayerCache(activeLayer + 1, true);
+      if (nextCanvas) {
+        ctx.globalAlpha = onionSkinOpacity;
+        ctx.imageSmoothingEnabled = false;
+        ctx.drawImage(nextCanvas, 0, 0, pw, ph);
+        ctx.globalAlpha = 1.0;
       }
-      
-      // Draw active layer (on top)
-      for (let y = 0; y < height; y++) {
-        for (let x = 0; x < width; x++) {
-          const color = getPixel(canvasState, x, y, activeLayer);
-          // Skip if fully transparent (either explicit or 9-char ending in 00)
-          if (color === '#00000000' || (color.length === 9 && color.endsWith('00'))) {
-            continue;
-          }
-          ctx.fillStyle = color.length === 9 ? color.slice(0, 7) : color;
-          ctx.fillRect(x * pixelSize, y * pixelSize, pixelSize, pixelSize);
-        }
-      }
-      
-      // Draw brush outline (showing exactly what will be painted)
-      if (lastPixel.current) {
-        const bx = lastPixel.current.x;
-        const by = lastPixel.current.y;
-        const size = brush.size;
-        
-        // Draw a dashed rectangle representing the brush size (N×N pixels from top-left)
-        ctx.strokeStyle = brush.tool === 'eraser' ? '#ff0000' : '#ffffff';
-        ctx.lineWidth = 1;
-        ctx.setLineDash([3, 3]);
-        const rectX = bx * pixelSize + offset.x;
-        const rectY = by * pixelSize + offset.y;
-        const rectSize = size * pixelSize;
-        ctx.strokeRect(rectX, rectY, rectSize, rectSize);
-        ctx.setLineDash([]); // Reset line style
-        
-        // Draw a dot at the top-left corner (where painting starts)
-        ctx.fillStyle = brush.tool === 'eraser' ? '#ff0000' : '#ffffff';
-        ctx.beginPath();
-        ctx.arc(
-          bx * pixelSize + pixelSize / 2 + offset.x,
-          by * pixelSize + pixelSize / 2 + offset.y,
-          2, 0, Math.PI * 2
-        );
-        ctx.fill();
-      }
-      
-      ctx.strokeStyle = '#444';
-    ctx.lineWidth = 0.5;
-    for (let x = 0; x <= width; x++) {
+    }
+
+    // Draw active layer (on top) using cache with dirty region optimization
+    const activeCanvas = updateLayerCache(activeLayer, true);
+    if (activeCanvas) {
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(activeCanvas, 0, 0, pw, ph);
+    }
+
+    // Draw brush outline
+    if (lastPixel.current) {
+      const bx = lastPixel.current.x;
+      const by = lastPixel.current.y;
+      const size = brush.size;
+
+      ctx.strokeStyle = brush.tool === 'eraser' ? '#ff0000' : '#ffffff';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([3, 3]);
+      const rectX = bx * pixelSize + offset.x;
+      const rectY = by * pixelSize + offset.y;
+      const rectSize = size * pixelSize;
+      ctx.strokeRect(rectX, rectY, rectSize, rectSize);
+      ctx.setLineDash([]);
+
+      ctx.fillStyle = brush.tool === 'eraser' ? '#ff0000' : '#ffffff';
       ctx.beginPath();
-      ctx.moveTo(x * pixelSize, 0);
-      ctx.lineTo(x * pixelSize, height * pixelSize);
-      ctx.stroke();
+      ctx.arc(
+        bx * pixelSize + pixelSize / 2 + offset.x,
+        by * pixelSize + pixelSize / 2 + offset.y,
+        2, 0, Math.PI * 2
+      );
+      ctx.fill();
+    }
+
+    // Draw grid lines efficiently using single-path approach
+    ctx.strokeStyle = '#444';
+    ctx.lineWidth = 0.5;
+    ctx.beginPath();
+    for (let x = 0; x <= width; x++) {
+      const px = x * pixelSize;
+      ctx.moveTo(px, 0);
+      ctx.lineTo(px, ph);
     }
     for (let y = 0; y <= height; y++) {
-      ctx.beginPath();
-      ctx.moveTo(0, y * pixelSize);
-      ctx.lineTo(width * pixelSize, y * pixelSize);
-      ctx.stroke();
+      const py = y * pixelSize;
+      ctx.moveTo(0, py);
+      ctx.lineTo(pw, py);
     }
-  }, [canvasState, pixelSize]);
+    ctx.stroke();
+  }, [canvasState, pixelSize, offset, brush]);
 
   useEffect(() => {
     drawCanvas();
@@ -180,7 +256,6 @@ const Canvas2D: React.FC<Canvas2DProps> = ({ canvasState, brush, onPixelChange, 
         y,
         lastX: lastPixel.current?.x,
         lastY: lastPixel.current?.y,
-        onPixelChange,
         to3D: (cx: number, cy: number) => ({
           x: cx,
           y: cy,
@@ -188,13 +263,33 @@ const Canvas2D: React.FC<Canvas2DProps> = ({ canvasState, brush, onPixelChange, 
         })
       };
 
-      brushHandler.apply(ctx);
+      const changes = brushHandler.getChanges(ctx);
+      for (const { x: px, y: py, color } of changes) {
+        const key = `${px},${py},${canvasState.activeLayer}`;
+        if (color === '#00000000' || color.endsWith('00')) {
+          canvasState.pixels.delete(key);
+        } else {
+          canvasState.pixels.set(key, color);
+        }
+      }
+      onPixelChange(0, 0, 0, '');
     };
 
     const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
       if (e.button !== 0) return; // Only left click
       const coords = getPixelCoords(e);
       if (!coords) return;
+      
+      // CTRL+click: pick color and add to palette
+      if (isCtrlPressed?.current && onColorPick) {
+        const { x, y } = coords;
+        const color = getPixel(canvasState, x, y, canvasState.activeLayer);
+        if (color && color !== '#00000000') {
+          onColorPick(color.length === 9 ? color.slice(0, 7) : color);
+        }
+        return;
+      }
+      
       isDrawing.current = true;
 
       // Apply brush BEFORE updating lastPixel (so line brush has access to previous position)
@@ -227,23 +322,39 @@ const Canvas2D: React.FC<Canvas2DProps> = ({ canvasState, brush, onPixelChange, 
       e.preventDefault();
       const touch = e.touches[0];
       if (!touch) return;
-      const mouseEvent = new MouseEvent('mousedown', {
+      const coords = getPixelCoords({
         clientX: touch.clientX,
         clientY: touch.clientY,
-        button: 0
-      });
-      handleMouseDown(mouseEvent as any);
+      } as unknown as React.MouseEvent<HTMLCanvasElement>);
+      if (!coords) return;
+      
+      // CTRL+touch: pick color and add to palette
+      if (isCtrlPressed?.current && onColorPick) {
+        const color = getPixel(canvasState, coords.x, coords.y, canvasState.activeLayer);
+        if (color && color !== '#00000000') {
+          onColorPick(color.length === 9 ? color.slice(0, 7) : color);
+        }
+        return;
+      }
+      
+      isDrawing.current = true;
+      applyBrush(coords.x, coords.y);
+      lastPixel.current = coords;
     };
 
     const handleTouchMove = (e: React.TouchEvent<HTMLCanvasElement>) => {
       e.preventDefault();
       const touch = e.touches[0];
       if (!touch) return;
-      const mouseEvent = new MouseEvent('mousemove', {
+      const coords = getPixelCoords({
         clientX: touch.clientX,
-        clientY: touch.clientY
-      });
-      handleMouseMove(mouseEvent as any);
+        clientY: touch.clientY,
+      } as unknown as React.MouseEvent<HTMLCanvasElement>);
+      if (!coords) return;
+      if (lastPixel.current && coords.x === lastPixel.current.x && coords.y === lastPixel.current.y) return;
+
+      applyBrush(coords.x, coords.y);
+      lastPixel.current = coords;
     };
 
     const handleTouchEnd = () => {
@@ -357,11 +468,11 @@ const Canvas2D: React.FC<Canvas2DProps> = ({ canvasState, brush, onPixelChange, 
     };
   }, [previewRef]);
 
-  // Update 3D preview when canvas state changes
+  // Update 3D preview when canvas state changes (use greedy meshing)
   useEffect(() => {
     const scene = previewSceneRef.current;
     if (!scene) return;
-    
+
     // Clear previous voxels
     const objectsToRemove: THREE.Object3D[] = [];
     scene.traverse((object) => {
@@ -378,24 +489,31 @@ const Canvas2D: React.FC<Canvas2DProps> = ({ canvasState, brush, onPixelChange, 
         }
       }
     });
-    
-    // Add voxels from current layer
-    const { width, height, activeLayer } = canvasState;
+
+    // Build spatial hash for current layer only (respect visibility)
+    const { width, height, activeLayer, layerInfo } = canvasState;
+    const activeInfo = layerInfo?.[activeLayer];
+    if (activeInfo && !activeInfo.visible) return; // Skip if layer is hidden
+
+    const spatialHash = new SpatialHash();
     for (let y = 0; y < height; y++) {
       for (let x = 0; x < width; x++) {
         const color = getPixel(canvasState, x, y, activeLayer);
         if (color === '#00000000' || (color.length === 9 && color.endsWith('00'))) {
           continue;
         }
-        
-        const r = parseInt(color.slice(1, 3), 16) / 255;
-        const g = parseInt(color.slice(3, 5), 16) / 255;
-        const b = parseInt(color.slice(5, 7), 16) / 255;
-        
-        const geometry = new THREE.BoxGeometry(1, 1, 1);
-        const material = new THREE.MeshLambertMaterial({ color: new THREE.Color(r, g, b) });
+        const flippedY = height - 1 - y;
+        spatialHash.set(x, flippedY, activeLayer, color);
+      }
+    }
+
+    if (spatialHash.size > 0) {
+      // Use greedy meshing for better performance
+      const faces = greedyMesh(spatialHash, width, height, activeLayer + 1);
+      if (faces.length > 0) {
+        const geometry = buildMergedGeometry(faces);
+        const material = new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide });
         const mesh = new THREE.Mesh(geometry, material);
-        mesh.position.set(x, height - 1 - y, activeLayer); // Flip Y to match 3D view
         mesh.userData.isVoxel = true;
         scene.add(mesh);
       }
@@ -467,4 +585,4 @@ const Canvas2D: React.FC<Canvas2DProps> = ({ canvasState, brush, onPixelChange, 
    );
 };
 
-export default Canvas2D;
+export default React.memo(Canvas2D);

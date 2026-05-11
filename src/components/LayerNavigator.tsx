@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React from 'react';
 import { LayerInfo, CanvasState } from '../types/voxel';
 import LayerThumbnail from './LayerThumbnail';
 
@@ -16,21 +16,14 @@ interface LayerNavigatorProps {
   onToggleVisibility?: (layer: number) => void;
   onToggleLock?: (layer: number) => void;
   onRenameLayer?: (layer: number, name: string) => void;
+  onOpenRenameModal?: (index: number, currentName: string) => void;
 }
 
 const LayerNavigator: React.FC<LayerNavigatorProps> = ({
   layers, activeLayer, layerInfo, canvasState, onLayerChange, onAddLayer, onDuplicateLayer,
   onMoveLayerUp, onMoveLayerDown, onImportImage,
-  onToggleVisibility, onToggleLock, onRenameLayer
+  onToggleVisibility, onToggleLock, onRenameLayer, onOpenRenameModal
 }) => {
-  const handleRename = useCallback((index: number) => {
-    if (!onRenameLayer) return;
-    const currentName = layerInfo[index]?.name || `Layer ${index + 1}`;
-    const newName = prompt('Rename layer:', currentName);
-    if (newName && newName.trim()) {
-      onRenameLayer(index, newName.trim());
-    }
-  }, [layerInfo, onRenameLayer]);
 
   return (
     <div className="flex flex-col gap-2">
@@ -97,16 +90,16 @@ const LayerNavigator: React.FC<LayerNavigatorProps> = ({
                 {info.locked ? '🔒' : '🔓'}
               </button>
               
-              <LayerThumbnail layerIndex={i} canvasState={canvasState || { width: 32, height: 32, layers: layers, pixels: new Map(), layerInfo: layerInfo, activeLayer: activeLayer }} width={32} height={32} />
+              <LayerThumbnail layerIndex={i} canvasState={canvasState || { width: 32, height: 32, layers: layers, pixels: new Map(), voxelTypes: new Map(), layerInfo: layerInfo, activeLayer: activeLayer }} width={32} height={32} />
               
                {/* Layer name (clickable to rename) */}
                <span
-                 className={`flex-1 truncate cursor-pointer ${
-                   isActive ? 'text-white font-medium' : 'text-gray-400'
-                 } ${!info.visible ? 'opacity-50 line-through' : ''}`}
-                 onClick={(e) => { e.stopPropagation(); handleRename(i); }}
-                 title="Click to rename"
-               >
+                  className={`flex-1 truncate cursor-pointer ${
+                    isActive ? 'text-white font-medium' : 'text-gray-400'
+                  } ${!info.visible ? 'opacity-50 line-through' : ''}`}
+                  onClick={(e) => { e.stopPropagation(); onOpenRenameModal?.(i, info.name); }}
+                  title="Click to rename"
+                >
                  {info.name}
                </span>
               

@@ -6,8 +6,12 @@ interface TopBarProps {
   onSave: () => void;
   onSaveProject: () => void;
   onLoadProject: () => void;
+  onLoadDemo: () => void;
+  onImportAnimation: (format: 'json' | 'abc') => void;
   onExportGLTF: () => void;
-  onExportAnimatedGLTF: () => void;
+  onExportAnimationJSON: () => void;
+  onExportAlembicABC: (compress: 'delta' | 'snapshot') => void;
+  onExportFrameSequence: () => void;
   onExportPNG: () => void;
   onExportSpriteSheet: () => void;
   onExportGIF: () => void;
@@ -21,12 +25,15 @@ interface TopBarProps {
 }
 
 const TopBar: React.FC<TopBarProps> = ({
-  onNew, onSave, onSaveProject, onLoadProject, onExportGLTF, onExportAnimatedGLTF, onExportPNG,
+  onNew, onSave, onSaveProject, onLoadProject, onLoadDemo, onImportAnimation, onExportGLTF,
+  onExportAnimationJSON, onExportAlembicABC, onExportFrameSequence, onExportPNG,
   onExportSpriteSheet, onExportGIF, onClear,
   onUndo, onRedo, renderMode, onToggleRenderMode, canUndo, canRedo
 }) => {
   const [fileMenuOpen, setFileMenuOpen] = useState(false);
   const [exportMenuOpen, setExportMenuOpen] = useState(false);
+  const [abcMenuOpen, setAbcMenuOpen] = useState(false);
+  const [importMenuOpen, setImportMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -34,6 +41,8 @@ const TopBar: React.FC<TopBarProps> = ({
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
         setFileMenuOpen(false);
         setExportMenuOpen(false);
+setAbcMenuOpen(false);
+        setImportMenuOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClick);
@@ -41,18 +50,18 @@ const TopBar: React.FC<TopBarProps> = ({
   }, []);
 
   return (
-    <div className="h-8 bg-panel-header border-b border-border flex items-center px-2 gap-1 flex-shrink-0 select-none">
+    <div ref={menuRef} className="h-8 bg-panel-header border-b border-border flex items-center px-2 gap-1 flex-shrink-0 select-none" style={{ paddingTop: 'var(--status-bar-height, env(safe-area-inset-top))' }}>
       <span className="text-accent font-bold text-xs tracking-wider mr-3">PIXVOX</span>
 
-      <div ref={menuRef} className="relative">
+      <div className="relative">
         <button
-          onClick={() => { setFileMenuOpen(!fileMenuOpen); setExportMenuOpen(false); }}
+          onClick={() => { setFileMenuOpen(!fileMenuOpen); setExportMenuOpen(false); setAbcMenuOpen(false); }}
           className="blender-icon-btn text-xs gap-1 flex items-center px-2"
         >
           File <IconChevronDown size={10} />
         </button>
         {fileMenuOpen && (
-          <div className="absolute top-full left-0 mt-0.5 bg-panel border border-border-light rounded-sm shadow-lg py-0.5 z-50 min-w-[140px]">
+          <div className="absolute top-full left-0 mt-0.5 bg-panel border border-border-light rounded-sm shadow-lg py-0.5 z-50 min-w-[160px]">
             <button onClick={() => { onNew(); setFileMenuOpen(false); }} className="w-full px-3 py-1.5 text-left text-xs hover:bg-panel-hover flex items-center gap-2">
               <span className="w-4">+</span> New
             </button>
@@ -62,9 +71,31 @@ const TopBar: React.FC<TopBarProps> = ({
             <button onClick={() => { onSaveProject(); setFileMenuOpen(false); }} className="w-full px-3 py-1.5 text-left text-xs hover:bg-panel-hover flex items-center gap-2">
               <IconSave size={12} /> Save to File
             </button>
-            <button onClick={() => { onLoadProject(); setFileMenuOpen(false); }} className="w-full px-3 py-1.5 text-left text-xs hover:bg-panel-hover flex items-center gap-2">
-              <IconLoad size={12} /> Load
-            </button>
+<button onClick={() => { onLoadProject(); setFileMenuOpen(false); }} className="w-full px-3 py-1.5 text-left text-xs hover:bg-panel-hover flex items-center gap-2">
+              <IconLoad size={12} /> Load Project
+             </button>
+            <button onClick={() => { onLoadDemo(); setFileMenuOpen(false); }} className="w-full px-3 py-1.5 text-left text-xs hover:bg-panel-hover flex items-center gap-2">
+              <IconLoad size={12} /> Load Demo (.json)
+             </button>
+            <div className="my-0.5 h-px bg-border" />
+            <div className="relative">
+              <button
+                onClick={() => { setImportMenuOpen(!importMenuOpen); setFileMenuOpen(false); }}
+                className="w-full px-3 py-1.5 text-left text-xs hover:bg-panel-hover flex items-center gap-2"
+              >
+                <IconLoad size={12} /> Import Animation <IconChevronDown size={10} />
+              </button>
+              {importMenuOpen && (
+                <div className="absolute left-full top-0 ml-0.5 bg-panel border border-border-light rounded-sm shadow-lg py-0.5 z-50 min-w-[140px]">
+                  <button onClick={() => { onImportAnimation('json'); setImportMenuOpen(false); }} className="w-full px-3 py-1.5 text-left text-xs hover:bg-panel-hover flex items-center gap-2">
+                    <IconLoad size={12} /> Animation JSON
+                  </button>
+                 <button onClick={() => { onImportAnimation('abc'); setImportMenuOpen(false); }} className="w-full px-3 py-1.5 text-left text-xs hover:bg-panel-hover flex items-center gap-2">
+                     <IconLoad size={12} /> Alembic ABC (.abc)
+                  </button>
+                </div>
+              )}
+            </div>
             <div className="my-0.5 h-px bg-border" />
             <button onClick={() => { onClear(); setFileMenuOpen(false); }} className="w-full px-3 py-1.5 text-left text-xs hover:bg-panel-hover flex items-center gap-2 text-danger">
               <IconTrash size={12} /> Clear All
@@ -75,13 +106,13 @@ const TopBar: React.FC<TopBarProps> = ({
 
       <div className="relative">
         <button
-          onClick={() => { setExportMenuOpen(!exportMenuOpen); setFileMenuOpen(false); }}
+          onClick={() => { setExportMenuOpen(!exportMenuOpen); setFileMenuOpen(false); setAbcMenuOpen(false); }}
           className="blender-icon-btn text-xs gap-1 flex items-center px-2"
         >
           Export <IconChevronDown size={10} />
         </button>
         {exportMenuOpen && (
-          <div className="absolute top-full left-0 mt-0.5 bg-panel border border-border-light rounded-sm shadow-lg py-0.5 z-50 min-w-[160px]">
+          <div className="absolute top-full left-0 mt-0.5 bg-panel border border-border-light rounded-sm shadow-lg py-0.5 z-50 min-w-[180px]">
             <div className="px-3 py-1 text-[10px] uppercase font-bold text-text-dim">Image</div>
             <button onClick={() => { onExportPNG(); setExportMenuOpen(false); }} className="w-full px-3 py-1.5 text-left text-xs hover:bg-panel-hover flex items-center gap-2">
               <IconExport size={12} /> PNG (Current Frame)
@@ -97,8 +128,31 @@ const TopBar: React.FC<TopBarProps> = ({
             <button onClick={() => { onExportGLTF(); setExportMenuOpen(false); }} className="w-full px-3 py-1.5 text-left text-xs hover:bg-panel-hover flex items-center gap-2">
               <IconExport size={12} /> GLTF (Static)
             </button>
-            <button onClick={() => { onExportAnimatedGLTF(); setExportMenuOpen(false); }} className="w-full px-3 py-1.5 text-left text-xs hover:bg-panel-hover flex items-center gap-2">
-              <IconExport size={12} /> Animated GLTF
+            <div className="my-0.5 h-px bg-border" />
+            <div className="px-3 py-1 text-[10px] uppercase font-bold text-text-dim">Animation</div>
+            <button onClick={() => { onExportAnimationJSON(); setExportMenuOpen(false); }} className="w-full px-3 py-1.5 text-left text-xs hover:bg-panel-hover flex items-center gap-2">
+              <IconExport size={12} /> Animation JSON
+            </button>
+            <div className="relative">
+              <button
+                onClick={() => { setAbcMenuOpen(!abcMenuOpen); setExportMenuOpen(false); }}
+                className="w-full px-3 py-1.5 text-left text-xs hover:bg-panel-hover flex items-center gap-2"
+              >
+               <IconExport size={12} /> Alembic ABC (.abc) <IconChevronDown size={10} />
+               </button>
+               {abcMenuOpen && (
+                 <div className="absolute left-full top-0 ml-0.5 bg-panel border border-border-light rounded-sm shadow-lg py-0.5 z-50 min-w-[140px]">
+                   <button onClick={() => { onExportAlembicABC('delta'); setAbcMenuOpen(false); }} className="w-full px-3 py-1.5 text-left text-xs hover:bg-panel-hover flex items-center gap-2">
+                     <IconExport size={12} /> Delta (Compressed)
+                   </button>
+                  <button onClick={() => { onExportAlembicABC('snapshot'); setAbcMenuOpen(false); }} className="w-full px-3 py-1.5 text-left text-xs hover:bg-panel-hover flex items-center gap-2">
+                     <IconExport size={12} /> Snapshot (Full)
+                   </button>
+                 </div>
+              )}
+            </div>
+            <button onClick={() => { onExportFrameSequence(); setExportMenuOpen(false); }} className="w-full px-3 py-1.5 text-left text-xs hover:bg-panel-hover flex items-center gap-2">
+              <IconExport size={12} /> Frame Sequence (.zip)
             </button>
           </div>
         )}

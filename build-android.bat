@@ -6,6 +6,7 @@ set ANDROID_USER_HOME=G:\1_CURRENT\PixelArtMaker\android-home
 set GRADLE_USER_HOME=G:\gradle-home
 set TEMP=G:\temp
 set TMP=G:\temp
+set PATH=C:\Users\Scotty\.rustup\toolchains\stable-x86_64-pc-windows-msvc\bin;%PATH%
 
 echo Stopping Gradle daemons...
 cd src-tauri\gen\android

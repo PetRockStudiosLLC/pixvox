@@ -250,7 +250,7 @@ const Timeline: React.FC<TimelineProps> = ({
         </div>
       </div>
 
-      <div className="h-36 flex flex-col">
+      <div className="h-24 flex flex-col">
         <div
           ref={timelineRef}
           className="flex-1 relative cursor-crosshair select-none overflow-hidden"

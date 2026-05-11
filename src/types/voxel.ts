@@ -18,6 +18,7 @@ export interface CanvasState {
   layers: number; // depth (Z-axis)
   activeLayer: number;
   pixels: Map<string, string>; // key: "x,y,z" -> hex color
+  voxelTypes: Map<string, string>; // key: "x,y,z" -> voxel type ID
   layerInfo: LayerInfo[]; // Per-layer metadata
 }
 
@@ -28,6 +29,8 @@ export interface BrushState {
   color: string; // current brush color #RRGGBB
   size: number;
   palette?: string[]; // current color palette
+  density?: number; // spray density 0-1
+  sprayRadius?: number; // spray area radius
 }
 
 export interface PaletteColor {

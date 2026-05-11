@@ -72,7 +72,7 @@ const PaletteManager: React.FC<PaletteManagerProps> = ({ currentColors, onLoadPa
         <div className="space-y-2">
           <select
             value={generateType}
-            onChange={(e) => setGenerateType(e.target.value as any)}
+            onChange={(e) => setGenerateType(e.target.value as 'complementary' | 'analogous' | 'triadic' | 'split-complementary' | 'monochromatic' | 'random')}
             className="w-full px-2 py-1.5 bg-surface text-text rounded-sm border border-border-light outline-none appearance-none text-xs"
           >
             <option value="triadic">Triadic</option>

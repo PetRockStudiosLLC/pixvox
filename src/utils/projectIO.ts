@@ -32,6 +32,7 @@ export interface SerializedCanvas {
   activeLayer: number;
   layerInfo: LayerInfo[];
   pixels: Record<string, string>;
+  voxelTypes?: Record<string, string>;
 }
 
 export interface SerializedTimeline {
@@ -131,12 +132,16 @@ export function deserializeProject(project: ProjectFile): {
   timeline: TimelineState;
   brush: BrushState;
 } {
+  if (!project.canvas || !project.timeline) {
+    throw new Error('Corrupt project data: missing canvas or timeline');
+  }
   const canvasState: CanvasState = {
     width: project.canvas.width,
     height: project.canvas.height,
     layers: project.canvas.layers,
     activeLayer: project.canvas.activeLayer,
     pixels: new Map(Object.entries(project.canvas.pixels)),
+    voxelTypes: project.canvas.voxelTypes ? new Map(Object.entries(project.canvas.voxelTypes) as [string, string][]) : new Map(),
     layerInfo: project.canvas.layerInfo,
   };
 
@@ -163,7 +168,7 @@ export function projectToJson(project: ProjectFile): string {
 
 export function jsonToProject(json: string): ProjectFile {
   const parsed = JSON.parse(json);
-  if (parsed.format !== PROJECT_FORMAT) {
+  if (parsed.format && parsed.format !== PROJECT_FORMAT) {
     throw new Error(`Invalid project format: expected ${PROJECT_FORMAT}, got ${parsed.format}`);
   }
   return parsed as ProjectFile;
@@ -190,41 +195,69 @@ export function downloadProject(project: ProjectFile, filename?: string): void {
   URL.revokeObjectURL(url);
 }
 
-export function saveToLocalStorage(project: ProjectFile, key = STORAGE_KEY): void {
+export function saveToLocalStorage(
+  project: ProjectFile,
+  key = STORAGE_KEY,
+  onError?: (error: unknown) => void
+): void {
   try {
     localStorage.setItem(key, projectToJson(project));
   } catch (e) {
-    console.warn('Failed to save to localStorage:', e);
+    console.error('Failed to save to localStorage:', e);
+    onError?.(e);
   }
 }
 
-export function loadFromLocalStorage(key = STORAGE_KEY): ProjectFile | null {
+export function loadFromLocalStorage(
+  key = STORAGE_KEY,
+  onError?: (error: unknown) => void
+): ProjectFile | null {
   try {
     const data = localStorage.getItem(key);
     if (!data) return null;
-    return jsonToProject(data);
+    const project = jsonToProject(data);
+    if (!project.canvas || !project.timeline) {
+      console.warn('Corrupt project in localStorage, clearing...');
+      localStorage.removeItem(key);
+      return null;
+    }
+    return project;
   } catch (e) {
-    console.warn('Failed to load from localStorage:', e);
+    console.error('Failed to load from localStorage:', e);
+    onError?.(e);
     return null;
   }
 }
 
-export function saveAutosave(canvasState: CanvasState, timeline: TimelineState, brush: BrushState): void {
+export function saveAutosave(
+  canvasState: CanvasState,
+  timeline: TimelineState,
+  brush: BrushState,
+  onError?: (error: unknown) => void
+): void {
   try {
     const project = serializeProject(canvasState, timeline, brush);
     localStorage.setItem(AUTOSAVE_KEY, projectToJson(project));
   } catch (e) {
-    console.warn('Failed to save autosave:', e);
+    console.error('Failed to save autosave:', e);
+    onError?.(e);
   }
 }
 
-export function loadAutosave(): ProjectFile | null {
+export function loadAutosave(onError?: (error: unknown) => void): ProjectFile | null {
   try {
     const data = localStorage.getItem(AUTOSAVE_KEY);
     if (!data) return null;
-    return jsonToProject(data);
+    const project = jsonToProject(data);
+    if (!project.canvas || !project.timeline) {
+      console.warn('Corrupt autosave, clearing...');
+      localStorage.removeItem(AUTOSAVE_KEY);
+      return null;
+    }
+    return project;
   } catch (e) {
-    console.warn('Failed to load autosave:', e);
+    console.error('Failed to load autosave:', e);
+    onError?.(e);
     return null;
   }
 }
@@ -249,6 +282,78 @@ export function createAutoSave(
   debouncedSave();
 
   return () => clearTimeout(timer);
+}
+
+export interface OldDemoFile {
+  width: number;
+  height: number;
+  layers: number;
+  pixels: Record<string, string>;
+}
+
+export function isOldDemoFile(json: unknown): json is OldDemoFile {
+  if (typeof json !== 'object' || json === null) return false;
+  const obj = json as Record<string, unknown>;
+  return typeof obj.width === 'number'
+    && typeof obj.height === 'number'
+    && typeof obj.layers === 'number'
+    && typeof obj.pixels === 'object'
+    && obj.pixels !== null
+    && !Array.isArray(obj.pixels);
+}
+
+export function oldDemoToProject(demo: OldDemoFile): ProjectFile {
+  const pixels = Object.fromEntries(
+    Object.entries(demo.pixels).map(([key, color]) => {
+      const parts = key.split(',');
+      if (parts.length === 3) {
+        const x = parseInt(parts[0], 10);
+        const y = parseInt(parts[1], 10);
+        const z = parseInt(parts[2], 10);
+        return [`${x},${y},${z}`, color];
+      }
+      return [key, color];
+    })
+  );
+
+  const layerInfo: LayerInfo[] = [];
+  for (let z = 0; z < demo.layers; z++) {
+    layerInfo.push({ name: `Layer ${z}`, visible: true, locked: false, opacity: 100 });
+  }
+
+  const project: ProjectFile = {
+    version: PROJECT_VERSION,
+    format: PROJECT_FORMAT,
+    timestamp: Date.now(),
+    metadata: {
+      name: 'Demo Import',
+      width: demo.width,
+      height: demo.height,
+      layers: demo.layers,
+      frameCount: 1,
+      fps: 12,
+    },
+    canvas: {
+      width: demo.width,
+      height: demo.height,
+      layers: demo.layers,
+      activeLayer: 0,
+      layerInfo,
+      pixels,
+    },
+    timeline: {
+      fps: 12,
+      totalFrames: 1,
+      currentFrame: 0,
+      loop: true,
+      frames: [
+        { pixels, hasKeyframe: true, duration: 1 },
+      ],
+    },
+    brush: defaultBrushState(),
+  };
+
+  return project;
 }
 
 export function estimateProjectSize(project: ProjectFile): string {

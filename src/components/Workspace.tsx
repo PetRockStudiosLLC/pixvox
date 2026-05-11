@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { CanvasState, BrushState, TimelineState } from '../types/voxel';
 import MultiCanvasView from './MultiCanvasView';
 import VoxelScene from './VoxelScene';
+
 import TopBar from './TopBar';
 import ToolPanel from './ToolPanel';
 import RightPanel from './RightPanel';
@@ -19,7 +20,10 @@ interface WorkspaceProps {
   voxelMode: 'fast-draft' | 'final-bake';
   setVoxelMode: (mode: 'fast-draft' | 'final-bake') => void;
   handleExportGLTF: () => void;
-  handleExportAnimatedGLTF: () => void;
+  handleExportAnimationJSON: () => void;
+  handleExportAlembicABC: (compress: 'delta' | 'snapshot') => void;
+  handleExportFrameSequence: () => void;
+  handleImportAnimation: (format: 'json' | 'abc') => void;
   handleExportPNG: () => void;
   handleExportSpriteSheet: () => void;
   handleExportGIF: () => void;
@@ -27,11 +31,13 @@ interface WorkspaceProps {
   handleClear: () => void;
   handleSaveProject: () => void;
   handleLoadProject: () => void;
+  handleLoadDemo: () => void;
   handleAddLayer: () => void;
   handleDuplicateLayer: () => void;
   handleMoveLayerUp: () => void;
   handleMoveLayerDown: () => void;
   handleImportImage: () => void;
+  onSaveHistory: (state: CanvasState) => void;
   handlePixelChange: (x: number, y: number, z: number, color: string) => void;
   handleColorPick: (color: string) => void;
   isCtrlPressed: React.RefObject<boolean>;
@@ -46,21 +52,24 @@ interface WorkspaceProps {
   onKeyframeDelete: (frame: number) => void;
   onFrameReorder: (fromIndex: number, toIndex: number) => void;
   onFrameDurationChange: (frameIndex: number, duration: number) => void;
+ 
 }
 
 const Workspace: React.FC<WorkspaceProps> = ({
   canvasState, setCanvasState, brush, onBrushChange, onCanvasResize,
   renderMode, setRenderMode, voxelMode, setVoxelMode,
-  handleExportGLTF, handleExportAnimatedGLTF, handleExportPNG, handleExportSpriteSheet, handleExportGIF,
-  handleSave, handleClear, handleSaveProject, handleLoadProject,
+  handleExportGLTF, handleExportAnimationJSON, handleExportAlembicABC, handleExportFrameSequence, handleImportAnimation, handleExportPNG, handleExportSpriteSheet, handleExportGIF,
+  handleSave, handleClear, handleSaveProject, handleLoadProject, handleLoadDemo,
   handleAddLayer, handleDuplicateLayer, handleMoveLayerUp, handleMoveLayerDown,
-  handleImportImage, handlePixelChange, handleColorPick, isCtrlPressed,
+  handleImportImage, onSaveHistory, handlePixelChange, handleColorPick, isCtrlPressed,
   canUndo, canRedo, onUndo, onRedo,
-  timeline, onTimelineChange, onFrameChange, onKeyframeAdd, onKeyframeDelete, onFrameReorder, onFrameDurationChange
+  timeline, onTimelineChange, onFrameChange, onKeyframeAdd, onKeyframeDelete, onFrameReorder, onFrameDurationChange,
+
 }) => {
   const [leftCollapsed, setLeftCollapsed] = useState(false);
   const [rightCollapsed, setRightCollapsed] = useState(false);
   const [timelineCollapsed, setTimelineCollapsed] = useState(false);
+ 
 
   const handleNew = () => {
     handleClear();
@@ -73,8 +82,12 @@ const Workspace: React.FC<WorkspaceProps> = ({
         onSave={handleSave}
         onSaveProject={handleSaveProject}
         onLoadProject={handleLoadProject}
+        onLoadDemo={handleLoadDemo}
+        onImportAnimation={handleImportAnimation}
         onExportGLTF={handleExportGLTF}
-        onExportAnimatedGLTF={handleExportAnimatedGLTF}
+        onExportAnimationJSON={handleExportAnimationJSON}
+        onExportAlembicABC={handleExportAlembicABC}
+        onExportFrameSequence={handleExportFrameSequence}
         onExportPNG={handleExportPNG}
         onExportSpriteSheet={handleExportSpriteSheet}
         onExportGIF={handleExportGIF}
@@ -111,18 +124,31 @@ const Workspace: React.FC<WorkspaceProps> = ({
             )}
           </div>
 
-          <div className="flex-1 min-h-0 bg-surface p-1 overflow-hidden">
+          <div className="flex-1 min-h-0 bg-surface p-1 overflow-hidden flex flex-col">
+            {/* 3D mode toolbar */}
+              {renderMode === '3d' && (
+                <div className="flex items-center justify-end gap-2 px-2 py-1 flex-shrink-0">
+                  <button
+                    onClick={() => setVoxelMode(voxelMode === 'fast-draft' ? 'final-bake' : 'fast-draft')}
+                    className="px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded text-xs font-bold text-gray-300 transition-colors"
+                  >
+                    {voxelMode === 'fast-draft' ? 'Draft' : 'Final'}
+                  </button>
+                </div>
+              )}
             {renderMode === '2d' ? (
               <MultiCanvasView
                 canvasState={canvasState}
+                setCanvasState={setCanvasState}
                 brush={brush}
                 onPixelChange={handlePixelChange}
+                onSaveHistory={onSaveHistory}
                 onColorPick={handleColorPick}
                 isCtrlPressed={isCtrlPressed}
               />
             ) : (
-              <VoxelScene canvasState={canvasState} mode={voxelMode} />
-            )}
+<VoxelScene canvasState={canvasState} mode={voxelMode} brush={brush} onPixelChange={handlePixelChange} />
+             )}
           </div>
 
           <Timeline
@@ -154,6 +180,8 @@ const Workspace: React.FC<WorkspaceProps> = ({
           onMoveLayerUp={handleMoveLayerUp}
           onMoveLayerDown={handleMoveLayerDown}
           onImportImage={handleImportImage}
+          renderMode={renderMode}
+          
           collapsed={rightCollapsed}
           onToggle={() => setRightCollapsed(!rightCollapsed)}
         />

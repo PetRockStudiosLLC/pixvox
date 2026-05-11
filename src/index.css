@@ -24,8 +24,15 @@
   --shadow-subtle: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
-body {
+html, body {
   margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
   font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', 'Roboto', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -35,10 +42,13 @@ body {
   user-select: none;
 }
 
+/* Mobile-first: proper viewport handling for Android WebView */
 #root {
-  width: 100vw;
-  height: 100vh;
+  width: 100%;
+  height: 100%;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 body.ctrl-pressed canvas {
@@ -244,23 +254,45 @@ body.ctrl-pressed canvas {
 }
 
 @layer utilities {
+  /* Safe area utilities — capped so they don't push content off-screen */
   .safe-pt {
-    padding-top: env(safe-area-inset-top);
+    padding-top: min(env(safe-area-inset-top, 0px), 24px);
   }
   .safe-pb {
-    padding-bottom: env(safe-area-inset-bottom);
+    padding-bottom: min(env(safe-area-inset-bottom, 0px), 24px);
   }
   .safe-pl {
-    padding-left: env(safe-area-inset-left);
+    padding-left: min(env(safe-area-inset-left, 0px), 16px);
   }
   .safe-pr {
-    padding-right: env(safe-area-inset-right);
+    padding-right: min(env(safe-area-inset-right, 0px), 16px);
   }
-  .safe-mt {
-    margin-top: env(safe-area-inset-top);
+  .safe-inset-top {
+    padding-top: min(env(safe-area-inset-top, 0px), 24px);
   }
-  .safe-mb {
-    margin-bottom: env(safe-area-inset-bottom);
+  .safe-inset-bottom {
+    padding-bottom: min(env(safe-area-inset-bottom, 0px), 24px);
+  }
+  .safe-inset-left {
+    padding-left: min(env(safe-area-inset-left, 0px), 16px);
+  }
+  .safe-inset-right {
+    padding-right: min(env(safe-area-inset-right, 0px), 16px);
+  }
+  /* Minimum touch target sizes (Android guideline: 48px) */
+  .touch-target-min {
+    min-width: 48px;
+    min-height: 48px;
+  }
+  .touch-target-sm {
+    min-width: 40px;
+    min-height: 40px;
+  }
+  /* Canvas container with proper overflow handling */
+  .canvas-container {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
   }
   .no-scrollbar::-webkit-scrollbar {
     display: none;
@@ -268,6 +300,28 @@ body.ctrl-pressed canvas {
   .no-scrollbar {
     -ms-overflow-style: none;
     scrollbar-width: none;
+  }
+  /* Floating toolbar with proper z-index and positioning */
+  .floating-toolbar {
+    position: absolute;
+    bottom: min(env(safe-area-inset-bottom, 0px), 16px);
+    left: 50%;
+    transform: translateX(-50%);
+    max-width: calc(100% - 32px);
+  }
+  /* Bottom navigation with gesture navigation support */
+  .mobile-nav {
+    min-height: 56px;
+    padding-bottom: min(env(safe-area-inset-bottom, 0px), 16px);
+  }
+  /* Header with status bar handling */
+  .mobile-header {
+    min-height: 48px;
+    padding-top: min(env(safe-area-inset-top, 0px), 16px);
+  }
+  /* Safe padding for bottom nav - handles gesture nav */
+  .pb-safe {
+    padding-bottom: min(env(safe-area-inset-bottom, 0px), 16px);
   }
 }
 

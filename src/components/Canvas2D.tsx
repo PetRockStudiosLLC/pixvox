@@ -256,7 +256,6 @@ const Canvas2D: React.FC<Canvas2DProps> = ({ canvasState, brush, onPixelChange, 
         y,
         lastX: lastPixel.current?.x,
         lastY: lastPixel.current?.y,
-        onPixelChange,
         to3D: (cx: number, cy: number) => ({
           x: cx,
           y: cy,
@@ -264,7 +263,16 @@ const Canvas2D: React.FC<Canvas2DProps> = ({ canvasState, brush, onPixelChange, 
         })
       };
 
-      brushHandler.apply(ctx);
+      const changes = brushHandler.getChanges(ctx);
+      for (const { x: px, y: py, color } of changes) {
+        const key = `${px},${py},${canvasState.activeLayer}`;
+        if (color === '#00000000' || color.endsWith('00')) {
+          canvasState.pixels.delete(key);
+        } else {
+          canvasState.pixels.set(key, color);
+        }
+      }
+      onPixelChange(0, 0, 0, '');
     };
 
     const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -314,23 +322,39 @@ const Canvas2D: React.FC<Canvas2DProps> = ({ canvasState, brush, onPixelChange, 
       e.preventDefault();
       const touch = e.touches[0];
       if (!touch) return;
-      const mouseEvent = new MouseEvent('mousedown', {
+      const coords = getPixelCoords({
         clientX: touch.clientX,
         clientY: touch.clientY,
-        button: 0
-      });
-      handleMouseDown(mouseEvent as any);
+      } as unknown as React.MouseEvent<HTMLCanvasElement>);
+      if (!coords) return;
+      
+      // CTRL+touch: pick color and add to palette
+      if (isCtrlPressed?.current && onColorPick) {
+        const color = getPixel(canvasState, coords.x, coords.y, canvasState.activeLayer);
+        if (color && color !== '#00000000') {
+          onColorPick(color.length === 9 ? color.slice(0, 7) : color);
+        }
+        return;
+      }
+      
+      isDrawing.current = true;
+      applyBrush(coords.x, coords.y);
+      lastPixel.current = coords;
     };
 
     const handleTouchMove = (e: React.TouchEvent<HTMLCanvasElement>) => {
       e.preventDefault();
       const touch = e.touches[0];
       if (!touch) return;
-      const mouseEvent = new MouseEvent('mousemove', {
+      const coords = getPixelCoords({
         clientX: touch.clientX,
-        clientY: touch.clientY
-      });
-      handleMouseMove(mouseEvent as any);
+        clientY: touch.clientY,
+      } as unknown as React.MouseEvent<HTMLCanvasElement>);
+      if (!coords) return;
+      if (lastPixel.current && coords.x === lastPixel.current.x && coords.y === lastPixel.current.y) return;
+
+      applyBrush(coords.x, coords.y);
+      lastPixel.current = coords;
     };
 
     const handleTouchEnd = () => {
@@ -561,4 +585,4 @@ const Canvas2D: React.FC<Canvas2DProps> = ({ canvasState, brush, onPixelChange, 
    );
 };
 
-export default Canvas2D;
+export default React.memo(Canvas2D);

@@ -18,6 +18,7 @@ interface RightPanelProps {
   onMoveLayerUp: () => void;
   onMoveLayerDown: () => void;
   onImportImage: () => void;
+  renderMode: '2d' | '3d';
   collapsed: boolean;
   onToggle: () => void;
 }
@@ -25,7 +26,7 @@ interface RightPanelProps {
 const RightPanel: React.FC<RightPanelProps> = ({
   canvasState, setCanvasState, voxelMode, setVoxelMode,
   onAddLayer, onDuplicateLayer, onMoveLayerUp, onMoveLayerDown, onImportImage,
-  collapsed, onToggle
+  renderMode, collapsed, onToggle
 }) => {
   const [activeTab, setActiveTab] = useState<'preview' | 'layers'>('preview');
 
@@ -88,6 +89,8 @@ const RightPanel: React.FC<RightPanelProps> = ({
             canvasState={canvasState}
             voxelMode={voxelMode}
             setVoxelMode={setVoxelMode}
+            renderMode={renderMode}
+            
           />
         ) : (
           <LayersTab
@@ -109,36 +112,46 @@ const PreviewTab: React.FC<{
   canvasState: CanvasState;
   voxelMode: 'fast-draft' | 'final-bake';
   setVoxelMode: (mode: 'fast-draft' | 'final-bake') => void;
-}> = ({ canvasState, voxelMode, setVoxelMode }) => (
-  <div className="flex flex-col">
-    <div className="aspect-square bg-surface relative">
-      <VoxelScene canvasState={canvasState} mode={voxelMode} />
-    </div>
-    <div className="p-2 space-y-1.5 border-t border-border">
-      <div className="flex gap-1">
-        <button
-          onClick={() => setVoxelMode('fast-draft')}
-          className={`flex-1 py-1 rounded-sm text-xs font-medium transition-colors ${
-            voxelMode === 'fast-draft' ? 'bg-accent-dim text-text-bright' : 'bg-panel-hover text-text-dim hover:text-text'
-          }`}
-        >
-          Fast Draft
-        </button>
-        <button
-          onClick={() => setVoxelMode('final-bake')}
-          className={`flex-1 py-1 rounded-sm text-xs font-medium transition-colors ${
-            voxelMode === 'final-bake' ? 'bg-accent-dim text-text-bright' : 'bg-panel-hover text-text-dim hover:text-text'
-          }`}
-        >
-          Final Bake
-        </button>
+  renderMode: '2d' | '3d';
+}> = ({ canvasState, voxelMode, setVoxelMode, renderMode }) => {
+  const hidePreview3D = renderMode === '3d';
+  return (
+    <div className="flex flex-col">
+      {hidePreview3D ? (
+        <div className="aspect-square bg-surface flex items-center justify-center">
+          <div className="text-text-dim text-xs">Preview hidden in 3D mode</div>
+        </div>
+      ) : (
+        <div className="aspect-square bg-surface relative">
+          <VoxelScene canvasState={canvasState} mode={voxelMode} />
+        </div>
+      )}
+      <div className="p-2 space-y-1.5 border-t border-border">
+        <div className="flex gap-1">
+          <button
+            onClick={() => setVoxelMode('fast-draft')}
+            className={`flex-1 py-1 rounded-sm text-xs font-medium transition-colors ${
+              voxelMode === 'fast-draft' ? 'bg-accent-dim text-text-bright' : 'bg-panel-hover text-text-dim hover:text-text'
+            }`}
+          >
+            Fast Draft
+          </button>
+          <button
+            onClick={() => setVoxelMode('final-bake')}
+            className={`flex-1 py-1 rounded-sm text-xs font-medium transition-colors ${
+              voxelMode === 'final-bake' ? 'bg-accent-dim text-text-bright' : 'bg-panel-hover text-text-dim hover:text-text'
+            }`}
+          >
+            Final Bake
+          </button>
+        </div>
+        <div className="text-[10px] text-text-dim font-mono">
+          Voxels: {canvasState.pixels.size} | Layers: {canvasState.layers}
+        </div>
       </div>
-      <div className="text-[10px] text-text-dim font-mono">
-        Voxels: {canvasState.pixels.size} | Layers: {canvasState.layers}
-      </div>
     </div>
-  </div>
-);
+  );
+};
 
 const LayersTab: React.FC<{
   canvasState: CanvasState;

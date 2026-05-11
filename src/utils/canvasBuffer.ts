@@ -12,6 +12,7 @@ export function createCanvasState(width: number, height: number, layers: number 
     layers,
     activeLayer: 0,
     pixels: new Map(),
+    voxelTypes: new Map(),
     layerInfo: Array.from({ length: layers }, (_, i) => ({
       name: `Layer ${i + 1}`,
       visible: true,
@@ -56,6 +57,7 @@ export function exportProject(state: CanvasState): string {
     layers: state.layers,
     layerInfo: state.layerInfo,
     pixels: Object.fromEntries(state.pixels),
+    voxelTypes: Object.fromEntries(state.voxelTypes),
   };
   return JSON.stringify(data);
 }
@@ -68,12 +70,16 @@ export function importProject(json: string): CanvasState {
     locked: false,
     opacity: 100,
   }));
+  const voxelTypes = data.voxelTypes
+    ? new Map(Object.entries(data.voxelTypes) as [string, string][])
+    : new Map();
   return {
     width: data.width,
     height: data.height,
     layers: data.layers,
     activeLayer: 0,
     pixels: new Map(Object.entries(data.pixels)),
+    voxelTypes,
     layerInfo,
   };
 }

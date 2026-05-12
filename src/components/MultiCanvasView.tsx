@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useCallback, useState } from 'react';
 import { CanvasState, BrushState } from '../types/voxel';
 import { getPixel } from '../utils/canvasBuffer';
-import { getBrush, BrushContext, PixelChange } from '../utils/brushSystem';
+import { getBrush, BrushContext, PixelChange } from '../utils/brushes';
 
 interface MultiCanvasViewProps {
   canvasState: CanvasState;

@@ -1,6 +1,6 @@
 import React from 'react';
 import { BrushState, BrushTool } from '../../types/voxel';
-import { getAllBrushes } from '../../utils/brushSystem';
+import { getAllBrushes } from '../../utils/brushes';
 
 interface MobileToolbarProps {
   brush: BrushState;

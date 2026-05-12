@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { CanvasState, BrushState } from '../../types/voxel';
 import { getPixel } from '../../utils/canvasBuffer';
-import { getBrush, BrushContext } from '../../utils/brushSystem';
+import { getBrush, BrushContext } from '../../utils/brushes';
 
 interface MobileCanvasProps {
   canvasState: CanvasState;

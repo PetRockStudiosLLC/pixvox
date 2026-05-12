@@ -31,6 +31,11 @@ export interface BrushState {
   palette?: string[]; // current color palette
   density?: number; // spray density 0-1
   sprayRadius?: number; // spray area radius
+  blurStrength?: number; // blur blend amount 0-1
+  blurFalloff?: number; // blur edge falloff 0-1
+  ditherDensity?: number; // dither threshold density 0-1
+  ditherAngle?: number; // dither pattern rotation in degrees
+  ditherPattern?: 'bayer2x2' | 'bayer3x3' | 'bayer4x4' | 'bayer8x8';
 }
 
 export interface PaletteColor {

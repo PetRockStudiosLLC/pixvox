@@ -2,7 +2,7 @@ import React, { useRef, useEffect, useCallback, useState } from 'react';
 import * as THREE from 'three';
 import { CanvasState, BrushState } from '../types/voxel';
 import { getPixel } from '../utils/canvasBuffer';
-import { getBrush, BrushContext } from '../utils/brushSystem';
+import { getBrush, BrushContext } from '../utils/brushes';
 import { SpatialHash } from '../utils/spatialHash';
 import { greedyMesh } from '../utils/greedyMesher';
 import { buildMergedGeometry } from '../utils/meshBuilder';

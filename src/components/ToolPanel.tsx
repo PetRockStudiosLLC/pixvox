@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { BrushState } from '../types/voxel';
-import { getAllBrushes } from '../utils/brushSystem';
+import { getAllBrushes } from '../utils/brushes';
 import { IconPoint, IconRect, IconLine, IconEraser, IconCollapse, IconExpand } from './Icons';
 
 const TOOL_ICONS: Record<string, React.FC<{ size?: number; className?: string }>> = {
@@ -122,6 +122,63 @@ const ToolPanel: React.FC<ToolPanelProps> = ({ brush, onBrushChange, onCanvasRes
                 </div>
               </div>
             </div>
+            {brush.tool === 'blur' && (
+              <>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] text-text-dim w-14">Strength</span>
+                  <input
+                    type="range"
+                    min={1}
+                    max={100}
+                    value={Math.round((brush.blurStrength ?? 0.5) * 100)}
+                    onChange={(e) => onBrushChange({ ...brush, blurStrength: parseInt(e.target.value) / 100 })}
+                    className="flex-1 blender-slider"
+                  />
+                  <span className="text-[10px] text-accent w-6 text-center">{Math.round((brush.blurStrength ?? 0.5) * 100)}%</span>
+                </div>
+              </>
+            )}
+            {brush.tool === 'dither' && (
+              <>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] text-text-dim w-14">Density</span>
+                  <input
+                    type="range"
+                    min={5}
+                    max={100}
+                    value={Math.round((brush.ditherDensity ?? 0.5) * 100)}
+                    onChange={(e) => onBrushChange({ ...brush, ditherDensity: parseInt(e.target.value) / 100 })}
+                    className="flex-1 blender-slider"
+                  />
+                  <span className="text-[10px] text-accent w-6 text-center">{Math.round((brush.ditherDensity ?? 0.5) * 100)}%</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] text-text-dim w-14">Angle</span>
+                  <input
+                    type="range"
+                    min={0}
+                    max={45}
+                    value={brush.ditherAngle ?? 0}
+                    onChange={(e) => onBrushChange({ ...brush, ditherAngle: parseInt(e.target.value) })}
+                    className="flex-1 blender-slider"
+                  />
+                  <span className="text-[10px] text-accent w-6 text-center">{brush.ditherAngle ?? 0}°</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] text-text-dim w-14">Pattern</span>
+                  <select
+                    value={brush.ditherPattern ?? 'bayer4x4'}
+                    onChange={(e) => onBrushChange({ ...brush, ditherPattern: e.target.value as BrushState['ditherPattern'] })}
+                    className="flex-1 bg-panel-hover border border-border-light rounded-sm text-[10px] text-text px-1 py-0.5 outline-none focus:border-accent"
+                  >
+                    <option value="bayer2x2">2×2</option>
+                    <option value="bayer3x3">3×3</option>
+                    <option value="bayer4x4">4×4</option>
+                    <option value="bayer8x8">8×8</option>
+                  </select>
+                </div>
+              </>
+            )}
           </div>
         </ToolSection>
 

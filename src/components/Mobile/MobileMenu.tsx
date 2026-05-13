@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback } from "react";
 
 interface MobileMenuProps {
   isOpen: boolean;
@@ -15,9 +15,9 @@ interface MobileMenuProps {
   onExportGIF: () => void;
   onExportGLTF: () => void;
   onExportAnimationJSON: () => void;
-  onExportAlembicABC: (compress: 'delta' | 'snapshot') => void;
+  onExportAlembicABC: (compress: "delta" | "snapshot") => void;
   onExportFrameSequence: () => void;
-  onImportAnimation: (format: 'json' | 'abc') => void;
+  onImportAnimation: (format: "json" | "abc") => void;
   // Canvas actions
   onCanvasResize: (width: number, height: number) => void;
   canvasWidth: number;
@@ -25,8 +25,8 @@ interface MobileMenuProps {
   canvasLayers: number;
   voxelCount: number;
   // Voxel mode
-  voxelMode: 'fast-draft' | 'final-bake';
-  onVoxelModeChange: (mode: 'fast-draft' | 'final-bake') => void;
+  voxelMode: "fast-draft" | "final-bake";
+  onVoxelModeChange: (mode: "fast-draft" | "final-bake") => void;
 }
 
 const MobileMenu: React.FC<MobileMenuProps> = ({
@@ -51,7 +51,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
   canvasLayers,
   voxelCount,
   voxelMode,
-  onVoxelModeChange,
+  onVoxelModeChange
 }) => {
   const [showResizeDialog, setShowResizeDialog] = useState(false);
   const [showExportSubmenu, setShowExportSubmenu] = useState(false);
@@ -75,10 +75,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
   return (
     <div className="fixed inset-0 z-[100] md:hidden">
       {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/70 backdrop-blur-sm"
-        onClick={onClose}
-      />
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
 
       {/* Full-screen menu panel */}
       <div className="absolute inset-0 bg-surface overflow-y-auto animate-slide-up">
@@ -252,8 +249,8 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
                 </svg>
               }
               label="Voxel Mode"
-              subtitle={voxelMode === 'fast-draft' ? 'Fast Draft' : 'Final Bake'}
-              onPress={() => onVoxelModeChange(voxelMode === 'fast-draft' ? 'final-bake' : 'fast-draft')}
+              subtitle={voxelMode === "fast-draft" ? "Fast Draft" : "Final Bake"}
+              onPress={() => onVoxelModeChange(voxelMode === "fast-draft" ? "final-bake" : "fast-draft")}
             />
           </MenuSection>
 
@@ -263,7 +260,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
               <InfoRow label="Canvas Size" value={`${canvasWidth} × ${canvasHeight}`} />
               <InfoRow label="Layers" value={String(canvasLayers)} />
               <InfoRow label="Voxel Count" value={voxelCount.toLocaleString()} />
-              <InfoRow label="Voxel Mode" value={voxelMode === 'fast-draft' ? 'Fast Draft' : 'Final Bake'} />
+              <InfoRow label="Voxel Mode" value={voxelMode === "fast-draft" ? "Fast Draft" : "Final Bake"} />
             </div>
           </MenuSection>
         </div>
@@ -325,25 +322,41 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
             <div className="w-10 h-1 bg-panel-hover rounded-full mx-auto mb-4" />
             <h3 className="text-base font-bold text-text mb-3">Export Animation</h3>
             <button
-              onClick={() => { onExportAnimationJSON(); setShowExportSubmenu(false); onClose(); }}
+              onClick={() => {
+                onExportAnimationJSON();
+                setShowExportSubmenu(false);
+                onClose();
+              }}
               className="w-full py-4 px-4 bg-panel-hover active:bg-panel-active rounded-lg text-left text-sm font-bold text-text touch-target-min"
             >
               Animation JSON
             </button>
             <button
-              onClick={() => { onExportAlembicABC('delta'); setShowExportSubmenu(false); onClose(); }}
+              onClick={() => {
+                onExportAlembicABC("delta");
+                setShowExportSubmenu(false);
+                onClose();
+              }}
               className="w-full py-4 px-4 bg-panel-hover active:bg-panel-active rounded-lg text-left text-sm font-bold text-text touch-target-min"
             >
               Alembic ABC (Delta)
             </button>
             <button
-              onClick={() => { onExportAlembicABC('snapshot'); setShowExportSubmenu(false); onClose(); }}
+              onClick={() => {
+                onExportAlembicABC("snapshot");
+                setShowExportSubmenu(false);
+                onClose();
+              }}
               className="w-full py-4 px-4 bg-panel-hover active:bg-panel-active rounded-lg text-left text-sm font-bold text-text touch-target-min"
             >
               Alembic ABC (Snapshot)
             </button>
             <button
-              onClick={() => { onExportFrameSequence(); setShowExportSubmenu(false); onClose(); }}
+              onClick={() => {
+                onExportFrameSequence();
+                setShowExportSubmenu(false);
+                onClose();
+              }}
               className="w-full py-4 px-4 bg-panel-hover active:bg-panel-active rounded-lg text-left text-sm font-bold text-text touch-target-min"
             >
               Frame Sequence GLTF
@@ -366,13 +379,21 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
             <div className="w-10 h-1 bg-panel-hover rounded-full mx-auto mb-4" />
             <h3 className="text-base font-bold text-text mb-3">Import Animation</h3>
             <button
-              onClick={() => { onImportAnimation('json'); setShowImportSubmenu(false); onClose(); }}
+              onClick={() => {
+                onImportAnimation("json");
+                setShowImportSubmenu(false);
+                onClose();
+              }}
               className="w-full py-4 px-4 bg-panel-hover active:bg-panel-active rounded-lg text-left text-sm font-bold text-text touch-target-min"
             >
               Animation JSON
             </button>
             <button
-              onClick={() => { onImportAnimation('abc'); setShowImportSubmenu(false); onClose(); }}
+              onClick={() => {
+                onImportAnimation("abc");
+                setShowImportSubmenu(false);
+                onClose();
+              }}
               className="w-full py-4 px-4 bg-panel-hover active:bg-panel-active rounded-lg text-left text-sm font-bold text-text touch-target-min"
             >
               Alembic ABC
@@ -400,9 +421,7 @@ interface MenuSectionProps {
 const MenuSection: React.FC<MenuSectionProps> = ({ title, children }) => (
   <section>
     <h3 className="text-[10px] font-bold text-text-dim uppercase tracking-wider mb-2 px-1">{title}</h3>
-    <div className="bg-panel rounded-lg border border-border overflow-hidden">
-      {children}
-    </div>
+    <div className="bg-panel rounded-lg border border-border overflow-hidden">{children}</div>
   </section>
 );
 
@@ -419,16 +438,24 @@ const MenuItem: React.FC<MenuItemProps> = ({ icon, label, subtitle, onPress, dan
   <button
     onClick={onPress}
     className={`w-full flex items-center gap-3 px-4 py-3.5 text-left transition-colors active:bg-panel-active touch-target-min border-b border-border last:border-b-0 ${
-      danger ? 'text-danger' : 'text-text'
+      danger ? "text-danger" : "text-text"
     }`}
   >
-    <span className={`flex-shrink-0 ${danger ? 'text-danger' : 'text-text-dim'}`}>{icon}</span>
+    <span className={`flex-shrink-0 ${danger ? "text-danger" : "text-text-dim"}`}>{icon}</span>
     <span className="flex-1 min-w-0">
       <span className="text-sm font-semibold block">{label}</span>
       {subtitle && <span className="text-[10px] text-text-dim block truncate">{subtitle}</span>}
     </span>
     {hasArrow && (
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-text-dim flex-shrink-0">
+      <svg
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        className="text-text-dim flex-shrink-0"
+      >
         <polyline points="9 18 15 12 9 6" />
       </svg>
     )}

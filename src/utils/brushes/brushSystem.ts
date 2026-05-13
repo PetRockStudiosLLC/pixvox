@@ -1,4 +1,4 @@
-import { CanvasState, BrushState, BrushTool } from '../../types/voxel';
+import { CanvasState, BrushState, BrushTool } from "../../types/voxel";
 
 export interface PixelChange {
   x: number;
@@ -24,7 +24,7 @@ export interface BrushHandler {
   preview?: (ctx: BrushContext) => { x: number; y: number; size: number } | null;
 }
 
-const brushRegistry = new Map<string, BrushHandler>();
+export const brushRegistry = new Map<string, BrushHandler>();
 
 export function registerBrush(handler: BrushHandler): void {
   brushRegistry.set(handler.tool, handler);
@@ -37,5 +37,3 @@ export function getBrush(tool: BrushTool): BrushHandler | undefined {
 export function getAllBrushes(): BrushHandler[] {
   return Array.from(brushRegistry.values());
 }
-
-

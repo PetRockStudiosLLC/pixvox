@@ -1,4 +1,4 @@
-import { CanvasState } from '../types/voxel';
+import { CanvasState } from "../types/voxel";
 
 interface GLTF {
   asset: { version: string };
@@ -29,24 +29,33 @@ interface GLTF {
   }[];
 }
 
-export function exportGLTF(canvasState: CanvasState, mode: 'fast-draft' | 'final-bake'): { content: string; filename: string; mimeType: string } {
+export function exportGLTF(
+  canvasState: CanvasState,
+  mode: "fast-draft" | "final-bake"
+): { content: string; filename: string; mimeType: string } {
   const { width, height, layers, pixels } = canvasState;
 
   const voxels: { x: number; y: number; z: number; color: string }[] = [];
   pixels.forEach((color, key) => {
-    const [x, y, z] = key.split(',').map(Number);
+    const [x, y, z] = key.split(",").map(Number);
     if (x >= 0 && x < width && y >= 0 && y < height && z >= 0 && z < layers) {
       voxels.push({ x, y, z, color });
     }
   });
 
   if (voxels.length === 0) {
-    return { content: '', filename: '', mimeType: '' };
+    return { content: "", filename: "", mimeType: "" };
   }
 
   const verts = [
-    [-0.5, -0.5, -0.5], [0.5, -0.5, -0.5], [0.5, 0.5, -0.5], [-0.5, 0.5, -0.5],
-    [-0.5, -0.5, 0.5], [0.5, -0.5, 0.5], [0.5, 0.5, 0.5], [-0.5, 0.5, 0.5]
+    [-0.5, -0.5, -0.5],
+    [0.5, -0.5, -0.5],
+    [0.5, 0.5, -0.5],
+    [-0.5, 0.5, -0.5],
+    [-0.5, -0.5, 0.5],
+    [0.5, -0.5, 0.5],
+    [0.5, 0.5, 0.5],
+    [-0.5, 0.5, 0.5]
   ];
 
   const faces = [
@@ -73,30 +82,34 @@ export function exportGLTF(canvasState: CanvasState, mode: 'fast-draft' | 'final
       colors.push(r, g, b, 1.0);
     });
 
-    faces.forEach(face => {
-      face.forEach(idx => indices.push(idx + vertexOffset));
+    faces.forEach((face) => {
+      face.forEach((idx) => indices.push(idx + vertexOffset));
     });
 
     vertexOffset += 8;
   });
 
   const gltf: GLTF = {
-    asset: { version: '2.0' },
+    asset: { version: "2.0" },
     scenes: [{ nodes: [0] }],
     nodes: [{ mesh: 0 }],
-    meshes: [{
-      primitives: [{
-        attributes: { POSITION: 0, COLOR_0: 1 },
-        indices: 2,
-        material: 0
-      }]
-    }],
+    meshes: [
+      {
+        primitives: [
+          {
+            attributes: { POSITION: 0, COLOR_0: 1 },
+            indices: 2,
+            material: 0
+          }
+        ]
+      }
+    ],
     accessors: [
       {
         bufferView: 0,
         componentType: 5126,
         count: positions.length / 3,
-        type: 'VEC3',
+        type: "VEC3",
         max: [width, height, layers],
         min: [0, 0, 0]
       },
@@ -104,13 +117,13 @@ export function exportGLTF(canvasState: CanvasState, mode: 'fast-draft' | 'final
         bufferView: 1,
         componentType: 5126,
         count: colors.length / 4,
-        type: 'VEC4'
+        type: "VEC4"
       },
       {
         bufferView: 2,
         componentType: 5125,
         count: indices.length,
-        type: 'SCALAR'
+        type: "SCALAR"
       }
     ],
     bufferViews: [
@@ -118,14 +131,16 @@ export function exportGLTF(canvasState: CanvasState, mode: 'fast-draft' | 'final
       { buffer: 0, byteOffset: positions.length * 4, byteLength: colors.length * 4, target: 34962 },
       { buffer: 0, byteOffset: (positions.length + colors.length) * 4, byteLength: indices.length * 4, target: 34963 }
     ],
-    buffers: [{ byteLength: 0, uri: '' }],
-    materials: [{
-      pbrMetallicRoughness: {
-        baseColorFactor: [1, 1, 1, 1],
-        metallicFactor: 0.0,
-        roughnessFactor: 0.9
+    buffers: [{ byteLength: 0, uri: "" }],
+    materials: [
+      {
+        pbrMetallicRoughness: {
+          baseColorFactor: [1, 1, 1, 1],
+          metallicFactor: 0.0,
+          roughnessFactor: 0.9
+        }
       }
-    }]
+    ]
   };
 
   const positionBuffer = new Float32Array(positions);
@@ -142,7 +157,7 @@ export function exportGLTF(canvasState: CanvasState, mode: 'fast-draft' | 'final
   offset += colorBuffer.byteLength;
   combinedBuffer.set(new Uint8Array(indexBuffer.buffer), offset);
 
-  let binary = '';
+  let binary = "";
   for (let i = 0; i < combinedBuffer.length; i++) {
     binary += String.fromCharCode(combinedBuffer[i]);
   }
@@ -156,13 +171,34 @@ export function exportGLTF(canvasState: CanvasState, mode: 'fast-draft' | 'final
   const json = JSON.stringify(gltf, null, 2);
   const filename = `p2v-export-${mode}.gltf`;
 
-  return { content: json, filename, mimeType: 'model/gltf+json' };
+  return { content: json, filename, mimeType: "model/gltf+json" };
 }
 
-export function downloadFile(content: string, filename: string, mimeType: string = 'text/plain'): void {
+export async function downloadFile(content: string, filename: string, mimeType: string = "text/plain"): Promise<void> {
+  if (window.showSaveFilePicker) {
+    try {
+      const handle = await window.showSaveFilePicker({
+        suggestedName: filename,
+        types: [
+          {
+            description: "All Files",
+            accept: { "application/octet-stream": ["*"] }
+          }
+        ]
+      });
+      const writable = await handle.createWritable();
+      await writable.write(content);
+      await writable.close();
+      return;
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") return;
+      console.error("Save failed, falling back to download:", error);
+    }
+  }
+
   const blob = new Blob([content], { type: mimeType });
   const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
+  const a = document.createElement("a");
   a.href = url;
   a.download = filename;
   a.click();

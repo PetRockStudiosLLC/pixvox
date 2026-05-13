@@ -1,42 +1,139 @@
 @echo off
-cd "G:\1_CURRENT\PixelArtMaker"
-set ANDROID_HOME=G:\1_CURRENT\PixelArtMaker\android-home
-set NDK_HOME=G:\1_CURRENT\PixelArtMaker\android-home\ndk\30.0.14904198
-set ANDROID_USER_HOME=G:\1_CURRENT\PixelArtMaker\android-home
-set GRADLE_USER_HOME=G:\gradle-home
-set TEMP=G:\temp
-set TMP=G:\temp
-set PATH=C:\Users\Scotty\.rustup\toolchains\stable-x86_64-pc-windows-msvc\bin;%PATH%
+setlocal enabledelayedexpansion
 
-echo Stopping Gradle daemons...
-cd src-tauri\gen\android
-call gradlew.bat --stop
-cd "G:\1_CURRENT\PixelArtMaker"
+cd /d "%~dp0"
 
-echo Building Android APK... > build-log.txt 2>&1
-npx tauri android build >> build-log.txt 2>&1
+:: Set environment variables (override with .env file or system env vars)
+set "ANDROID_HOME=%ANDROID_HOME%"
+if "!ANDROID_HOME!"=="" set "ANDROID_HOME=%~dp0android-home"
 
-echo Signing APK... >> build-log.txt 2>&1
-set APKSIGNER=G:\1_CURRENT\PixelArtMaker\android-home\build-tools\35.0.0\apksigner.bat
-set KEYSTORE=G:\1_CURRENT\PixelArtMaker\android-key.keystore
-set KEY_STORE_PASS=pixvox123
-set KEY_PASS=pixvox123
+set "NDK_HOME=%NDK_HOME%"
+if "!NDK_HOME!"=="" set "NDK_HOME=!ANDROID_HOME!\ndk\30.0.14904198"
 
-%APKSIGNER% sign --ks "%KEYSTORE%" --ks-pass pass:%KEY_STORE_PASS% --key-pass pass:%KEY_PASS% --out "G:\1_CURRENT\PixelArtMaker\build\PixVox-v1.0.0-signed.apk" "G:\1_CURRENT\PixelArtMaker\src-tauri\gen\android\app\build\outputs\apk\universal\release\app-universal-release-unsigned.apk" >> build-log.txt 2>&1
+set "ANDROID_USER_HOME=%ANDROID_USER_HOME%"
+if "!ANDROID_USER_HOME!"=="" set "ANDROID_USER_HOME=!ANDROID_HOME!"
 
-echo. >> build-log.txt
-echo Installing APK... >> build-log.txt 2>&1
-adb install -r "G:\1_CURRENT\PixelArtMaker\build\PixVox-v1.0.0-signed.apk" >> build-log.txt 2>&1
+set "GRADLE_USER_HOME=%GRADLE_USER_HOME%"
+if "!GRADLE_USER_HOME!"=="" set "GRADLE_USER_HOME=G:\gradle-home"
 
-echo. >> build-log.txt
-echo Running app and capturing logs... >> build-log.txt 2>&1
-adb logcat -c
-adb shell am start -n com.pixvox/.MainActivity
-timeout /t 5 /nobreak
-adb logcat -d > logcat-crash.txt 2>&1
+set "TEMP=%TEMP%"
+if "!TEMP!"=="" set "TEMP=G:\temp"
 
-echo. >> build-log.txt
-echo Signed APK: build\PixVox-v1.0.0-signed.apk >> build-log.txt
-echo Crash logs saved to logcat-crash.txt >> build-log.txt
-type build-log.txt
+set "TMP=%TMP%"
+if "!TMP!"=="" set "TMP=G:\temp"
+
+set "PATH=C:\Users\Scotty\.rustup\toolchains\stable-x86_64-pc-windows-msvc\bin;%PATH%"
+
+:: Parse command line arguments
+set "ACTION=%~1"
+if "!ACTION!"=="" set "ACTION=full"
+
+echo ============================================
+echo   PixVox Android Build System
+echo ============================================
+echo.
+echo   Action: !ACTION!
+echo   ANDROID_HOME: !ANDROID_HOME!
+echo.
+
+if /i "!ACTION!"=="full" goto fullBuild
+if /i "!ACTION!"=="build" goto buildOnly
+if /i "!ACTION!"=="sign" goto signOnly
+if /i "!ACTION!"=="install" goto installOnly
+if /i "!ACTION!"=="log" goto logOnly
+if /i "!ACTION!"=="clean" goto cleanBuild
+
+echo Unknown action: !ACTION!
+echo.
+echo Usage: build-android.bat [full^|build^|sign^|install^|log^|clean]
+echo.
+echo   full    - Build, sign, and install (default)
+echo   build   - Build the APK only
+echo   sign    - Sign existing unsigned APK
+echo   install - Install signed APK to device
+echo   log     - Capture logs after app launch
+echo   clean   - Stop gradle daemons and clean build artifacts
 pause
+goto :eof
+
+:fullBuild
+echo [1/4] Stopping Gradle daemons...
+cd /d "src-tauri\gen\android"
+call gradlew.bat --stop
+cd /d "%~dp0"
+if errorlevel 1 goto error
+
+echo.
+echo [2/4] Building APK...
+call npm run tauri:android:build
+if errorlevel 1 goto error
+
+echo.
+echo [3/4] Signing APK...
+call npm run tauri:android:sign
+if errorlevel 1 goto error
+
+echo.
+echo [4/4] Installing to device...
+call npm run tauri:android:deploy
+if errorlevel 1 goto error
+
+echo.
+echo ============================================
+echo   Build complete!
+echo ============================================
+goto :end
+
+:buildOnly
+echo Building APK...
+call npm run tauri:android:build
+if errorlevel 1 goto error
+goto :end
+
+:signOnly
+echo Signing APK...
+call npm run tauri:android:sign
+if errorlevel 1 goto error
+goto :end
+
+:installOnly
+echo Installing APK...
+call npm run tauri:android:deploy
+if errorlevel 1 goto error
+goto :end
+
+:logOnly
+echo Capturing logs...
+call npm run tauri:android:log
+if errorlevel 1 goto error
+goto :end
+
+:cleanBuild
+echo Cleaning build artifacts...
+cd /d "src-tauri\gen\android"
+call gradlew.bat clean
+call gradlew.bat --stop
+cd /d "%~dp0"
+echo Clean complete.
+goto :end
+
+:error
+echo.
+echo ============================================
+echo   ERROR: Build failed!
+echo ============================================
+echo.
+echo Check the error message above for details.
+echo Common issues:
+echo   - Check that ANDROID_HOME is set correctly
+echo   - Run "adb devices" to verify device connection
+echo   - Check that the keystore password is correct
+echo.
+pause
+exit /b 1
+
+:end
+echo.
+echo Done.
+pause
+exit /b 0

@@ -1,5 +1,5 @@
-import { CanvasState, TimelineState, FrameData } from '../types/voxel';
-import { GIFEncoder } from './gifEncoder';
+import { CanvasState, TimelineState, FrameData } from "../types/voxel";
+import { GIFEncoder } from "./gifEncoder";
 
 export interface ImageExportOptions {
   scale?: number;
@@ -39,14 +39,14 @@ export function renderFrameToCanvas(
   height: number,
   options: ImageExportOptions = {}
 ): HTMLCanvasElement {
-  const { scale = 1, backgroundColor = 'transparent', includeGrid = false, gridColor = '#333333' } = options;
+  const { scale = 1, backgroundColor = "transparent", includeGrid = false, gridColor = "#333333" } = options;
 
-  const canvas = document.createElement('canvas');
+  const canvas = document.createElement("canvas");
   canvas.width = width * scale;
   canvas.height = height * scale;
-  const ctx = canvas.getContext('2d')!;
+  const ctx = canvas.getContext("2d")!;
 
-  if (backgroundColor !== 'transparent') {
+  if (backgroundColor !== "transparent") {
     ctx.fillStyle = backgroundColor;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
   }
@@ -54,7 +54,7 @@ export function renderFrameToCanvas(
   const pixels = frame instanceof Map ? frame : frame.pixels;
 
   pixels.forEach((color, key) => {
-    const [x, y] = key.split(',').map(Number);
+    const [x, y] = key.split(",").map(Number);
     if (x >= 0 && x < width && y >= 0 && y < height) {
       ctx.fillStyle = color;
       ctx.fillRect(x * scale, y * scale, scale, scale);
@@ -81,17 +81,13 @@ export function renderFrameToCanvas(
   return canvas;
 }
 
-export function canvasToBlob(canvas: HTMLCanvasElement, type = 'image/png'): Promise<Blob> {
+export function canvasToBlob(canvas: HTMLCanvasElement, type = "image/png"): Promise<Blob> {
   return new Promise((resolve, reject) => {
-    canvas.toBlob(
-      blob => (blob ? resolve(blob) : reject(new Error('Failed to create blob'))),
-      type,
-      1
-    );
+    canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error("Failed to create blob"))), type, 1);
   });
 }
 
-export function canvasToDataUrl(canvas: HTMLCanvasElement, type = 'image/png'): string {
+export function canvasToDataUrl(canvas: HTMLCanvasElement, type = "image/png"): string {
   return canvas.toDataURL(type);
 }
 
@@ -101,7 +97,7 @@ export async function exportPNG(
 ): Promise<{ blob: Blob; filename: string }> {
   const canvas = renderFrameToCanvas(canvasState.pixels, canvasState.width, canvasState.height, options);
   const blob = await canvasToBlob(canvas);
-  return { blob, filename: 'frame.png' };
+  return { blob, filename: "frame.png" };
 }
 
 export async function exportSpriteSheet(
@@ -110,19 +106,19 @@ export async function exportSpriteSheet(
   height: number,
   options: SpriteSheetOptions = {}
 ): Promise<{ blob: Blob; filename: string; metadata: SpriteSheetMetadata }> {
-  const { columns, scale = 1, padding = 0, backgroundColor = 'transparent' } = options;
+  const { columns, scale = 1, padding = 0, backgroundColor = "transparent" } = options;
   const cols = columns || Math.ceil(Math.sqrt(timeline.frames.length));
   const rows = Math.ceil(timeline.frames.length / cols);
 
   const cellWidth = width * scale + padding * 2;
   const cellHeight = height * scale + padding * 2;
 
-  const sheet = document.createElement('canvas');
+  const sheet = document.createElement("canvas");
   sheet.width = cols * cellWidth;
   sheet.height = rows * cellHeight;
-  const ctx = sheet.getContext('2d')!;
+  const ctx = sheet.getContext("2d")!;
 
-  if (backgroundColor !== 'transparent') {
+  if (backgroundColor !== "transparent") {
     ctx.fillStyle = backgroundColor;
     ctx.fillRect(0, 0, sheet.width, sheet.height);
   }
@@ -133,12 +129,7 @@ export async function exportSpriteSheet(
     const x = col * cellWidth + padding;
     const y = row * cellHeight + padding;
 
-    const frameCanvas = renderFrameToCanvas(
-      timeline.frames[i],
-      width,
-      height,
-      { scale }
-    );
+    const frameCanvas = renderFrameToCanvas(timeline.frames[i], width, height, { scale });
 
     ctx.drawImage(frameCanvas, x, y);
   }
@@ -153,10 +144,10 @@ export async function exportSpriteSheet(
     totalFrames: timeline.frames.length,
     padding,
     scale,
-    fps: timeline.fps,
+    fps: timeline.fps
   };
 
-  return { blob, filename: 'spritesheet.png', metadata };
+  return { blob, filename: "spritesheet.png", metadata };
 }
 
 export async function exportAnimatedGIF(
@@ -165,7 +156,7 @@ export async function exportAnimatedGIF(
   height: number,
   options: GIFOptions = {}
 ): Promise<{ blob: Blob; filename: string }> {
-  const { scale = 1, delay = Math.round(100 / timeline.fps), loop = true, backgroundColor = 'transparent' } = options;
+  const { scale = 1, delay = Math.round(100 / timeline.fps), loop = true, backgroundColor = "transparent" } = options;
 
   const frameCanvases: HTMLCanvasElement[] = [];
   for (const frame of timeline.frames) {
@@ -191,15 +182,12 @@ async function encodeGIF(
   }
 
   encoder.finish();
-  return { blob: encoder.getBlob(), filename: 'animation.gif' };
+  return { blob: encoder.getBlob(), filename: "animation.gif" };
 }
 
-export { downloadImage } from './download';
+export { downloadImage } from "./download";
 
-export async function exportPNGBlob(
-  canvasState: CanvasState,
-  options: ImageExportOptions = {}
-): Promise<Blob> {
+export async function exportPNGBlob(canvasState: CanvasState, options: ImageExportOptions = {}): Promise<Blob> {
   const { blob } = await exportPNG(canvasState, options);
   return blob;
 }

@@ -96,7 +96,7 @@ export class GIFEncoder {
   }
 
   private writeHeader(): void {
-    this.writeString('GIF89a');
+    this.writeString("GIF89a");
   }
 
   private writeString(str: string): void {
@@ -109,7 +109,7 @@ export class GIFEncoder {
     this.width = canvas.width;
     this.height = canvas.height;
 
-    const ctx = canvas.getContext('2d')!;
+    const ctx = canvas.getContext("2d")!;
     const imageData = ctx.getImageData(0, 0, this.width, this.height);
     const pixels = imageData.data;
 
@@ -216,11 +216,7 @@ export class GIFEncoder {
     return colorMap;
   }
 
-  private indexFramePixels(
-    pixels: Uint8ClampedArray,
-    colorMap: number[],
-    indexedPixels: Uint8Array
-  ): void {
+  private indexFramePixels(pixels: Uint8ClampedArray, colorMap: number[], indexedPixels: Uint8Array): void {
     for (let i = 0; i < pixels.length; i += 4) {
       const r = pixels[i];
       const g = pixels[i + 1];
@@ -313,6 +309,6 @@ export class GIFEncoder {
   }
 
   getBlob(): Blob {
-    return new Blob([this.outputStream.getBytes()], { type: 'image/gif' });
+    return new Blob([this.outputStream.getBytes()], { type: "image/gif" });
   }
 }

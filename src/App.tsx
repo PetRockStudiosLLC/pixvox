@@ -1,26 +1,27 @@
-import { useCallback, useState } from 'react';
-import { BrushState } from './types/voxel';
-import type { ToastType } from './components/Toast';
-import { useProjectState } from './hooks/useProjectState';
-import { useTimeline } from './hooks/useTimeline';
-import { useUndoRedo } from './hooks/useUndoRedo';
-import { useAutoSave } from './hooks/useAutoSave';
-import { usePlayback } from './hooks/usePlayback';
-import { useKeyboard } from './hooks/useKeyboard';
-import { useExportActions } from './hooks/useExportActions';
-import { useImportActions } from './hooks/useImportActions';
-import { useSaveActions } from './hooks/useSaveActions';
-import { useCanvasActions } from './hooks/useCanvasActions';
-import { useMobileUI } from './hooks/useMobileUI';
-import MultiCanvasView from './components/MultiCanvasView';
-import Workspace from './components/Workspace';
-import VoxelScene from './components/VoxelScene';
-import PaletteManager from './components/PaletteManager';
-import LayerNavigator from './components/LayerNavigator';
-import { ToastProvider, useToast } from './components/Toast';
-import MobileBottomNav from './components/Mobile/MobileBottomNav';
-import MobileTimeline from './components/Mobile/MobileTimeline';
-import MobileMenu from './components/Mobile/MobileMenu';
+import { useCallback, useState } from "react";
+import { BrushState } from "./types/voxel";
+import type { ToastType } from "./components/Toast";
+import { useProjectState } from "./hooks/useProjectState";
+import { useTimeline } from "./hooks/useTimeline";
+import { useUndoRedo } from "./hooks/useUndoRedo";
+import { useAutoSave } from "./hooks/useAutoSave";
+import { usePlayback } from "./hooks/usePlayback";
+import { useKeyboard } from "./hooks/useKeyboard";
+import { useExportActions } from "./hooks/useExportActions";
+import { useImportActions } from "./hooks/useImportActions";
+import { useSaveActions } from "./hooks/useSaveActions";
+import { useCanvasActions } from "./hooks/useCanvasActions";
+import { useMobileUI } from "./hooks/useMobileUI";
+import MultiCanvasView from "./components/MultiCanvasView";
+import Workspace from "./components/Workspace";
+import VoxelScene from "./components/VoxelScene";
+import PaletteManager from "./components/PaletteManager";
+import LayerNavigator from "./components/LayerNavigator";
+import { ToastProvider, useToast } from "./components/Toast";
+import MobileBottomNav from "./components/Mobile/MobileBottomNav";
+import MobileTimeline from "./components/Mobile/MobileTimeline";
+import MobileMenu from "./components/Mobile/MobileMenu";
+import LoadingOverlay from "./components/LoadingOverlay";
 
 function AppInner() {
   const { toast } = useToast();
@@ -28,18 +29,31 @@ function AppInner() {
   // Core project state
   const projectState = useProjectState(toast);
   const {
-    canvasState, setCanvasState, canvasStateRef,
-    brush, setBrush, brushRef,
-    renderMode, setRenderMode,
-    voxelMode, setVoxelMode,
+    canvasState,
+    setCanvasState,
+    canvasStateRef,
+    brush,
+    setBrush,
+    brushRef,
+    renderMode,
+    setRenderMode,
+    voxelMode,
+    setVoxelMode
   } = projectState;
 
   // Timeline state + frame/keyframe handlers
   const timelineState = useTimeline(canvasStateRef, setCanvasState, toast);
   const {
-    timeline, setTimeline, timelineRef, currentFrameRef,
-    handleFrameChange, handleKeyframeAdd, handleKeyframeDelete,
-    handleTimelineChange, handleFrameReorder, handleFrameDurationChange,
+    timeline,
+    setTimeline,
+    timelineRef,
+    currentFrameRef,
+    handleFrameChange,
+    handleKeyframeAdd,
+    handleKeyframeDelete,
+    handleTimelineChange,
+    handleFrameReorder,
+    handleFrameDurationChange
   } = timelineState;
 
   // Undo/redo
@@ -54,8 +68,14 @@ function AppInner() {
 
   // Keyboard shortcuts
   const isCtrlPressed = useKeyboard(
-    handleUndo, handleRedo, handleFrameChange, handleKeyframeAdd,
-    setRenderMode, setTimeline, timeline.totalFrames, currentFrameRef
+    handleUndo,
+    handleRedo,
+    handleFrameChange,
+    handleKeyframeAdd,
+    setRenderMode,
+    setTimeline,
+    timeline.totalFrames,
+    currentFrameRef
   );
 
   // UI state
@@ -63,49 +83,56 @@ function AppInner() {
   const [loadingState, setLoadingState] = useState<{ isLoading: boolean; message?: string }>({ isLoading: false });
 
   // Export actions
-  const exportActions = useExportActions(
-    canvasState, timeline, voxelMode, setLoadingState, toast
-  );
+  const exportActions = useExportActions(canvasState, timeline, voxelMode, setLoadingState, toast);
 
   // Import actions
-  const importActions = useImportActions(
-    canvasState, setCanvasState, setTimeline, setLoadingState, toast
-  );
+  const importActions = useImportActions(canvasState, setCanvasState, setTimeline, setLoadingState, toast);
 
   // Save actions
   const saveActions = useSaveActions(
-    canvasStateRef, timelineRef, brushRef,
-    setCanvasState, setTimeline, setBrush, setLoadingState, toast
+    canvasStateRef,
+    timelineRef,
+    brushRef,
+    setCanvasState,
+    setTimeline,
+    setBrush,
+    setLoadingState,
+    toast
   );
 
   // Canvas actions
-  const canvasActions = useCanvasActions(
-    canvasState, setCanvasState, setLoadingState, toast, saveToHistory
-  );
+  const canvasActions = useCanvasActions(canvasState, setCanvasState, setLoadingState, toast, saveToHistory);
 
   // Mobile UI
   const mobileUI = useMobileUI(setCanvasState, setBrush);
 
   // Brush/palette handlers
-  const handleBrushChange = useCallback((newBrush: BrushState) => {
-    setBrush(newBrush);
-    setMobileMenuOpen(false);
-  }, [setBrush]);
+  const handleBrushChange = useCallback(
+    (newBrush: BrushState) => {
+      setBrush(newBrush);
+      setMobileMenuOpen(false);
+    },
+    [setBrush]
+  );
 
-  const handleLoadPalette = useCallback((colors: string[]) => {
-    setBrush(prev => ({ ...prev, palette: colors, color: colors[0] || prev.color }));
-  }, [setBrush]);
+  const handleLoadPalette = useCallback(
+    (colors: string[]) => {
+      setBrush((prev) => ({ ...prev, palette: colors, color: colors[0] || prev.color }));
+    },
+    [setBrush]
+  );
 
-  const handleColorPick = useCallback((color: string) => {
-    if (!color || color === '#00000000') return;
-    setBrush(prev => {
-      const currentPalette = prev.palette || [];
-      const newPalette = currentPalette.includes(color)
-        ? currentPalette
-        : [...currentPalette, color];
-      return { ...prev, palette: newPalette, color };
-    });
-  }, [setBrush]);
+  const handleColorPick = useCallback(
+    (color: string) => {
+      if (!color || color === "#00000000") return;
+      setBrush((prev) => {
+        const currentPalette = prev.palette || [];
+        const newPalette = currentPalette.includes(color) ? currentPalette : [...currentPalette, color];
+        return { ...prev, palette: newPalette, color };
+      });
+    },
+    [setBrush]
+  );
 
   return (
     <div className="flex flex-col h-full bg-surface text-text overflow-hidden">
@@ -141,10 +168,10 @@ function AppInner() {
           handleImportImage={canvasActions.handleImportImage}
           onSaveHistory={saveToHistory}
           handlePixelChange={(x: number, y: number, z: number, color: string) => {
-            setCanvasState(prev => {
+            setCanvasState((prev) => {
               const next = { ...prev, pixels: new Map(prev.pixels) };
               const key = `${x},${y},${z}`;
-              if (color.endsWith('00') || color === '#00000000') {
+              if (color.endsWith("00") || color === "#00000000") {
                 next.pixels.delete(key);
               } else {
                 next.pixels.set(key, color);
@@ -174,9 +201,9 @@ function AppInner() {
           <h1 className="text-sm font-bold text-accent tracking-wider">PIXVOX</h1>
           <div className="flex items-center gap-3">
             <button
-              onClick={() => mobileUI.setShowTimeline(prev => !prev)}
+              onClick={() => mobileUI.setShowTimeline((prev) => !prev)}
               className={`flex items-center gap-1.5 bg-panel px-2 py-0.5 rounded-sm border transition-colors touch-target-sm ${
-                mobileUI.showTimeline ? 'border-accent text-accent' : 'border-border-light text-text-dim'
+                mobileUI.showTimeline ? "border-accent text-accent" : "border-border-light text-text-dim"
               }`}
               aria-label="Toggle timeline"
             >
@@ -206,38 +233,66 @@ function AppInner() {
           </div>
         )}
 
-        <main className="flex-1 flex flex-col min-h-0 relative overflow-hidden" onTouchStart={mobileUI.handleTouchStartMobile} onTouchEnd={mobileUI.handleTouchEndMobile}>
-          {mobileUI.mobileTab === 'draw' && (
+        <main
+          className="flex-1 flex flex-col min-h-0 relative overflow-hidden"
+          onTouchStart={mobileUI.handleTouchStartMobile}
+          onTouchEnd={mobileUI.handleTouchEndMobile}
+        >
+          {mobileUI.mobileTab === "draw" && (
             <div className="flex-1 flex flex-col min-h-0 overflow-hidden p-1">
               <div className="flex-1 min-h-0 bg-surface overflow-hidden">
-                <MultiCanvasView canvasState={canvasState} setCanvasState={setCanvasState} brush={brush} onPixelChange={(x, y, z, color) => {
-                  setCanvasState(prev => {
-                    const next = { ...prev, pixels: new Map(prev.pixels) };
-                    const key = `${x},${y},${z}`;
-                    if (color.endsWith('00') || color === '#00000000') {
-                      next.pixels.delete(key);
-                    } else {
-                      next.pixels.set(key, color);
-                    }
-                    return saveToHistoryFromState(next);
-                  });
-                }} onSaveHistory={saveToHistory} onColorPick={handleColorPick} isCtrlPressed={isCtrlPressed} />
+                <MultiCanvasView
+                  canvasState={canvasState}
+                  setCanvasState={setCanvasState}
+                  brush={brush}
+                  onPixelChange={(x, y, z, color) => {
+                    setCanvasState((prev) => {
+                      const next = { ...prev, pixels: new Map(prev.pixels) };
+                      const key = `${x},${y},${z}`;
+                      if (color.endsWith("00") || color === "#00000000") {
+                        next.pixels.delete(key);
+                      } else {
+                        next.pixels.set(key, color);
+                      }
+                      return saveToHistoryFromState(next);
+                    });
+                  }}
+                  onSaveHistory={saveToHistory}
+                  onColorPick={handleColorPick}
+                  isCtrlPressed={isCtrlPressed}
+                />
               </div>
               <div className="mt-auto mb-14 mx-auto w-[95%] max-w-md z-10">
                 <div className="bg-panel/95 backdrop-blur-sm rounded-lg p-2 border border-border shadow-lg">
                   <div className="flex items-center gap-2">
                     <div className="flex-shrink-0">
-                      <input type="color" value={brush.color.slice(0, 7)} onChange={(e) => setBrush({ ...brush, color: e.target.value })} className="w-10 h-10 rounded cursor-pointer border border-border-light bg-transparent" />
+                      <input
+                        type="color"
+                        value={brush.color.slice(0, 7)}
+                        onChange={(e) => setBrush({ ...brush, color: e.target.value })}
+                        className="w-10 h-10 rounded cursor-pointer border border-border-light bg-transparent"
+                      />
                     </div>
                     <div className="flex gap-1">
-                      {['point', 'line', 'eraser'].map((tool) => (
-                        <button key={tool} onClick={() => setBrush({ ...brush, tool: tool as any })} className={`w-9 h-9 rounded flex items-center justify-center text-xs font-bold transition-all ${brush.tool === tool ? 'bg-accent-dim text-text-bright' : 'bg-panel-hover text-text-dim'}`}>
+                      {(["point", "line", "eraser"] as const).map((tool) => (
+                        <button
+                          key={tool}
+                          onClick={() => setBrush({ ...brush, tool: tool as any })}
+                          className={`w-9 h-9 rounded flex items-center justify-center text-xs font-bold transition-all ${brush.tool === tool ? "bg-accent-dim text-text-bright" : "bg-panel-hover text-text-dim"}`}
+                        >
                           {tool[0].toUpperCase()}
                         </button>
                       ))}
                     </div>
                     <div className="flex-1 min-w-[60px]">
-                      <input type="range" min={1} max={8} value={brush.size} onChange={(e) => setBrush({ ...brush, size: parseInt(e.target.value) })} className="w-full blender-slider" />
+                      <input
+                        type="range"
+                        min={1}
+                        max={8}
+                        value={brush.size}
+                        onChange={(e) => setBrush({ ...brush, size: parseInt(e.target.value) })}
+                        className="w-full blender-slider"
+                      />
                     </div>
                   </div>
                 </div>
@@ -245,17 +300,43 @@ function AppInner() {
             </div>
           )}
 
-          {mobileUI.mobileTab === 'palette' && (
+          {mobileUI.mobileTab === "palette" && (
             <div className="h-full overflow-y-auto p-4 bg-surface pb-20">
               <h2 className="text-sm font-bold mb-4 text-text-dim uppercase tracking-wider">Palette Manager</h2>
               <PaletteManager currentColors={brush.palette || []} onLoadPalette={handleLoadPalette} />
             </div>
           )}
 
-          {mobileUI.mobileTab === 'layers' && (
+          {mobileUI.mobileTab === "layers" && (
             <div className="h-full overflow-y-auto p-4 bg-surface pb-20">
               <h2 className="text-sm font-bold mb-4 text-text-dim uppercase tracking-wider">Layer Management</h2>
-              <LayerNavigator layers={canvasState.layers} activeLayer={canvasState.activeLayer} layerInfo={canvasState.layerInfo} canvasState={canvasState} onLayerChange={(layer) => setCanvasState(prev => ({ ...prev, activeLayer: layer }))} onAddLayer={canvasActions.handleAddLayer} onDuplicateLayer={canvasActions.handleDuplicateLayer} onMoveLayerUp={canvasActions.handleMoveLayerUp} onMoveLayerDown={canvasActions.handleMoveLayerDown} onImportImage={canvasActions.handleImportImage} onToggleVisibility={(layer) => { setCanvasState(prev => { const newInfo = [...prev.layerInfo]; newInfo[layer] = { ...newInfo[layer], visible: !newInfo[layer].visible }; return { ...prev, layerInfo: newInfo }; }); }} onToggleLock={(layer) => { setCanvasState(prev => { const newInfo = [...prev.layerInfo]; newInfo[layer] = { ...newInfo[layer], locked: !newInfo[layer].locked }; return { ...prev, layerInfo: newInfo }; }); }} onOpenRenameModal={(layer, name) => mobileUI.setRenameModal({ layer, name })} />
+              <LayerNavigator
+                layers={canvasState.layers}
+                activeLayer={canvasState.activeLayer}
+                layerInfo={canvasState.layerInfo}
+                canvasState={canvasState}
+                onLayerChange={(layer) => setCanvasState((prev) => ({ ...prev, activeLayer: layer }))}
+                onAddLayer={canvasActions.handleAddLayer}
+                onDuplicateLayer={canvasActions.handleDuplicateLayer}
+                onMoveLayerUp={canvasActions.handleMoveLayerUp}
+                onMoveLayerDown={canvasActions.handleMoveLayerDown}
+                onImportImage={canvasActions.handleImportImage}
+                onToggleVisibility={(layer) => {
+                  setCanvasState((prev) => {
+                    const newInfo = [...prev.layerInfo];
+                    newInfo[layer] = { ...newInfo[layer], visible: !newInfo[layer].visible };
+                    return { ...prev, layerInfo: newInfo };
+                  });
+                }}
+                onToggleLock={(layer) => {
+                  setCanvasState((prev) => {
+                    const newInfo = [...prev.layerInfo];
+                    newInfo[layer] = { ...newInfo[layer], locked: !newInfo[layer].locked };
+                    return { ...prev, layerInfo: newInfo };
+                  });
+                }}
+                onOpenRenameModal={(layer, name) => mobileUI.setRenameModal({ layer, name })}
+              />
             </div>
           )}
 
@@ -268,10 +349,10 @@ function AppInner() {
                   defaultValue={mobileUI.renameModal.name}
                   className="w-full bg-surface border border-border rounded px-2 py-1 text-sm text-text mb-4"
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter' && mobileUI.renameModal) {
+                    if (e.key === "Enter" && mobileUI.renameModal) {
                       const name = (e.target as HTMLInputElement).value;
                       mobileUI.handleRenameModalSubmit(name);
-                    } else if (e.key === 'Escape') {
+                    } else if (e.key === "Escape") {
                       mobileUI.setRenameModal(null);
                     }
                   }}
@@ -287,7 +368,7 @@ function AppInner() {
                   <button
                     onClick={() => {
                       const input = document.querySelector('input[type="text"]') as HTMLInputElement;
-                      const name = input?.value || '';
+                      const name = input?.value || "";
                       mobileUI.handleRenameModalSubmit(name);
                     }}
                     className="px-3 py-1 text-xs bg-accent-dim text-text rounded transition-colors"
@@ -299,23 +380,31 @@ function AppInner() {
             </div>
           )}
 
-          {mobileUI.mobileTab === 'voxel' && (
+          {mobileUI.mobileTab === "voxel" && (
             <div className="h-full relative bg-surface">
-              <VoxelScene canvasState={canvasState} mode={voxelMode} brush={brush} onPixelChange={(x, y, z, color) => {
-                setCanvasState(prev => {
-                  const next = { ...prev, pixels: new Map(prev.pixels) };
-                  const key = `${x},${y},${z}`;
-                  if (color.endsWith('00') || color === '#00000000') {
-                    next.pixels.delete(key);
-                  } else {
-                    next.pixels.set(key, color);
-                  }
-                  return saveToHistoryFromState(next);
-                });
-              }} />
+              <VoxelScene
+                canvasState={canvasState}
+                mode={voxelMode}
+                brush={brush}
+                onPixelChange={(x, y, z, color) => {
+                  setCanvasState((prev) => {
+                    const next = { ...prev, pixels: new Map(prev.pixels) };
+                    const key = `${x},${y},${z}`;
+                    if (color.endsWith("00") || color === "#00000000") {
+                      next.pixels.delete(key);
+                    } else {
+                      next.pixels.set(key, color);
+                    }
+                    return saveToHistoryFromState(next);
+                  });
+                }}
+              />
               <div className="absolute top-4 right-4 z-10 flex flex-col gap-2">
-                <button onClick={() => setVoxelMode(voxelMode === 'fast-draft' ? 'final-bake' : 'fast-draft')} className="px-3 py-1.5 bg-panel/90 backdrop-blur-sm rounded text-xs font-bold border border-border-light">
-                  {voxelMode === 'fast-draft' ? 'Draft' : 'Final'}
+                <button
+                  onClick={() => setVoxelMode(voxelMode === "fast-draft" ? "final-bake" : "fast-draft")}
+                  className="px-3 py-1.5 bg-panel/90 backdrop-blur-sm rounded text-xs font-bold border border-border-light"
+                >
+                  {voxelMode === "fast-draft" ? "Draft" : "Final"}
                 </button>
               </div>
             </div>
@@ -326,13 +415,16 @@ function AppInner() {
           activeTab={mobileUI.mobileTab}
           onTabChange={(tab) => {
             mobileUI.setMobileTab(tab);
-            if (tab === 'voxel') setRenderMode('3d');
-            else if (tab === 'draw') setRenderMode('2d');
+            if (tab === "voxel") setRenderMode("3d");
+            else if (tab === "draw") setRenderMode("2d");
             mobileUI.setShowBottomSheet(false);
           }}
           onMenuPress={() => setMobileMenuOpen(true)}
         />
       </div>
+
+      {/* Loading Overlay */}
+      <LoadingOverlay isLoading={loadingState.isLoading} message={loadingState.message} />
 
       {/* Mobile Menu */}
       <MobileMenu

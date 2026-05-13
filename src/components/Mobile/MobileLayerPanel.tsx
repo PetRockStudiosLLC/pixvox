@@ -1,5 +1,5 @@
-import React, { useState, useCallback } from 'react';
-import { CanvasState, LayerInfo } from '../../types/voxel';
+import React, { useState, useCallback } from "react";
+import { CanvasState, LayerInfo } from "../../types/voxel";
 
 interface MobileLayerPanelProps {
   canvasState: CanvasState;
@@ -22,25 +22,28 @@ const MobileLayerPanel: React.FC<MobileLayerPanelProps> = ({
   onMoveLayerDown,
   onToggleVisibility,
   onToggleLock,
-  onRenameLayer,
+  onRenameLayer
 }) => {
   const [editingLayer, setEditingLayer] = useState<number | null>(null);
-  const [editName, setEditName] = useState('');
+  const [editName, setEditName] = useState("");
 
-  const startRename = useCallback((layer: number) => {
-    const info = canvasState.layerInfo[layer];
-    if (info) {
-      setEditingLayer(layer);
-      setEditName(info.name);
-    }
-  }, [canvasState.layerInfo]);
+  const startRename = useCallback(
+    (layer: number) => {
+      const info = canvasState.layerInfo[layer];
+      if (info) {
+        setEditingLayer(layer);
+        setEditName(info.name);
+      }
+    },
+    [canvasState.layerInfo]
+  );
 
   const commitRename = useCallback(() => {
     if (editingLayer !== null && editName.trim()) {
       onRenameLayer?.(editingLayer, editName.trim());
     }
     setEditingLayer(null);
-    setEditName('');
+    setEditName("");
   }, [editingLayer, editName, onRenameLayer]);
 
   return (
@@ -53,18 +56,22 @@ const MobileLayerPanel: React.FC<MobileLayerPanelProps> = ({
           className="w-10 h-10 rounded-lg bg-panel-hover flex items-center justify-center active:bg-panel-active disabled:opacity-30 touch-target-min"
           aria-label="Previous layer"
         >
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 16 16"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+          >
             <path d="M10 4L6 8L10 12" />
           </svg>
         </button>
 
         <div className="flex-1 text-center">
-          <div className="text-sm font-bold text-accent">
-            Layer {canvasState.activeLayer + 1}
-          </div>
-          <div className="text-[10px] text-text-dim">
-            of {canvasState.layers} layers
-          </div>
+          <div className="text-sm font-bold text-accent">Layer {canvasState.activeLayer + 1}</div>
+          <div className="text-[10px] text-text-dim">of {canvasState.layers} layers</div>
         </div>
 
         <button
@@ -73,7 +80,15 @@ const MobileLayerPanel: React.FC<MobileLayerPanelProps> = ({
           className="w-10 h-10 rounded-lg bg-panel-hover flex items-center justify-center active:bg-panel-active disabled:opacity-30 touch-target-min"
           aria-label="Next layer"
         >
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 16 16"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+          >
             <path d="M6 4L10 8L6 12" />
           </svg>
         </button>
@@ -99,7 +114,7 @@ const MobileLayerPanel: React.FC<MobileLayerPanelProps> = ({
             name: `Layer ${i + 1}`,
             visible: true,
             locked: false,
-            opacity: 100,
+            opacity: 100
           };
           const isActive = i === canvasState.activeLayer;
 
@@ -107,16 +122,16 @@ const MobileLayerPanel: React.FC<MobileLayerPanelProps> = ({
             <div
               key={i}
               className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${
-                isActive
-                  ? 'bg-accent/10 border-accent/30'
-                  : 'bg-panel border-border active:bg-panel-hover'
+                isActive ? "bg-accent/10 border-accent/30" : "bg-panel border-border active:bg-panel-hover"
               }`}
               onClick={() => onLayerChange(i)}
             >
               {/* Layer number */}
-              <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold ${
-                isActive ? 'bg-accent text-white' : 'bg-panel-hover text-text-dim'
-              }`}>
+              <div
+                className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold ${
+                  isActive ? "bg-accent text-white" : "bg-panel-hover text-text-dim"
+                }`}
+              >
                 {i + 1}
               </div>
 
@@ -128,16 +143,19 @@ const MobileLayerPanel: React.FC<MobileLayerPanelProps> = ({
                     value={editName}
                     onChange={(e) => setEditName(e.target.value)}
                     onBlur={commitRename}
-                    onKeyDown={(e) => e.key === 'Enter' && commitRename()}
+                    onKeyDown={(e) => e.key === "Enter" && commitRename()}
                     className="w-full px-2 py-1 bg-surface text-text rounded border border-accent text-xs outline-none"
                     autoFocus
                   />
                 ) : (
                   <div
                     className={`text-sm font-medium truncate ${
-                      isActive ? 'text-text-bright' : 'text-text-dim'
-                    } ${!info.visible ? 'opacity-50 line-through' : ''}`}
-                    onClick={(e) => { e.stopPropagation(); startRename(i); }}
+                      isActive ? "text-text-bright" : "text-text-dim"
+                    } ${!info.visible ? "opacity-50 line-through" : ""}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      startRename(i);
+                    }}
                   >
                     {info.name}
                   </div>
@@ -146,11 +164,14 @@ const MobileLayerPanel: React.FC<MobileLayerPanelProps> = ({
 
               {/* Visibility toggle */}
               <button
-                onClick={(e) => { e.stopPropagation(); onToggleVisibility?.(i); }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onToggleVisibility?.(i);
+                }}
                 className={`w-10 h-10 rounded-lg flex items-center justify-center touch-target-min ${
-                  info.visible ? 'text-success' : 'text-text-dim/50'
+                  info.visible ? "text-success" : "text-text-dim/50"
                 }`}
-                aria-label={info.visible ? 'Hide layer' : 'Show layer'}
+                aria-label={info.visible ? "Hide layer" : "Show layer"}
               >
                 {info.visible ? (
                   <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -158,7 +179,15 @@ const MobileLayerPanel: React.FC<MobileLayerPanelProps> = ({
                     <circle cx="9" cy="9" r="2.5" />
                   </svg>
                 ) : (
-                  <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 18 18"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                  >
                     <path d="M3 6L15 12M4 4C4 4 3 4.5 3 6.5M14 14C14 14 15 13.5 15 11.5M2 11C2 11 4 15 9 15C11 15 13 14 14 13M6 5C7 4.5 8 4.5 9 5" />
                   </svg>
                 )}
@@ -166,11 +195,14 @@ const MobileLayerPanel: React.FC<MobileLayerPanelProps> = ({
 
               {/* Lock toggle */}
               <button
-                onClick={(e) => { e.stopPropagation(); onToggleLock?.(i); }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onToggleLock?.(i);
+                }}
                 className={`w-10 h-10 rounded-lg flex items-center justify-center touch-target-min ${
-                  info.locked ? 'text-warning' : 'text-text-dim/50'
+                  info.locked ? "text-warning" : "text-text-dim/50"
                 }`}
-                aria-label={info.locked ? 'Unlock layer' : 'Lock layer'}
+                aria-label={info.locked ? "Unlock layer" : "Lock layer"}
               >
                 {info.locked ? (
                   <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -178,7 +210,15 @@ const MobileLayerPanel: React.FC<MobileLayerPanelProps> = ({
                     <path d="M5 8V5C5 3 6 2 9 2C12 2 13 3 13 5V8" />
                   </svg>
                 ) : (
-                  <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 18 18"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                  >
                     <rect x="3" y="8" width="12" height="8" rx="2" />
                     <path d="M5 8V5C5 3 6 2 9 2C10.5 2 11.5 2.8 12 3.5" />
                   </svg>
@@ -195,7 +235,15 @@ const MobileLayerPanel: React.FC<MobileLayerPanelProps> = ({
           onClick={onAddLayer}
           className="flex items-center justify-center gap-2 py-3 bg-success/20 text-success rounded-xl font-bold text-sm border border-success/30 active:bg-success/30 touch-target-min"
         >
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 16 16"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+          >
             <line x1="8" y1="3" x2="8" y2="13" />
             <line x1="3" y1="8" x2="13" y2="8" />
           </svg>
@@ -219,7 +267,15 @@ const MobileLayerPanel: React.FC<MobileLayerPanelProps> = ({
           disabled={canvasState.activeLayer === 0}
           className="flex items-center justify-center gap-2 py-3 bg-panel-hover text-text rounded-xl font-bold text-sm border border-border active:bg-panel-active disabled:opacity-30 touch-target-min"
         >
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 14 14"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+          >
             <path d="M7 11V3M7 3L3 7M7 3L11 7" />
           </svg>
           Move Up
@@ -229,7 +285,15 @@ const MobileLayerPanel: React.FC<MobileLayerPanelProps> = ({
           disabled={canvasState.activeLayer === canvasState.layers - 1}
           className="flex items-center justify-center gap-2 py-3 bg-panel-hover text-text rounded-xl font-bold text-sm border border-border active:bg-panel-active disabled:opacity-30 touch-target-min"
         >
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 14 14"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+          >
             <path d="M7 3V11M7 11L3 7M7 11L11 7" />
           </svg>
           Move Down

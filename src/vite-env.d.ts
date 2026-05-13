@@ -8,7 +8,7 @@ interface Navigator {
 }
 
 interface GPURequestAdapterOptions {
-  powerPreference?: 'low-power' | 'high-performance';
+  powerPreference?: "low-power" | "high-performance";
 }
 
 interface GPUAdapter {
@@ -43,7 +43,7 @@ interface GPUShaderModule {
 
 interface GPUComputePipelineDescriptor {
   label?: string;
-  layout: GPUPipelineLayout | 'auto';
+  layout: GPUPipelineLayout | "auto";
   compute: GPUComputeStageDescriptor;
 }
 
@@ -68,7 +68,7 @@ interface GPUBindGroupLayoutDescriptor {
 interface GPUBindGroupLayoutEntry {
   binding: number;
   visibility: number;
-  buffer?: { type: 'storage' | 'read-only-storage' | 'uniform' };
+  buffer?: { type: "storage" | "read-only-storage" | "uniform" };
 }
 
 interface GPUBindGroup {
@@ -131,7 +131,13 @@ interface GPUCommandBuffer {
 interface GPUQueue {
   submit(commands: GPUCommandBuffer[]): void;
   writeBuffer(buffer: GPUBuffer, bufferOffset: number, data: ArrayBufferView, dataOffset?: number, size?: number): void;
-  copyBufferToBuffer(source: GPUBuffer, sourceOffset: number, destination: GPUBuffer, destinationOffset: number, size: number): void;
+  copyBufferToBuffer(
+    source: GPUBuffer,
+    sourceOffset: number,
+    destination: GPUBuffer,
+    destinationOffset: number,
+    size: number
+  ): void;
 }
 
 interface GPUBufferDescriptor {

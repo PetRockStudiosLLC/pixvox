@@ -1,8 +1,7 @@
-import { useState, useCallback, useRef } from 'react';
+import { useCallback, useRef } from "react";
+import type { CanvasState } from "../types/voxel";
 
-export function useUndoRedo(
-  setCanvasState: React.Dispatch<React.SetStateAction<any>>
-) {
+export function useUndoRedo(setCanvasState: React.Dispatch<React.SetStateAction<CanvasState>>) {
   const maxHistory = 50;
 
   // Use refs so callbacks always read the latest value
@@ -10,7 +9,7 @@ export function useUndoRedo(
   const indexRef = useRef(-1);
 
   // Deep-stringify the state to store in history
-  const snapshot = useCallback((state: any): string => {
+  const snapshot = useCallback((state: CanvasState): string => {
     return JSON.stringify({
       width: state.width,
       height: state.height,
@@ -18,12 +17,12 @@ export function useUndoRedo(
       activeLayer: state.activeLayer,
       pixels: Array.from(state.pixels.entries()),
       voxelTypes: Array.from(state.voxelTypes.entries()),
-      layerInfo: state.layerInfo,
+      layerInfo: state.layerInfo
     });
   }, []);
 
   // Rebuild state from a snapshot string
-  const restore = useCallback((snap: string): any => {
+  const restore = useCallback((snap: string): CanvasState => {
     const parsed = JSON.parse(snap);
     return {
       width: parsed.width,
@@ -32,26 +31,32 @@ export function useUndoRedo(
       activeLayer: parsed.activeLayer,
       pixels: new Map(parsed.pixels),
       voxelTypes: new Map(parsed.voxelTypes),
-      layerInfo: parsed.layerInfo,
+      layerInfo: parsed.layerInfo
     };
   }, []);
 
-  const saveToHistory = useCallback((state: any) => {
-    const snap = snapshot(state);
-    // Truncate any redo states
-    historyRef.current = historyRef.current.slice(0, indexRef.current + 1);
-    historyRef.current.push(snap);
-    if (historyRef.current.length > maxHistory) {
-      historyRef.current.shift();
-    }
-    indexRef.current = historyRef.current.length - 1;
-  }, [snapshot]);
+  const saveToHistory = useCallback(
+    (state: CanvasState) => {
+      const snap = snapshot(state);
+      // Truncate any redo states
+      historyRef.current = historyRef.current.slice(0, indexRef.current + 1);
+      historyRef.current.push(snap);
+      if (historyRef.current.length > maxHistory) {
+        historyRef.current.shift();
+      }
+      indexRef.current = historyRef.current.length - 1;
+    },
+    [snapshot]
+  );
 
   // Save history as part of a state transition — called inside setCanvasState updater
-  const saveToHistoryFromState = useCallback((state: any): any => {
-    saveToHistory(state);
-    return state;
-  }, [saveToHistory]);
+  const saveToHistoryFromState = useCallback(
+    (state: CanvasState): CanvasState => {
+      saveToHistory(state);
+      return state;
+    },
+    [saveToHistory]
+  );
 
   const handleUndo = useCallback(() => {
     if (indexRef.current <= 0) return;
@@ -75,6 +80,6 @@ export function useUndoRedo(
     saveToHistory,
     saveToHistoryFromState,
     handleUndo,
-    handleRedo,
+    handleRedo
   };
 }

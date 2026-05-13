@@ -1,15 +1,16 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback } from "react";
+import type { CanvasState, BrushState } from "../types/voxel";
 
 export function useMobileUI(
-  setCanvasState: React.Dispatch<React.SetStateAction<any>>,
-  setBrush: React.Dispatch<React.SetStateAction<any>>
+  setCanvasState: React.Dispatch<React.SetStateAction<CanvasState>>,
+  setBrush: React.Dispatch<React.SetStateAction<BrushState>>
 ) {
-  const [mobileTab, setMobileTab] = useState<'draw' | 'palette' | 'layers' | 'voxel' | 'menu'>('draw');
+  const [mobileTab, setMobileTab] = useState<"draw" | "palette" | "layers" | "voxel" | "menu">("draw");
   const [renameModal, setRenameModal] = useState<{ layer: number; name: string } | null>(null);
   const [showBottomSheet, setShowBottomSheet] = useState(false);
   const [sheetMinimized, setSheetMinimized] = useState(false);
   const [touchStart, setTouchStart] = useState({ x: 0, y: 0 });
-  const [activeView, setActiveView] = useState<'main' | 'front' | 'left' | 'right' | 'top' | 'bottom'>('main');
+  const [activeView, setActiveView] = useState<"main" | "front" | "left" | "right" | "top" | "bottom">("main");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [sheetTouchStart, setSheetTouchStart] = useState({ x: 0, y: 0 });
   const [showTimeline, setShowTimeline] = useState(false);
@@ -23,7 +24,14 @@ export function useMobileUI(
     const deltaX = e.changedTouches[0].clientX - touchStart.x;
     const deltaY = e.changedTouches[0].clientY - touchStart.y;
     if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 50) {
-      const views: ('main' | 'front' | 'left' | 'right' | 'top' | 'bottom')[] = ['main', 'front', 'left', 'right', 'top', 'bottom'];
+      const views: ("main" | "front" | "left" | "right" | "top" | "bottom")[] = [
+        "main",
+        "front",
+        "left",
+        "right",
+        "top",
+        "bottom"
+      ];
       const currentIndex = views.indexOf(activeView);
       if (deltaX > 0 && currentIndex > 0) setActiveView(views[currentIndex - 1]);
       else if (deltaX < 0 && currentIndex < views.length - 1) setActiveView(views[currentIndex + 1]);
@@ -48,31 +56,45 @@ export function useMobileUI(
     setSheetTouchStart({ x: 0, y: 0 });
   };
 
-  const handleRenameModalSubmit = useCallback((name: string) => {
-    if (!renameModal || !name.trim()) {
+  const handleRenameModalSubmit = useCallback(
+    (name: string) => {
+      if (!renameModal || !name.trim()) {
+        setRenameModal(null);
+        return;
+      }
+      setCanvasState((prev) => {
+        const newInfo = [...prev.layerInfo];
+        newInfo[renameModal.layer] = { ...newInfo[renameModal.layer], name: name.trim() };
+        return { ...prev, layerInfo: newInfo };
+      });
       setRenameModal(null);
-      return;
-    }
-    setCanvasState((prev: any) => {
-      const newInfo = [...prev.layerInfo];
-      newInfo[renameModal.layer] = { ...newInfo[renameModal.layer], name: name.trim() };
-      return { ...prev, layerInfo: newInfo };
-    });
-    setRenameModal(null);
-  }, [renameModal, setCanvasState]);
+    },
+    [renameModal, setCanvasState]
+  );
 
   return {
-    mobileTab, setMobileTab,
-    renameModal, setRenameModal,
-    showBottomSheet, setShowBottomSheet,
-    sheetMinimized, setSheetMinimized,
-    touchStart, setTouchStart,
-    activeView, setActiveView,
-    sidebarCollapsed, setSidebarCollapsed,
-    sheetTouchStart, setSheetTouchStart,
-    showTimeline, setShowTimeline,
-    handleTouchStartMobile, handleTouchEndMobile,
-    handleSheetTouchStart, handleSheetTouchEnd,
-    handleRenameModalSubmit,
+    mobileTab,
+    setMobileTab,
+    renameModal,
+    setRenameModal,
+    showBottomSheet,
+    setShowBottomSheet,
+    sheetMinimized,
+    setSheetMinimized,
+    touchStart,
+    setTouchStart,
+    activeView,
+    setActiveView,
+    sidebarCollapsed,
+    setSidebarCollapsed,
+    sheetTouchStart,
+    setSheetTouchStart,
+    showTimeline,
+    setShowTimeline,
+    handleTouchStartMobile,
+    handleTouchEndMobile,
+    handleSheetTouchStart,
+    handleSheetTouchEnd,
+    handleRenameModalSubmit
   };
 }

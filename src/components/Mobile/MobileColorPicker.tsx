@@ -1,5 +1,5 @@
-import React, { useState, useCallback } from 'react';
-import { BrushState } from '../../types/voxel';
+import React, { useState, useCallback } from "react";
+import { BrushState } from "../../types/voxel";
 
 interface MobileColorPickerProps {
   brush: BrushState;
@@ -9,48 +9,80 @@ interface MobileColorPickerProps {
 // Extended default palette with more colors for mobile
 const EXTENDED_PALETTE = [
   // Reds
-  '#ff0000ff', '#ff3333ff', '#ff6666ff', '#cc0000ff',
+  "#ff0000ff",
+  "#ff3333ff",
+  "#ff6666ff",
+  "#cc0000ff",
   // Oranges
-  '#ff8800ff', '#ffaa00ff', '#ffcc00ff', '#ff6600ff',
+  "#ff8800ff",
+  "#ffaa00ff",
+  "#ffcc00ff",
+  "#ff6600ff",
   // Yellows
-  '#ffff00ff', '#ffff66ff', '#ffff99ff', '#cccc00ff',
+  "#ffff00ff",
+  "#ffff66ff",
+  "#ffff99ff",
+  "#cccc00ff",
   // Greens
-  '#00ff00ff', '#33ff33ff', '#66ff66ff', '#00cc00ff',
+  "#00ff00ff",
+  "#33ff33ff",
+  "#66ff66ff",
+  "#00cc00ff",
   // Cyans
-  '#00ffff', '#33ffff', '#66ffff', '#00cccc',
+  "#00ffff",
+  "#33ffff",
+  "#66ffff",
+  "#00cccc",
   // Blues
-  '#0000ffff', '#3333ffff', '#6666ffff', '#0000ccff',
+  "#0000ffff",
+  "#3333ffff",
+  "#6666ffff",
+  "#0000ccff",
   // Purples
-  '#8800ffff', '#aa33ffff', '#cc66ffff', '#6600ccff',
+  "#8800ffff",
+  "#aa33ffff",
+  "#cc66ffff",
+  "#6600ccff",
   // Pinks
-  '#ff4488ff', '#ff66aaff', '#ff88ccff', '#cc3366ff',
+  "#ff4488ff",
+  "#ff66aaff",
+  "#ff88ccff",
+  "#cc3366ff",
   // Browns
-  '#884400ff', '#aa6633ff', '#cc8866ff', '#663300ff',
+  "#884400ff",
+  "#aa6633ff",
+  "#cc8866ff",
+  "#663300ff",
   // Grays
-  '#888888ff', '#aaaaaaff', '#ccccccff', '#666666ff',
+  "#888888ff",
+  "#aaaaaaff",
+  "#ccccccff",
+  "#666666ff",
   // White/Black
-  '#ffffffff', '#000000ff',
+  "#ffffffff",
+  "#000000ff"
 ];
 
 const MobileColorPicker: React.FC<MobileColorPickerProps> = ({ brush, onBrushChange }) => {
   const [showFullPicker, setShowFullPicker] = useState(false);
   const [recentColors, setRecentColors] = useState<string[]>([]);
 
-  const handleColorSelect = useCallback((color: string) => {
-    if (!color || color === '#00000000') return;
-    const currentPalette = brush.palette || [];
-    const newPalette = currentPalette.includes(color)
-      ? currentPalette
-      : [...currentPalette, color];
+  const handleColorSelect = useCallback(
+    (color: string) => {
+      if (!color || color === "#00000000") return;
+      const currentPalette = brush.palette || [];
+      const newPalette = currentPalette.includes(color) ? currentPalette : [...currentPalette, color];
 
-    onBrushChange({ ...brush, palette: newPalette, color });
+      onBrushChange({ ...brush, palette: newPalette, color });
 
-    // Add to recent colors
-    setRecentColors((prev) => {
-      const filtered = prev.filter((c) => c !== color);
-      return [color, ...filtered].slice(0, 8);
-    });
-  }, [brush, onBrushChange]);
+      // Add to recent colors
+      setRecentColors((prev) => {
+        const filtered = prev.filter((c) => c !== color);
+        return [color, ...filtered].slice(0, 8);
+      });
+    },
+    [brush, onBrushChange]
+  );
 
   return (
     <div className="space-y-4">
@@ -67,7 +99,7 @@ const MobileColorPicker: React.FC<MobileColorPickerProps> = ({ brush, onBrushCha
         <input
           type="color"
           value={brush.color.slice(0, 7)}
-          onChange={(e) => handleColorSelect(e.target.value + 'ff')}
+          onChange={(e) => handleColorSelect(e.target.value + "ff")}
           className="w-12 h-12 rounded-xl cursor-pointer border-2 border-border-light bg-transparent"
           aria-label="Pick custom color"
         />
@@ -83,7 +115,7 @@ const MobileColorPicker: React.FC<MobileColorPickerProps> = ({ brush, onBrushCha
                 key={color}
                 onClick={() => handleColorSelect(color)}
                 className={`w-10 h-10 rounded-lg transition-all border-2 ${
-                  brush.color === color ? 'border-white scale-110 shadow-lg' : 'border-transparent'
+                  brush.color === color ? "border-white scale-110 shadow-lg" : "border-transparent"
                 }`}
                 style={{ backgroundColor: color }}
                 aria-label={`Select color ${color}`}
@@ -101,17 +133,17 @@ const MobileColorPicker: React.FC<MobileColorPickerProps> = ({ brush, onBrushCha
             onClick={() => setShowFullPicker(!showFullPicker)}
             className="text-[10px] text-accent font-bold active:opacity-70"
           >
-            {showFullPicker ? 'Show Less' : 'Show All'}
+            {showFullPicker ? "Show Less" : "Show All"}
           </button>
         </div>
 
-        <div className={`grid gap-2 ${showFullPicker ? 'grid-cols-8' : 'grid-cols-8'}`}>
+        <div className={`grid gap-2 ${showFullPicker ? "grid-cols-8" : "grid-cols-8"}`}>
           {(showFullPicker ? EXTENDED_PALETTE : EXTENDED_PALETTE.slice(0, 16)).map((color) => (
             <button
               key={color}
               onClick={() => handleColorSelect(color)}
               className={`aspect-square rounded-lg transition-all border-2 ${
-                brush.color === color ? 'border-white scale-110 shadow-lg z-10' : 'border-transparent active:scale-95'
+                brush.color === color ? "border-white scale-110 shadow-lg z-10" : "border-transparent active:scale-95"
               }`}
               style={{ backgroundColor: color }}
               aria-label={`Select color ${color}`}
@@ -130,7 +162,7 @@ const MobileColorPicker: React.FC<MobileColorPickerProps> = ({ brush, onBrushCha
                 key={color}
                 onClick={() => handleColorSelect(color)}
                 className={`w-10 h-10 rounded-lg transition-all border-2 ${
-                  brush.color === color ? 'border-white scale-110 shadow-lg' : 'border-transparent'
+                  brush.color === color ? "border-white scale-110 shadow-lg" : "border-transparent"
                 }`}
                 style={{ backgroundColor: color }}
                 aria-label={`Select palette color ${color}`}

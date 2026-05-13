@@ -1,5 +1,5 @@
-import * as THREE from 'three';
-import { Face } from './greedyMesher';
+import * as THREE from "three";
+import { Face } from "./greedyMesher";
 
 /**
  * Build a Three.js mesh from greedy-meshed faces
@@ -29,23 +29,23 @@ export function buildMergedGeometry(faces: Face[]): THREE.BufferGeometry {
       // X-axis faces: normal along x, u=z, v=y
       const px = x + (direction[0] > 0 ? 1 : 0);
       v0 = new THREE.Vector3(px, y, z);
-      v1 = new THREE.Vector3(px, y, z + width);      // +u (z)
+      v1 = new THREE.Vector3(px, y, z + width); // +u (z)
       v2 = new THREE.Vector3(px, y + height, z + width); // +v (y) +u
-      v3 = new THREE.Vector3(px, y + height, z);      // +v (y)
+      v3 = new THREE.Vector3(px, y + height, z); // +v (y)
     } else if (direction[1] !== 0) {
       // Y-axis faces: normal along y, u=x, v=z
       const py = y + (direction[1] > 0 ? 1 : 0);
       v0 = new THREE.Vector3(x, py, z);
-      v1 = new THREE.Vector3(x + width, py, z);      // +u (x)
+      v1 = new THREE.Vector3(x + width, py, z); // +u (x)
       v2 = new THREE.Vector3(x + width, py, z + height); // +u +v (z)
-      v3 = new THREE.Vector3(x, py, z + height);      // +v (z)
+      v3 = new THREE.Vector3(x, py, z + height); // +v (z)
     } else {
       // Z-axis faces: normal along z, u=x, v=y
       const pz = z + (direction[2] > 0 ? 1 : 0);
       v0 = new THREE.Vector3(x, y, pz);
-      v1 = new THREE.Vector3(x + width, y, pz);      // +u (x)
+      v1 = new THREE.Vector3(x + width, y, pz); // +u (x)
       v2 = new THREE.Vector3(x + width, y + height, pz); // +u +v (y)
-      v3 = new THREE.Vector3(x, y + height, pz);      // +v (y)
+      v3 = new THREE.Vector3(x, y + height, pz); // +v (y)
     }
 
     // Add vertices
@@ -61,8 +61,8 @@ export function buildMergedGeometry(faces: Face[]): THREE.BufferGeometry {
   }
 
   const geometry = new THREE.BufferGeometry();
-  geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-  geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+  geometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+  geometry.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
   geometry.setIndex(indices);
   geometry.computeVertexNormals();
 

@@ -1,13 +1,13 @@
-import React, { useState } from 'react';
-import { BrushState } from '../types/voxel';
-import { getAllBrushes } from '../utils/brushes';
-import { IconPoint, IconRect, IconLine, IconEraser, IconCollapse, IconExpand } from './Icons';
+import React, { useState } from "react";
+import { BrushState } from "../types/voxel";
+import { getAllBrushes } from "../utils/brushes";
+import { IconPoint, IconRect, IconLine, IconEraser, IconCollapse, IconExpand } from "./Icons";
 
 const TOOL_ICONS: Record<string, React.FC<{ size?: number; className?: string }>> = {
   point: IconPoint,
   rect: IconRect,
   line: IconLine,
-  eraser: IconEraser,
+  eraser: IconEraser
 };
 
 interface ToolPanelProps {
@@ -24,24 +24,26 @@ const ToolPanel: React.FC<ToolPanelProps> = ({ brush, onBrushChange, onCanvasRes
     tool: true,
     brush: true,
     palette: true,
-    canvas: false,
+    canvas: false
   });
 
   const toggleSection = (key: string) => {
-    setSectionOpen(prev => ({ ...prev, [key]: !prev[key] }));
+    setSectionOpen((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
   if (collapsed) {
     return (
       <div className="w-10 bg-panel border-r border-border flex flex-col items-center py-2 gap-1 flex-shrink-0">
-        {tools.map(tool => {
+        {tools.map((tool) => {
           const IconComp = TOOL_ICONS[tool.tool] || IconPoint;
           return (
             <button
               key={tool.tool}
               onClick={() => onBrushChange({ ...brush, tool: tool.tool })}
               className={`p-1.5 rounded-sm transition-colors ${
-                brush.tool === tool.tool ? 'bg-accent-dim text-text-bright' : 'text-text-dim hover:text-text hover:bg-panel-hover'
+                brush.tool === tool.tool
+                  ? "bg-accent-dim text-text-bright"
+                  : "text-text-dim hover:text-text hover:bg-panel-hover"
               }`}
               title={tool.name}
             >
@@ -75,9 +77,9 @@ const ToolPanel: React.FC<ToolPanelProps> = ({ brush, onBrushChange, onCanvasRes
       </div>
 
       <div className="flex-1 overflow-y-auto py-2">
-        <ToolSection title="Brush" open={sectionOpen.tool} onToggle={() => toggleSection('tool')}>
+        <ToolSection title="Brush" open={sectionOpen.tool} onToggle={() => toggleSection("tool")}>
           <div className="grid grid-cols-2 gap-1">
-            {tools.map(tool => {
+            {tools.map((tool) => {
               const IconComp = TOOL_ICONS[tool.tool] || IconPoint;
               return (
                 <button
@@ -85,8 +87,8 @@ const ToolPanel: React.FC<ToolPanelProps> = ({ brush, onBrushChange, onCanvasRes
                   onClick={() => onBrushChange({ ...brush, tool: tool.tool })}
                   className={`flex items-center gap-1.5 px-2 py-1.5 rounded-sm text-xs font-medium transition-colors ${
                     brush.tool === tool.tool
-                      ? 'bg-accent-dim text-text-bright'
-                      : 'text-text-dim hover:text-text hover:bg-panel-hover'
+                      ? "bg-accent-dim text-text-bright"
+                      : "text-text-dim hover:text-text hover:bg-panel-hover"
                   }`}
                 >
                   <IconComp size={14} />
@@ -97,7 +99,7 @@ const ToolPanel: React.FC<ToolPanelProps> = ({ brush, onBrushChange, onCanvasRes
           </div>
         </ToolSection>
 
-        <ToolSection title="Brush Settings" open={sectionOpen.brush} onToggle={() => toggleSection('brush')}>
+        <ToolSection title="Brush Settings" open={sectionOpen.brush} onToggle={() => toggleSection("brush")}>
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               <input
@@ -122,7 +124,7 @@ const ToolPanel: React.FC<ToolPanelProps> = ({ brush, onBrushChange, onCanvasRes
                 </div>
               </div>
             </div>
-            {brush.tool === 'blur' && (
+            {brush.tool === "blur" && (
               <>
                 <div className="flex items-center gap-2">
                   <span className="text-[10px] text-text-dim w-14">Strength</span>
@@ -134,11 +136,13 @@ const ToolPanel: React.FC<ToolPanelProps> = ({ brush, onBrushChange, onCanvasRes
                     onChange={(e) => onBrushChange({ ...brush, blurStrength: parseInt(e.target.value) / 100 })}
                     className="flex-1 blender-slider"
                   />
-                  <span className="text-[10px] text-accent w-6 text-center">{Math.round((brush.blurStrength ?? 0.5) * 100)}%</span>
+                  <span className="text-[10px] text-accent w-6 text-center">
+                    {Math.round((brush.blurStrength ?? 0.5) * 100)}%
+                  </span>
                 </div>
               </>
             )}
-            {brush.tool === 'dither' && (
+            {brush.tool === "dither" && (
               <>
                 <div className="flex items-center gap-2">
                   <span className="text-[10px] text-text-dim w-14">Density</span>
@@ -150,7 +154,9 @@ const ToolPanel: React.FC<ToolPanelProps> = ({ brush, onBrushChange, onCanvasRes
                     onChange={(e) => onBrushChange({ ...brush, ditherDensity: parseInt(e.target.value) / 100 })}
                     className="flex-1 blender-slider"
                   />
-                  <span className="text-[10px] text-accent w-6 text-center">{Math.round((brush.ditherDensity ?? 0.5) * 100)}%</span>
+                  <span className="text-[10px] text-accent w-6 text-center">
+                    {Math.round((brush.ditherDensity ?? 0.5) * 100)}%
+                  </span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-[10px] text-text-dim w-14">Angle</span>
@@ -167,8 +173,10 @@ const ToolPanel: React.FC<ToolPanelProps> = ({ brush, onBrushChange, onCanvasRes
                 <div className="flex items-center gap-2">
                   <span className="text-[10px] text-text-dim w-14">Pattern</span>
                   <select
-                    value={brush.ditherPattern ?? 'bayer4x4'}
-                    onChange={(e) => onBrushChange({ ...brush, ditherPattern: e.target.value as BrushState['ditherPattern'] })}
+                    value={brush.ditherPattern ?? "bayer4x4"}
+                    onChange={(e) =>
+                      onBrushChange({ ...brush, ditherPattern: e.target.value as BrushState["ditherPattern"] })
+                    }
                     className="flex-1 bg-panel-hover border border-border-light rounded-sm text-[10px] text-text px-1 py-0.5 outline-none focus:border-accent"
                   >
                     <option value="bayer2x2">2×2</option>
@@ -182,14 +190,16 @@ const ToolPanel: React.FC<ToolPanelProps> = ({ brush, onBrushChange, onCanvasRes
           </div>
         </ToolSection>
 
-        <ToolSection title="Palette" open={sectionOpen.palette} onToggle={() => toggleSection('palette')}>
+        <ToolSection title="Palette" open={sectionOpen.palette} onToggle={() => toggleSection("palette")}>
           <div className="grid grid-cols-8 gap-0.5">
-            {(brush.palette || []).map(color => (
+            {(brush.palette || []).map((color) => (
               <button
                 key={color}
                 onClick={() => onBrushChange({ ...brush, color })}
                 className={`aspect-square rounded-sm transition-all ${
-                  brush.color === color ? 'ring-1 ring-white ring-offset-1 ring-offset-panel scale-110' : 'hover:scale-110'
+                  brush.color === color
+                    ? "ring-1 ring-white ring-offset-1 ring-offset-panel scale-110"
+                    : "hover:scale-110"
                 }`}
                 style={{ backgroundColor: color }}
                 title={color}
@@ -198,9 +208,9 @@ const ToolPanel: React.FC<ToolPanelProps> = ({ brush, onBrushChange, onCanvasRes
           </div>
         </ToolSection>
 
-        <ToolSection title="Canvas Size" open={sectionOpen.canvas} onToggle={() => toggleSection('canvas')}>
+        <ToolSection title="Canvas Size" open={sectionOpen.canvas} onToggle={() => toggleSection("canvas")}>
           <div className="grid grid-cols-3 gap-1">
-            {[16, 32, 64].map(size => (
+            {[16, 32, 64].map((size) => (
               <button
                 key={size}
                 onClick={() => onCanvasResize(size, size)}
@@ -217,16 +227,14 @@ const ToolPanel: React.FC<ToolPanelProps> = ({ brush, onBrushChange, onCanvasRes
 };
 
 const ToolSection: React.FC<{ title: string; open: boolean; onToggle: () => void; children: React.ReactNode }> = ({
-  title, open, onToggle, children
+  title,
+  open,
+  onToggle,
+  children
 }) => (
   <div className="mb-1">
-    <button
-      onClick={onToggle}
-      className="blender-section-title w-full px-2 py-1 flex items-center gap-1"
-    >
-      <span className={`transform transition-transform ${open ? 'rotate-90' : ''}`}>
-        ▶
-      </span>
+    <button onClick={onToggle} className="blender-section-title w-full px-2 py-1 flex items-center gap-1">
+      <span className={`transform transition-transform ${open ? "rotate-90" : ""}`}>▶</span>
       <span>{title}</span>
     </button>
     {open && <div className="px-2 pb-2">{children}</div>}

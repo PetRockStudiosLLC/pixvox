@@ -2,7 +2,7 @@
 
 🎨 **Transform 2D pixel art into 3D voxel models** - A cross-platform pixel art editor with real-time 3D preview and GLTF/OBJ export.
 
-![PixVox Banner](https://img.shields.io/badge/PixVox-1.0.0-cyan?style=for-the-badge)
+![PixVox Banner](https://img.shields.io/badge/PixVox-1.0.2-cyan?style=for-the-badge)
 ![License](https://img.shields.io/github/license/PetRockStudiosLLC/pixvox?style=for-the-badge)
 ![Stars](https://img.shields.io/github/stars/PetRockStudiosLLC/pixvox?style=for-the-badge)
 

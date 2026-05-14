@@ -113,7 +113,7 @@ const Canvas2D: React.FC<Canvas2DProps> = ({
         for (let y = 0; y < height; y++) {
           for (let x = 0; x < width; x++) {
             const color = getPixel(canvasState, x, y, layerIdx);
-            if (color === "#00000000" || (color.length === 9 && color.endsWith("00"))) continue;
+            if (color === "#00000000" || (color.length === 9 && color.slice(7) === "00")) continue;
             offCtx.fillStyle = color.length === 9 ? color.slice(0, 7) : color;
             offCtx.fillRect(x, y, 1, 1);
           }
@@ -130,7 +130,7 @@ const Canvas2D: React.FC<Canvas2DProps> = ({
         for (let y = minY; y <= maxY; y++) {
           for (let x = minX; x <= maxX; x++) {
             const color = getPixel(canvasState, x, y, layerIdx);
-            if (color === "#00000000" || (color.length === 9 && color.endsWith("00"))) {
+            if (color === "#00000000" || (color.length === 9 && color.slice(7) === "00")) {
               offCtx.clearRect(x, y, 1, 1);
             } else {
               offCtx.fillStyle = color.length === 9 ? color.slice(0, 7) : color;
@@ -271,7 +271,7 @@ const Canvas2D: React.FC<Canvas2DProps> = ({
     const changes = brushHandler.getChanges(ctx);
     for (const { x: px, y: py, color } of changes) {
       const key = `${px},${py},${canvasState.activeLayer}`;
-      if (color === "#00000000" || color.endsWith("00")) {
+      if (color === "#00000000" || (color.length === 9 && color.slice(7) === "00")) {
         canvasState.pixels.delete(key);
       } else {
         canvasState.pixels.set(key, color);
@@ -510,7 +510,7 @@ const Canvas2D: React.FC<Canvas2DProps> = ({
     for (let y = 0; y < height; y++) {
       for (let x = 0; x < width; x++) {
         const color = getPixel(canvasState, x, y, activeLayer);
-        if (color === "#00000000" || (color.length === 9 && color.endsWith("00"))) {
+        if (color === "#00000000" || (color.length === 9 && color.slice(7) === "00")) {
           continue;
         }
         const flippedY = height - 1 - y;

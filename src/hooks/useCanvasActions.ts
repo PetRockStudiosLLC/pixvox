@@ -117,6 +117,30 @@ export function useCanvasActions(
   const handleMoveLayerUp = useCallback(() => handleMoveLayer(-1), [handleMoveLayer]);
   const handleMoveLayerDown = useCallback(() => handleMoveLayer(1), [handleMoveLayer]);
 
+  const handleFillLayers = useCallback(
+    (target: number) => {
+      setCanvasState((prev) => {
+        if (target <= prev.layers) return prev;
+        const newState = createCanvasState(prev.width, prev.height, target);
+        prev.pixels.forEach((color, key) => newState.pixels.set(key, color));
+        const newLayerInfo: typeof prev.layerInfo = [];
+        for (let i = 0; i < target; i++) {
+          newLayerInfo.push(
+            i < prev.layerInfo.length
+              ? { ...prev.layerInfo[i] }
+              : { name: `Layer ${i + 1}`, visible: true, locked: false, opacity: 100 }
+          );
+        }
+        newState.layerInfo = newLayerInfo;
+        newState.activeLayer = Math.min(prev.activeLayer, target - 1);
+        saveToHistory(newState);
+        return newState;
+      });
+      onToast(`Filled to ${target} layers`, "info");
+    },
+    [setCanvasState, onToast, saveToHistory]
+  );
+
   const handleImportImage = useCallback(async () => {
     try {
       const input = document.createElement("input");
@@ -190,6 +214,7 @@ export function useCanvasActions(
     handleDuplicateLayer,
     handleMoveLayerUp,
     handleMoveLayerDown,
+    handleFillLayers,
     handleImportImage
   };
 }

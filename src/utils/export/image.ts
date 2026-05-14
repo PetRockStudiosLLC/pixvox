@@ -1,5 +1,5 @@
-import { CanvasState, TimelineState, FrameData } from "../types/voxel";
-import { GIFEncoder } from "./gifEncoder";
+import { CanvasState, TimelineState, FrameData } from "../../types/voxel";
+import { GIFEncoder } from "../gifEncoder";
 
 export interface ImageExportOptions {
   scale?: number;
@@ -184,8 +184,6 @@ async function encodeGIF(
   encoder.finish();
   return { blob: encoder.getBlob(), filename: "animation.gif" };
 }
-
-export { downloadImage } from "./download";
 
 export async function exportPNGBlob(canvasState: CanvasState, options: ImageExportOptions = {}): Promise<Blob> {
   const { blob } = await exportPNG(canvasState, options);

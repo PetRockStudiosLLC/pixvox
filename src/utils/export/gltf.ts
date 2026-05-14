@@ -1,4 +1,4 @@
-import { CanvasState } from "../types/voxel";
+import { CanvasState } from "../../types/voxel";
 
 interface GLTF {
   asset: { version: string };
@@ -172,35 +172,4 @@ export function exportGLTF(
   const filename = `p2v-export-${mode}.gltf`;
 
   return { content: json, filename, mimeType: "model/gltf+json" };
-}
-
-export async function downloadFile(content: string, filename: string, mimeType: string = "text/plain"): Promise<void> {
-  if (window.showSaveFilePicker) {
-    try {
-      const handle = await window.showSaveFilePicker({
-        suggestedName: filename,
-        types: [
-          {
-            description: "All Files",
-            accept: { "application/octet-stream": ["*"] }
-          }
-        ]
-      });
-      const writable = await handle.createWritable();
-      await writable.write(content);
-      await writable.close();
-      return;
-    } catch (error) {
-      if (error instanceof DOMException && error.name === "AbortError") return;
-      console.error("Save failed, falling back to download:", error);
-    }
-  }
-
-  const blob = new Blob([content], { type: mimeType });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(url);
 }

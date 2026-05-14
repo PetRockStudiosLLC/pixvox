@@ -1,9 +1,9 @@
-import { CanvasState, TimelineState, FrameData } from "../types/voxel";
-import { exportGLTF } from "./objExporter";
+import { CanvasState, TimelineState, FrameData } from "../../types/voxel";
+import { exportGLTF } from "./gltf";
 import JSZip from "jszip";
 
 const ANIM_JSON_FORMAT = "pixvox-anim";
-const ANIM_JSON_VERSION = "1.0.0";
+const ANIM_JSON_VERSION = "1.0.2";
 
 export interface AnimationJSON {
   format: string;
@@ -26,7 +26,6 @@ export interface AlembicABCOpts {
   compress: "delta" | "snapshot";
 }
 
-// Alembic Ogawa binary format constants
 const OGAWA_MAGIC = "Ogawa";
 const OGAWA_VERSION = 11;
 const OGAWA_HEADER_SIZE = 16;
@@ -111,7 +110,6 @@ export function importAnimationJSON(
   return { canvasState: newCanvas, timeline };
 }
 
-// Ogawa binary writer helpers
 function writeU64LE(buffer: Uint8Array, offset: number, value: bigint): void {
   buffer[offset] = Number(value & BigInt(0xff));
   buffer[offset + 1] = Number((value >> BigInt(8)) & BigInt(0xff));
@@ -184,7 +182,6 @@ function getDeltaEntries(current: Map<string, string>, previous: Map<string, str
   return deltas;
 }
 
-// Build frame payload as raw bytes for Ogawa data block
 function buildFramePayload(frame: FrameData, prevFrame: FrameData | null, compress: "delta" | "snapshot"): Uint8Array {
   const entries =
     compress === "delta" && prevFrame
@@ -192,7 +189,7 @@ function buildFramePayload(frame: FrameData, prevFrame: FrameData | null, compre
       : Array.from(frame.pixels.entries());
 
   const encoder = new TextEncoder();
-  let totalBytes = 4; // entry count u32
+  let totalBytes = 4;
 
   for (const [key] of entries) {
     const keyBytes = encoder.encode(key);
@@ -200,7 +197,7 @@ function buildFramePayload(frame: FrameData, prevFrame: FrameData | null, compre
   }
 
   for (const [, color] of entries) {
-    totalBytes += 4; // rgba
+    totalBytes += 4;
   }
 
   const buffer = new Uint8Array(totalBytes);
@@ -232,7 +229,6 @@ function buildFramePayload(frame: FrameData, prevFrame: FrameData | null, compre
   return buffer;
 }
 
-// Build metadata payload: width, height, layers, fps, loop, totalFrames, compress mode
 function buildMetadataPayload(
   width: number,
   height: number,
@@ -263,8 +259,6 @@ function buildMetadataPayload(
   return buffer;
 }
 
-// Ogawa Writer: builds a valid .abc file using Alembic Ogawa binary format
-// Layout: [16B Header][Root Group][Frame Groups x N][Data Blocks x (N+1)]
 class OgawaWriter {
   buffer: Uint8Array;
   offset = OGAWA_HEADER_SIZE;
@@ -284,7 +278,7 @@ class OgawaWriter {
     this.buffer[2] = magic[2];
     this.buffer[3] = magic[3];
     this.buffer[4] = magic[4];
-    this.buffer[5] = 0; // frozen = false
+    this.buffer[5] = 0;
     this.buffer[6] = OGAWA_VERSION & 0xff;
     this.buffer[7] = (OGAWA_VERSION >> 8) & 0xff;
     writeU32(this.buffer, 8, OGAWA_HEADER_SIZE);
@@ -348,11 +342,6 @@ async function buildAlembicABC(
   const frames = timeline.frames;
   const numFrames = frames.length;
 
-  // Calculate total size needed
-  // Header: 16
-  // Root group: 8 (child count) + 8 * (numFrames + 1) (refs: metadata + N frame groups)
-  // Frame groups: N * (8 (child count) + 8 (data ref))
-  // Data blocks: (N + 1) * (8 (size) + payload)
   let estimatedSize = OGAWA_HEADER_SIZE + 200;
   for (let i = 0; i < numFrames; i++) {
     const prevFrame = i > 0 ? frames[i - 1] : null;
@@ -371,7 +360,6 @@ async function buildAlembicABC(
 
   const writer = new OgawaWriter(estimatedSize);
 
-  // Build data blocks first (metadata + N frame payloads)
   const metadataPayload = buildMetadataPayload(
     width,
     height,
@@ -391,7 +379,6 @@ async function buildAlembicABC(
     frameDataRefs.push(ref);
   }
 
-  // Build frame groups (each has 1 child: the data block)
   const frameGroupRefs: bigint[] = [];
   for (let i = 0; i < numFrames; i++) {
     writer.writeGroup(1);
@@ -399,7 +386,6 @@ async function buildAlembicABC(
     frameGroupRefs.push(BigInt(writer.groupPositions[writer.groupPositions.length - 1]));
   }
 
-  // Build root group: children are metadata data ref + N frame group refs
   const rootChildRefs = [metadataRef, ...frameGroupRefs];
   writer.writeGroup(rootChildRefs.length);
   writer.writeGroupRefs(rootChildRefs);
@@ -418,7 +404,6 @@ export async function importAlembicABC(
   const buffer = await file.arrayBuffer();
   const bytes = new Uint8Array(buffer);
 
-  // Validate Ogawa magic
   const enc = new TextEncoder();
   const magic = enc.encode("Ogawa");
   for (let i = 0; i < 5; i++) {
@@ -431,7 +416,6 @@ export async function importAlembicABC(
 
   if (firstGroupPos !== OGAWA_HEADER_SIZE) return null;
 
-  // Parse root group
   let off = firstGroupPos;
   const rootChildCount = Number(readU64LE(bytes, off));
   off += 8;
@@ -442,7 +426,6 @@ export async function importAlembicABC(
     off += 8;
   }
 
-  // First ref is metadata data block
   const metadataRef = rootRefs[0];
   const isDataRef = (metadataRef & OGAWA_DATA_REF_BIT) !== BigInt(0);
   if (!isDataRef) return null;
@@ -451,7 +434,6 @@ export async function importAlembicABC(
   const dataSize = Number(readU64LE(bytes, dataPos));
   const metadataStart = dataPos + 8;
 
-  // Parse metadata
   const metaWidth =
     bytes[metadataStart] |
     (bytes[metadataStart + 1] << 8) |
@@ -480,7 +462,6 @@ export async function importAlembicABC(
     (bytes[metadataStart + 20] << 24);
   const metaCompress = bytes[metadataStart + 21] === 1 ? "delta" : "snapshot";
 
-  // Remaining refs are frame groups
   const decoder = new TextDecoder();
   const frames: FrameData[] = [];
   let prevPixels: Map<string, string> | null = null;
@@ -605,5 +586,3 @@ export async function exportFrameSequenceGLTF(
   const blob = await zip.generateAsync({ type: "blob" });
   return { blob, filename: "frame-sequence.gltf.zip" };
 }
-
-export { downloadBlob } from "./download";

@@ -80,11 +80,26 @@ const Toolbar: React.FC<ToolbarProps> = ({ brush, onBrushChange, onCanvasResize,
               <input
                 type="range"
                 min={1}
-                max={8}
+                max={32}
                 value={brush.size}
                 onChange={(e) => onBrushChange({ ...brush, size: parseInt(e.target.value) })}
                 className="w-full accent-cyan-500 h-1.5"
               />
+              <div className="flex gap-1.5 mt-2 flex-wrap">
+                {[1, 2, 4, 8, 16, 32].map((s) => (
+                  <button
+                    key={s}
+                    onClick={() => onBrushChange({ ...brush, size: s })}
+                    className={`px-2 py-0.5 rounded text-[10px] font-mono transition-colors ${
+                      brush.size === s
+                        ? "bg-cyan-500 text-white"
+                        : "bg-gray-700/50 text-gray-400 hover:bg-gray-700"
+                    }`}
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
             </div>
             <span className="w-6 text-center font-bold text-cyan-400">{brush.size}</span>
           </div>

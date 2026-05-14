@@ -8,8 +8,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+---
+
+## [1.0.2] — 2026-05-12
+
 ### Fixed
-- **Dither brush** — Was only painting a circle pattern because it read luminance from existing (blank) pixels instead of the target color. Fixed to use target brush color luminance, producing a proper Bayer 4x4 ordered dither across the stroke area.
+- **Brush preview** — Was offset by double the pan amount due to CSS transform + canvas coordinate double-application. Preview now correctly follows cursor at all times.
+- **Brush centering** — Brush strokes were painting from cursor top-left instead of centered on cursor. All brushes now paint centered on the cursor position.
 
 ---
 

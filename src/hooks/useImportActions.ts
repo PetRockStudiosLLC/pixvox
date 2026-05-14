@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 import { CanvasState, TimelineState } from "../types/voxel";
 import type { ToastType } from "../components/Toast";
-import { importAnimationJSON, importAlembicABC } from "../utils/animationExporter";
+import { importAnimationJSON, importAlembicABC } from "../utils/export";
 import { isOldDemoFile, oldDemoToProject, deserializeProject } from "../utils/projectIO";
 import type { ProjectFile as ProjectFileType } from "../utils/projectIO";
 

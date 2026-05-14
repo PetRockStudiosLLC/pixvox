@@ -1,4 +1,5 @@
 import { useCallback, useState } from "react";
+import { IconClose } from "./components/Icons";
 import { BrushState } from "./types/voxel";
 import type { ToastType } from "./components/Toast";
 import { useProjectState } from "./hooks/useProjectState";
@@ -81,6 +82,7 @@ function AppInner() {
   // UI state
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [loadingState, setLoadingState] = useState<{ isLoading: boolean; message?: string }>({ isLoading: false });
+  const [paletteManagerOpen, setPaletteManagerOpen] = useState(false);
 
   // Export actions
   const exportActions = useExportActions(canvasState, timeline, voxelMode, setLoadingState, toast);
@@ -166,12 +168,13 @@ function AppInner() {
           handleMoveLayerUp={canvasActions.handleMoveLayerUp}
           handleMoveLayerDown={canvasActions.handleMoveLayerDown}
           handleImportImage={canvasActions.handleImportImage}
+          handleFillLayers={canvasActions.handleFillLayers}
           onSaveHistory={saveToHistory}
           handlePixelChange={(x: number, y: number, z: number, color: string) => {
             setCanvasState((prev) => {
               const next = { ...prev, pixels: new Map(prev.pixels) };
               const key = `${x},${y},${z}`;
-              if (color.endsWith("00") || color === "#00000000") {
+              if (color === "#00000000" || (color.length === 9 && color.slice(7) === "00")) {
                 next.pixels.delete(key);
               } else {
                 next.pixels.set(key, color);
@@ -180,6 +183,7 @@ function AppInner() {
             });
           }}
           handleColorPick={handleColorPick}
+          onColorSelect={(color: string) => handleBrushChange({ ...brush, color })}
           isCtrlPressed={isCtrlPressed}
           canUndo={canUndo}
           canRedo={canRedo}
@@ -192,6 +196,7 @@ function AppInner() {
           onKeyframeDelete={handleKeyframeDelete}
           onFrameReorder={handleFrameReorder}
           onFrameDurationChange={handleFrameDurationChange}
+          onOpenPaletteManager={() => setPaletteManagerOpen(true)}
         />
       </div>
 
@@ -249,7 +254,7 @@ function AppInner() {
                     setCanvasState((prev) => {
                       const next = { ...prev, pixels: new Map(prev.pixels) };
                       const key = `${x},${y},${z}`;
-                      if (color.endsWith("00") || color === "#00000000") {
+if (color === "#00000000" || (color.length === 9 && color.slice(7) === "00")) {
                         next.pixels.delete(key);
                       } else {
                         next.pixels.set(key, color);
@@ -288,11 +293,26 @@ function AppInner() {
                       <input
                         type="range"
                         min={1}
-                        max={8}
+                        max={32}
                         value={brush.size}
                         onChange={(e) => setBrush({ ...brush, size: parseInt(e.target.value) })}
                         className="w-full blender-slider"
                       />
+                      <div className="flex gap-1 mt-2 flex-wrap">
+                        {[1, 2, 4, 8, 16, 32].map((s) => (
+                          <button
+                            key={s}
+                            onClick={() => setBrush({ ...brush, size: s })}
+                            className={`px-2 py-0.5 rounded text-[10px] font-mono transition-colors ${
+                              brush.size === s
+                                ? "bg-accent text-white"
+                                : "bg-panel-hover text-text-dim hover:text-text"
+                            }`}
+                          >
+                            {s}
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -314,6 +334,8 @@ function AppInner() {
                 layers={canvasState.layers}
                 activeLayer={canvasState.activeLayer}
                 layerInfo={canvasState.layerInfo}
+                canvasWidth={canvasState.width}
+                canvasHeight={canvasState.height}
                 canvasState={canvasState}
                 onLayerChange={(layer) => setCanvasState((prev) => ({ ...prev, activeLayer: layer }))}
                 onAddLayer={canvasActions.handleAddLayer}
@@ -321,6 +343,7 @@ function AppInner() {
                 onMoveLayerUp={canvasActions.handleMoveLayerUp}
                 onMoveLayerDown={canvasActions.handleMoveLayerDown}
                 onImportImage={canvasActions.handleImportImage}
+                onFillLayers={canvasActions.handleFillLayers}
                 onToggleVisibility={(layer) => {
                   setCanvasState((prev) => {
                     const newInfo = [...prev.layerInfo];
@@ -390,7 +413,7 @@ function AppInner() {
                   setCanvasState((prev) => {
                     const next = { ...prev, pixels: new Map(prev.pixels) };
                     const key = `${x},${y},${z}`;
-                    if (color.endsWith("00") || color === "#00000000") {
+                    if (color === "#00000000" || (color.length === 9 && color.slice(7) === "00")) {
                       next.pixels.delete(key);
                     } else {
                       next.pixels.set(key, color);
@@ -451,6 +474,30 @@ function AppInner() {
         voxelMode={voxelMode}
         onVoxelModeChange={setVoxelMode}
       />
+
+      {/* Palette Manager Modal */}
+      {paletteManagerOpen && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-panel border border-border rounded-xl shadow-2xl w-full max-w-md max-h-[80vh] flex flex-col overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-border flex-shrink-0">
+              <h3 className="text-sm font-bold text-text-bright">Palette Manager</h3>
+              <button
+                onClick={() => setPaletteManagerOpen(false)}
+                className="blender-icon-btn p-1"
+                title="Close"
+              >
+                <IconClose size={16} />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-4">
+              <PaletteManager
+                currentColors={brush.palette || []}
+                onLoadPalette={handleLoadPalette}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

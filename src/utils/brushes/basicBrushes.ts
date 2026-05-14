@@ -1,18 +1,18 @@
 import { BrushContext, PixelChange, registerBrush } from "./brushSystem";
 
-function collectBlockCoords(ctx: BrushContext, px: number, py: number, size: number): Array<{ x: number; y: number }> {
+function collectBlockCoords(ctx: BrushContext, px: number, py: number, size: number): Array<{ x: number; y: number; z: number }> {
   const { canvasState } = ctx;
-  const coords: Array<{ x: number; y: number }> = [];
+  const coords: Array<{ x: number; y: number; z: number }> = [];
   const half = Math.floor(size / 2);
   for (let dy = 0; dy < size; dy++) {
     for (let dx = 0; dx < size; dx++) {
       const targetX = px + dx - half;
       const targetY = py + dy - half;
-      const { x, y } = ctx.to3D
-        ? (ctx.to3D(targetX, targetY) ?? { x: targetX, y: targetY })
-        : { x: targetX, y: targetY };
-      if (x >= 0 && x < canvasState.width && y >= 0 && y < canvasState.height) {
-        coords.push({ x, y });
+      const result = ctx.to3D
+        ? (ctx.to3D(targetX, targetY) ?? { x: targetX, y: targetY, z: 0 })
+        : { x: targetX, y: targetY, z: 0 };
+      if (result.x >= 0 && result.x < canvasState.width && result.y >= 0 && result.y < canvasState.height) {
+        coords.push(result);
       }
     }
   }
@@ -27,7 +27,7 @@ const pointBrush = {
     const color = ctx.brush.tool === "eraser" ? "#00000000" : ctx.brush.color;
     const { canvasState, brush } = ctx;
     const coords = collectBlockCoords(ctx, ctx.x, ctx.y, brush.size);
-    return coords.map(({ x, y }) => ({ x, y, color }));
+    return coords.map(({ x, y, z }) => ({ x, y, z, color }));
   },
   preview: (ctx: BrushContext) => ({ x: ctx.x, y: ctx.y, size: ctx.brush.size })
 };
@@ -56,8 +56,8 @@ const lineBrush = {
       cy = y0;
     while (true) {
       const coords = collectBlockCoords(ctx, cx, cy, brush.size);
-      for (const { x, y } of coords) {
-        changes.push({ x, y, color });
+      for (const { x, y, z } of coords) {
+        changes.push({ x, y, z, color });
       }
       if (cx === x1 && cy === y1) break;
       const e2 = 2 * err;
@@ -80,28 +80,33 @@ const bucketBrush = {
   cursor: "crosshair",
   getChanges: (ctx: BrushContext) => {
     const { canvasState, brush } = ctx;
-    const z = canvasState.activeLayer;
-    const targetKey = `${ctx.x},${ctx.y},${z}`;
-    const targetColor = canvasState.pixels.get(targetKey) ?? "#00000000";
     const fillColor = brush.tool === "eraser" ? "#00000000" : brush.color;
+    const to3D = ctx.to3D ?? ((cx: number, cy: number) => ({ x: cx, y: cy, z: 0 } as const));
+
+    const worldPos = to3D(ctx.x, ctx.y) ?? { x: ctx.x, y: ctx.y, z: 0 };
+    const targetKey = `${worldPos.x},${worldPos.y},${worldPos.z}`;
+    const targetColor = canvasState.pixels.get(targetKey) ?? "#00000000";
 
     if (targetColor === fillColor) return [];
 
+    const radius = Math.max(1, Math.floor(brush.size / 2));
     const stack: [number, number][] = [[ctx.x, ctx.y]];
     const visited = new Set<string>();
     const changes: PixelChange[] = [];
 
     while (stack.length > 0) {
       const [cx, cy] = stack.pop()!;
-      const key = `${cx},${cy},${z}`;
+      const k = `${cx},${cy}`;
 
-      if (visited.has(key)) continue;
-      visited.add(key);
+      if (visited.has(k)) continue;
+      visited.add(k);
 
+      const transformed = to3D(cx, cy) ?? { x: cx, y: cy, z: 0 };
+      const key = `${transformed.x},${transformed.y},${transformed.z}`;
       const currentColor = canvasState.pixels.get(key) ?? "#00000000";
       if (currentColor !== targetColor) continue;
 
-      changes.push({ x: cx, y: cy, color: fillColor });
+      changes.push({ x: transformed.x, y: transformed.y, z: transformed.z, color: fillColor });
 
       const neighbors: [number, number][] = [
         [cx - 1, cy],
@@ -111,12 +116,14 @@ const bucketBrush = {
       ];
       for (const [nx, ny] of neighbors) {
         if (
-          nx >= 0 &&
-          nx < canvasState.width &&
-          ny >= 0 &&
-          ny < canvasState.height &&
-          !visited.has(`${nx},${ny},${z}`)
-        ) {
+          nx < -radius || nx > canvasState.width + radius ||
+          ny < -radius || ny > canvasState.height + radius
+        ) continue;
+        const nKey = `${nx},${ny}`;
+        if (visited.has(nKey)) continue;
+        const nTransformed = to3D(nx, ny) ?? { x: nx, y: ny, z: 0 };
+        const nColor = canvasState.pixels.get(`${nTransformed.x},${nTransformed.y},${nTransformed.z}`) ?? "#00000000";
+        if (nColor === targetColor) {
           stack.push([nx, ny]);
         }
       }
@@ -132,7 +139,7 @@ const eraserBrush = {
   getChanges: (ctx: BrushContext) => {
     const { canvasState, brush } = ctx;
     const coords = collectBlockCoords(ctx, ctx.x, ctx.y, brush.size);
-    return coords.map(({ x, y }) => ({ x, y, color: "#00000000" }));
+    return coords.map(({ x, y, z }) => ({ x, y, z, color: "#00000000" }));
   },
   preview: (ctx: BrushContext) => ({ x: ctx.x, y: ctx.y, size: ctx.brush.size })
 };
@@ -147,31 +154,34 @@ const circleBrush = {
     const radius = Math.max(1, ctx.brush.size);
 
     const changes: PixelChange[] = [];
-    let dx = radius;
-    let dy = 0;
+    let ddx = radius;
+    let ddy = 0;
     let decision = 1 - radius;
 
+    const to3D = ctx.to3D ?? ((px: number, py: number) => ({ x: px, y: py, z: 0 } as const));
+
     const plot = (px: number, py: number) => {
-      if (px >= 0 && px < canvasState.width && py >= 0 && py < canvasState.height) {
-        changes.push({ x: px, y: py, color });
+      const transformed = to3D(px, py) ?? { x: px, y: py, z: 0 };
+      if (transformed.x >= 0 && transformed.x < canvasState.width && transformed.y >= 0 && transformed.y < canvasState.height) {
+        changes.push({ x: transformed.x, y: transformed.y, z: transformed.z, color });
       }
     };
 
-    while (dy <= dx) {
-      plot(ctx.x + dx, ctx.y + dy);
-      plot(ctx.x - dx, ctx.y + dy);
-      plot(ctx.x + dx, ctx.y - dy);
-      plot(ctx.x - dx, ctx.y - dy);
-      plot(ctx.x + dy, ctx.y + dx);
-      plot(ctx.x - dy, ctx.y + dx);
-      plot(ctx.x + dy, ctx.y - dx);
-      plot(ctx.x - dy, ctx.y - dx);
-      dy++;
+    while (ddy <= ddx) {
+      plot(ctx.x + ddx, ctx.y + ddy);
+      plot(ctx.x - ddx, ctx.y + ddy);
+      plot(ctx.x + ddx, ctx.y - ddy);
+      plot(ctx.x - ddx, ctx.y - ddy);
+      plot(ctx.x + ddy, ctx.y + ddx);
+      plot(ctx.x - ddy, ctx.y + ddx);
+      plot(ctx.x + ddy, ctx.y - ddx);
+      plot(ctx.x - ddy, ctx.y - ddx);
+      ddy++;
       if (decision <= 0) {
-        decision += 2 * dy + 1;
+        decision += 2 * ddy + 1;
       } else {
-        dx--;
-        decision += 2 * (dy - dx) + 1;
+        ddx--;
+        decision += 2 * (ddy - ddx) + 1;
       }
     }
     return changes;
@@ -194,13 +204,16 @@ const filledCircleBrush = {
     const rSquared = radius * radius;
 
     const changes: PixelChange[] = [];
+    const to3D = ctx.to3D ?? ((px: number, py: number) => ({ x: px, y: py, z: 0 } as const));
+
     for (let dy = -radius; dy <= radius; dy++) {
       for (let dx = -radius; dx <= radius; dx++) {
         if (dx * dx + dy * dy > rSquared) continue;
         const sx = ctx.x + dx;
         const sy = ctx.y + dy;
-        if (sx >= 0 && sx < canvasState.width && sy >= 0 && sy < canvasState.height) {
-          changes.push({ x: sx, y: sy, color });
+        const transformed = to3D(sx, sy) ?? { x: sx, y: sy, z: 0 };
+        if (transformed.x >= 0 && transformed.x < canvasState.width && transformed.y >= 0 && transformed.y < canvasState.height) {
+          changes.push({ x: transformed.x, y: transformed.y, z: transformed.z, color });
         }
       }
     }
@@ -231,11 +244,11 @@ const sprayBrush = {
       const r = Math.random() * sprayR;
       const px = Math.round(ctx.x + r * Math.cos(angle));
       const py = Math.round(ctx.y + r * Math.sin(angle));
-      const transformed = ctx.to3D ? (ctx.to3D(px, py) ?? { x: px, y: py }) : { x: px, y: py };
+      const transformed = ctx.to3D ? (ctx.to3D(px, py) ?? { x: px, y: py, z: 0 }) : { x: px, y: py, z: 0 };
       const tx = transformed.x;
       const ty = transformed.y;
       if (tx >= 0 && tx < canvasState.width && ty >= 0 && ty < canvasState.height) {
-        changes.push({ x: tx, y: ty, color });
+        changes.push({ x: tx, y: ty, z: transformed.z, color });
       }
     }
     return changes;
@@ -256,7 +269,7 @@ const patternBrush = {
     const pattern = brush.pattern;
     if (!pattern || pattern.length === 0) {
       const coords = collectBlockCoords(ctx, ctx.x, ctx.y, brush.size);
-      return coords.map(({ x, y }) => ({ x, y, color: brush.color }));
+      return coords.map(({ x, y, z }) => ({ x, y, z, color: brush.color }));
     }
 
     const changes: PixelChange[] = [];
@@ -270,8 +283,8 @@ const patternBrush = {
         const sx = ctx.x + px - Math.floor(cols / 2);
         const sy = ctx.y + py - Math.floor(rows / 2);
         if (sx >= 0 && sx < canvasState.width && sy >= 0 && sy < canvasState.height) {
-          const transformed = ctx.to3D ? (ctx.to3D(sx, sy) ?? { x: sx, y: sy }) : { x: sx, y: sy };
-          changes.push({ x: transformed.x, y: transformed.y, color });
+          const transformed = ctx.to3D ? (ctx.to3D(sx, sy) ?? { x: sx, y: sy, z: 0 }) : { x: sx, y: sy, z: 0 };
+          changes.push({ x: transformed.x, y: transformed.y, z: transformed.z, color });
         }
       }
     }

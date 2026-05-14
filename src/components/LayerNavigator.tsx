@@ -6,6 +6,8 @@ interface LayerNavigatorProps {
   layers: number;
   activeLayer: number;
   layerInfo: LayerInfo[];
+  canvasWidth: number;
+  canvasHeight: number;
   canvasState?: CanvasState;
   onLayerChange: (layer: number) => void;
   onAddLayer: () => void;
@@ -13,6 +15,7 @@ interface LayerNavigatorProps {
   onMoveLayerUp: () => void;
   onMoveLayerDown: () => void;
   onImportImage: () => void;
+  onFillLayers: (target: number) => void;
   onToggleVisibility?: (layer: number) => void;
   onToggleLock?: (layer: number) => void;
   onRenameLayer?: (layer: number, name: string) => void;
@@ -23,6 +26,8 @@ const LayerNavigator: React.FC<LayerNavigatorProps> = ({
   layers,
   activeLayer,
   layerInfo,
+  canvasWidth,
+  canvasHeight,
   canvasState,
   onLayerChange,
   onAddLayer,
@@ -30,6 +35,7 @@ const LayerNavigator: React.FC<LayerNavigatorProps> = ({
   onMoveLayerUp,
   onMoveLayerDown,
   onImportImage,
+  onFillLayers,
   onToggleVisibility,
   onToggleLock,
   onRenameLayer,
@@ -172,9 +178,24 @@ const LayerNavigator: React.FC<LayerNavigatorProps> = ({
         </button>
       </div>
 
-      <button onClick={onImportImage} className="w-full px-3 py-1 bg-purple-600 hover:bg-purple-700 rounded text-xs">
+     <button onClick={onImportImage} className="w-full px-3 py-1 bg-purple-600 hover:bg-purple-700 rounded text-xs">
         Import Image
       </button>
+
+      <div className="grid grid-cols-2 gap-1">
+        <button
+          onClick={() => onFillLayers(canvasWidth)}
+          className="px-2 py-1 bg-indigo-600 hover:bg-indigo-700 rounded text-[10px] font-mono"
+        >
+          ={canvasWidth}
+        </button>
+        <button
+          onClick={() => onFillLayers(32)}
+          className="px-2 py-1 bg-indigo-600 hover:bg-indigo-700 rounded text-[10px] font-mono"
+        >
+          =32
+        </button>
+      </div>
     </div>
   );
 };

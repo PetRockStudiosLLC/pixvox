@@ -179,7 +179,7 @@ const canvasRef = useRef<HTMLCanvasElement>(null);
       for (let px = 0; px < viewWidth; px++) {
         const coords = config.to3D(px + rangeXStart, py + rangeYStart, canvasState, layerValue);
         const color = getPixel(canvasState, coords.x, coords.y, coords.z);
-        if (color === "#00000000" || (color.length === 9 && color.endsWith("00"))) {
+        if (color === "#00000000" || (color.length === 9 && color.slice(7) === "00")) {
           continue;
         }
         ctx.fillStyle = color.length === 9 ? color.slice(0, 7) : color;
@@ -331,9 +331,9 @@ const canvasRef = useRef<HTMLCanvasElement>(null);
 
       // Merge all changes into a single pixels map
       const merged = new Map(canvasState.pixels);
-      for (const { x, y, color } of changes) {
-        const key = `${x},${y},${layerValue}`;
-        if (color === "#00000000" || color.endsWith("00")) {
+      for (const { x, y, z, color } of changes) {
+        const key = `${x},${y},${z}`;
+        if (color === "#00000000" || (color.length === 9 && color.slice(7) === "00")) {
           merged.delete(key);
         } else {
           merged.set(key, color);

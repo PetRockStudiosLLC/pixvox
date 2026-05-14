@@ -42,7 +42,6 @@ const ditherBrush = {
   cursor: "crosshair",
   getChanges: (ctx: BrushContext) => {
     const { canvasState, brush } = ctx;
-    const z = canvasState.activeLayer;
     const radius = Math.max(1, brush.size);
     const targetColor = ctx.brush.tool === "eraser" ? "#00000000" : ctx.brush.color;
     const density = brush.ditherDensity ?? 0.5;
@@ -53,6 +52,7 @@ const ditherBrush = {
     const matrixSize = matrix.length;
 
     const changes: PixelChange[] = [];
+    const to3D = ctx.to3D ?? ((px: number, py: number) => ({ x: px, y: py, z: 0 }));
 
     const rad = (angle * Math.PI) / 180;
     const cosA = Math.cos(rad);
@@ -76,10 +76,11 @@ const ditherBrush = {
         const threshold = matrix[my][mx] / scale;
 
         if (density > threshold) {
-          const key = `${px},${py},${z}`;
+          const transformed = to3D(px, py) ?? { x: px, y: py, z: 0 };
+          const key = `${transformed.x},${transformed.y},${transformed.z}`;
           const existing = canvasState.pixels.get(key);
           if (existing !== targetColor) {
-            changes.push({ x: px, y: py, color: targetColor });
+            changes.push({ x: transformed.x, y: transformed.y, z: transformed.z, color: targetColor });
           }
         }
       }

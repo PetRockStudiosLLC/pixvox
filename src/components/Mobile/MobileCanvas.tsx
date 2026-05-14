@@ -118,7 +118,7 @@ const MobileCanvas: React.FC<MobileCanvasProps> = ({
       for (let px = 0; px < viewWidth; px++) {
         const key = `${px},${py},${activeLayer}`;
         const color = canvasState.pixels.get(key);
-        if (!color || color === "#00000000" || (color.length === 9 && color.endsWith("00"))) {
+        if (!color || color === "#00000000" || (color.length === 9 && color.slice(7) === "00")) {
           continue;
         }
         ctx.fillStyle = color.length === 9 ? color.slice(0, 7) : color;
@@ -189,7 +189,7 @@ const MobileCanvas: React.FC<MobileCanvasProps> = ({
     const changes = brushHandler.getChanges(ctx);
     for (const { x: px, y: py, color } of changes) {
       const key = `${px},${py},${activeLayer}`;
-      if (color === "#00000000" || color.endsWith("00")) {
+      if (color === "#00000000" || (color.length === 9 && color.slice(7) === "00")) {
         canvasState.pixels.delete(key);
       } else {
         canvasState.pixels.set(key, color);

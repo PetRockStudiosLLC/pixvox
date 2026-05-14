@@ -3,6 +3,7 @@ import { CanvasState, BrushState, BrushTool } from "../../types/voxel";
 export interface PixelChange {
   x: number;
   y: number;
+  z: number;
   color: string;
 }
 

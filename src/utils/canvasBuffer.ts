@@ -32,7 +32,8 @@ export function getPixel(state: CanvasState, x: number, y: number, z: number): s
 
 export function setPixel(state: CanvasState, x: number, y: number, z: number, color: string): void {
   const key = getPixelKey(x, y, z);
-  if (color === DEFAULT_COLOR || color.endsWith("00")) {
+  const isTransparent = color === DEFAULT_COLOR || (color.length === 9 && color.slice(7) === "00");
+  if (isTransparent) {
     state.pixels.delete(key);
   } else {
     state.pixels.set(key, color);
@@ -43,7 +44,8 @@ export function* iterateLayer(state: CanvasState, z: number): Generator<VoxelDat
   for (let y = 0; y < state.height; y++) {
     for (let x = 0; x < state.width; x++) {
       const color = getPixel(state, x, y, z);
-      if (color !== DEFAULT_COLOR && !color.endsWith("00")) {
+      const isTransparent = color === DEFAULT_COLOR || (color.length === 9 && color.slice(7) === "00");
+      if (color !== DEFAULT_COLOR && !isTransparent) {
         yield { x, y, z, color };
       }
     }

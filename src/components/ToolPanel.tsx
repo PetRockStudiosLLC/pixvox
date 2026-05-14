@@ -115,14 +115,29 @@ const ToolPanel: React.FC<ToolPanelProps> = ({ brush, onBrushChange, onCanvasRes
                   <input
                     type="range"
                     min={1}
-                    max={8}
+                    max={32}
                     value={brush.size}
                     onChange={(e) => onBrushChange({ ...brush, size: parseInt(e.target.value) })}
                     className="flex-1 blender-slider"
                   />
-                  <span className="text-[10px] text-accent w-4 text-center">{brush.size}</span>
+                  <span className="text-[10px] text-accent w-6 text-center">{brush.size}</span>
                 </div>
               </div>
+            </div>
+            <div className="flex gap-0.5 flex-wrap">
+              {[1, 2, 4, 8, 16, 32].map((s) => (
+                <button
+                  key={s}
+                  onClick={() => onBrushChange({ ...brush, size: s })}
+                  className={`w-6 h-4 rounded text-[8px] font-mono leading-none transition-colors ${
+                    brush.size === s
+                      ? "bg-accent text-white"
+                      : "bg-panel-hover text-text-dim hover:text-text"
+                  }`}
+                >
+                  {s}
+                </button>
+              ))}
             </div>
             {brush.tool === "blur" && (
               <>

@@ -229,12 +229,27 @@ const MobileToolbar: React.FC<MobileToolbarProps> = ({
         <input
           type="range"
           min={1}
-          max={8}
+          max={32}
           value={brush.size}
           onChange={(e) => onBrushChange({ ...brush, size: parseInt(e.target.value) })}
           className="flex-1 blender-slider"
         />
         <span className="text-sm font-bold text-accent w-6 text-center">{brush.size}</span>
+      </div>
+      <div className="flex gap-1 mt-2 overflow-x-auto no-scrollbar">
+        {[1, 2, 4, 8, 16, 32].map((s) => (
+          <button
+            key={s}
+            onClick={() => onBrushChange({ ...brush, size: s })}
+            className={`flex-shrink-0 px-2.5 py-1 rounded text-[10px] font-mono transition-colors ${
+              brush.size === s
+                ? "bg-accent text-white"
+                : "bg-panel-hover text-text-dim hover:text-text"
+            }`}
+          >
+            {s}
+          </button>
+        ))}
       </div>
 
       {/* Quick palette preview */}

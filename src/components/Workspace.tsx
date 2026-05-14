@@ -37,6 +37,7 @@ interface WorkspaceProps {
   handleMoveLayerUp: () => void;
   handleMoveLayerDown: () => void;
   handleImportImage: () => void;
+  handleFillLayers: (target: number) => void;
   onSaveHistory: (state: CanvasState) => void;
   handlePixelChange: (x: number, y: number, z: number, color: string) => void;
   handleColorPick: (color: string) => void;
@@ -48,6 +49,8 @@ interface WorkspaceProps {
   timeline: TimelineState;
   onTimelineChange: (timeline: TimelineState) => void;
   onFrameChange: (frame: number) => void;
+  onOpenPaletteManager: () => void;
+  onColorSelect: (color: string) => void;
   onKeyframeAdd: () => void;
   onKeyframeDelete: (frame: number) => void;
   onFrameReorder: (fromIndex: number, toIndex: number) => void;
@@ -82,6 +85,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
   handleMoveLayerUp,
   handleMoveLayerDown,
   handleImportImage,
+  handleFillLayers,
   onSaveHistory,
   handlePixelChange,
   handleColorPick,
@@ -93,10 +97,12 @@ const Workspace: React.FC<WorkspaceProps> = ({
   timeline,
   onTimelineChange,
   onFrameChange,
+  onFrameReorder,
   onKeyframeAdd,
   onKeyframeDelete,
-  onFrameReorder,
-  onFrameDurationChange
+  onFrameDurationChange,
+  onOpenPaletteManager,
+  onColorSelect
 }) => {
   const [leftCollapsed, setLeftCollapsed] = useState(false);
   const [rightCollapsed, setRightCollapsed] = useState(false);
@@ -205,9 +211,14 @@ const Workspace: React.FC<WorkspaceProps> = ({
           onMoveLayerUp={handleMoveLayerUp}
           onMoveLayerDown={handleMoveLayerDown}
           onImportImage={handleImportImage}
+          onFillLayers={handleFillLayers}
           renderMode={renderMode}
           collapsed={rightCollapsed}
           onToggle={() => setRightCollapsed(!rightCollapsed)}
+          currentPalette={brush.palette || []}
+          onPaletteChange={(colors) => onBrushChange({ ...brush, palette: colors, color: colors[0] })}
+          onColorSelect={onColorSelect}
+          onOpenPaletteManager={onOpenPaletteManager}
         />
       </div>
     </div>

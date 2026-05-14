@@ -6,15 +6,22 @@ const blurBrush = {
   cursor: "crosshair",
   getChanges: (ctx: BrushContext) => {
     const { canvasState, brush } = ctx;
-    const z = canvasState.activeLayer;
     const radius = Math.max(1, Math.floor(brush.size / 2));
     const w = canvasState.width;
     const h = canvasState.height;
     const strength = brush.blurStrength ?? 0.5;
 
+    const to3D = ctx.to3D ?? ((px: number, py: number) => ({ x: px, y: py, z: 0 } as const));
+
     const layerPixels = new Map<string, string>();
     for (const [key, color] of canvasState.pixels) {
-      if (key.endsWith(`,${z}`)) layerPixels.set(key, color);
+      const parts = key.split(",");
+      const kx = parseInt(parts[0]), ky = parseInt(parts[1]), kz = parseInt(parts[2]);
+      if (isNaN(kx) || isNaN(ky) || isNaN(kz)) continue;
+      const transformed = to3D(kx, ky) ?? { x: kx, y: ky, z: 0 };
+      if (transformed.x === kx && transformed.y === ky) {
+        layerPixels.set(key, color);
+      }
     }
 
     if (layerPixels.size === 0) return [];
@@ -56,13 +63,12 @@ const blurBrush = {
       y1: Math.min(h - 1, ctx.y + radius)
     };
 
-    // Run multiple passes for stronger blur effect per stroke
     const passes = Math.max(1, Math.ceil(strength * 3));
 
     for (let pass = 0; pass < passes; pass++) {
       for (let py = extent.y0; py <= extent.y1; py++) {
         for (let px = extent.x0; px <= extent.x1; px++) {
-          const transformed = ctx.to3D ? (ctx.to3D(px, py) ?? { x: px, y: py }) : { x: px, y: py };
+          const transformed = to3D(px, py) ?? { x: px, y: py, z: 0 };
           const tx = transformed.x;
           const ty = transformed.y;
 
@@ -113,22 +119,21 @@ const blurBrush = {
       }
     }
 
-    // Collect final changes
     for (let py = extent.y0; py <= extent.y1; py++) {
       for (let px = extent.x0; px <= extent.x1; px++) {
-        const transformed = ctx.to3D ? (ctx.to3D(px, py) ?? { x: px, y: py }) : { x: px, y: py };
+        const transformed = to3D(px, py) ?? { x: px, y: py, z: 0 };
         const tx = transformed.x;
         const ty = transformed.y;
 
         const cell = grid[ty]?.[tx];
         if (!cell || cell[3] === 0) continue;
 
-        const origKey = `${tx},${ty},${z}`;
+        const origKey = `${tx},${ty},${transformed.z}`;
         const origHex = layerPixels.get(origKey);
         const newHex = toHex(cell[0], cell[1], cell[2], cell[3]);
 
         if (origHex && newHex !== origHex) {
-          changes.push({ x: tx, y: ty, color: newHex });
+          changes.push({ x: tx, y: ty, z: transformed.z, color: newHex });
         }
       }
     }

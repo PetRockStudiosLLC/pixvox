@@ -13,7 +13,7 @@ export interface VoxelData {
 }
 
 export interface CanvasState {
-  width: number;  // 8 to 128
+  width: number; // 8 to 128
   height: number;
   layers: number; // depth (Z-axis)
   activeLayer: number;
@@ -22,7 +22,17 @@ export interface CanvasState {
   layerInfo: LayerInfo[]; // Per-layer metadata
 }
 
-export type BrushTool = 'point' | 'line' | 'bucket' | 'eraser' | 'circle' | 'filled-circle' | 'spray' | 'pattern' | 'blur' | 'dither';
+export type BrushTool =
+  | "point"
+  | "line"
+  | "bucket"
+  | "eraser"
+  | "circle"
+  | "filled-circle"
+  | "spray"
+  | "pattern"
+  | "blur"
+  | "dither";
 
 export interface BrushState {
   tool: BrushTool;
@@ -35,7 +45,8 @@ export interface BrushState {
   blurFalloff?: number; // blur edge falloff 0-1
   ditherDensity?: number; // dither threshold density 0-1
   ditherAngle?: number; // dither pattern rotation in degrees
-  ditherPattern?: 'bayer2x2' | 'bayer3x3' | 'bayer4x4' | 'bayer8x8';
+  ditherPattern?: "bayer2x2" | "bayer3x3" | "bayer4x4" | "bayer8x8";
+  pattern?: string[][]; // 2D array of hex colors for pattern brush
 }
 
 export interface PaletteColor {

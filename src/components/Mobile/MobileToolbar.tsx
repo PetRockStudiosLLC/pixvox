@@ -1,6 +1,6 @@
-import React from 'react';
-import { BrushState, BrushTool } from '../../types/voxel';
-import { getAllBrushes } from '../../utils/brushes';
+import React from "react";
+import { BrushState, BrushTool } from "../../types/voxel";
+import { getAllBrushes } from "../../utils/brushes";
 
 interface MobileToolbarProps {
   brush: BrushState;
@@ -16,24 +16,58 @@ interface MobileToolbarProps {
 
 const toolIcons: Record<BrushTool, React.ReactNode> = {
   point: (
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 20 20"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <path d="M14 3L17 6L6 17H3V14L14 3Z" />
     </svg>
   ),
   line: (
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 20 20"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+    >
       <line x1="3" y1="17" x2="17" y2="3" />
     </svg>
   ),
   bucket: (
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 20 20"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <path d="M10 3L16 14H4L10 3Z" />
       <path d="M7 14L6 17" />
       <path d="M13 14L14 17" />
     </svg>
   ),
   eraser: (
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round">
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 20 20"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinejoin="round"
+    >
       <path d="M6 16H3L5 6L11 4L17 10L12 16H6Z" />
     </svg>
   ),
@@ -42,7 +76,7 @@ const toolIcons: Record<BrushTool, React.ReactNode> = {
       <circle cx="10" cy="10" r="7" />
     </svg>
   ),
-  'filled-circle': (
+  "filled-circle": (
     <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
       <circle cx="10" cy="10" r="7" />
     </svg>
@@ -85,7 +119,7 @@ const toolIcons: Record<BrushTool, React.ReactNode> = {
       <rect x="7" y="11" width="2" height="2" fill="currentColor" />
       <rect x="11" y="11" width="2" height="2" fill="currentColor" />
     </svg>
-  ),
+  )
 };
 
 const MobileToolbar: React.FC<MobileToolbarProps> = ({
@@ -97,7 +131,7 @@ const MobileToolbar: React.FC<MobileToolbarProps> = ({
   canUndo,
   canRedo,
   zoom,
-  onZoomChange,
+  onZoomChange
 }) => {
   const tools = getAllBrushes();
 
@@ -110,11 +144,19 @@ const MobileToolbar: React.FC<MobileToolbarProps> = ({
             onClick={onUndo}
             disabled={!canUndo}
             className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all touch-target-min ${
-              canUndo ? 'bg-panel-hover text-text active:bg-panel-active' : 'bg-panel text-text-dim/30'
+              canUndo ? "bg-panel-hover text-text active:bg-panel-active" : "bg-panel text-text-dim/30"
             }`}
             aria-label="Undo"
           >
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 18 18"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+            >
               <path d="M3 6H9C11 6 13 8 13 10C13 12 11 14 9 14H5" />
               <path d="M7 3L4 6L7 9" />
             </svg>
@@ -123,11 +165,19 @@ const MobileToolbar: React.FC<MobileToolbarProps> = ({
             onClick={onRedo}
             disabled={!canRedo}
             className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all touch-target-min ${
-              canRedo ? 'bg-panel-hover text-text active:bg-panel-active' : 'bg-panel text-text-dim/30'
+              canRedo ? "bg-panel-hover text-text active:bg-panel-active" : "bg-panel text-text-dim/30"
             }`}
             aria-label="Redo"
           >
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 18 18"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+            >
               <path d="M15 6H9C7 6 5 8 5 10C5 12 7 14 9 14H13" />
               <path d="M11 3L14 6L11 9" />
             </svg>
@@ -161,15 +211,13 @@ const MobileToolbar: React.FC<MobileToolbarProps> = ({
             onClick={() => onBrushChange({ ...brush, tool: tool.tool })}
             className={`w-12 h-12 rounded-xl flex flex-col items-center justify-center gap-0.5 flex-shrink-0 transition-all touch-target-min ${
               brush.tool === tool.tool
-                ? 'bg-accent text-white shadow-lg shadow-accent/30 scale-105'
-                : 'bg-panel-hover text-text-dim active:bg-panel-active'
+                ? "bg-accent text-white shadow-lg shadow-accent/30 scale-105"
+                : "bg-panel-hover text-text-dim active:bg-panel-active"
             }`}
             aria-label={tool.name}
             title={tool.name}
           >
-            <span className="flex items-center justify-center">
-              {toolIcons[tool.tool] || toolIcons.point}
-            </span>
+            <span className="flex items-center justify-center">{toolIcons[tool.tool] || toolIcons.point}</span>
             <span className="text-[8px] font-bold truncate max-w-full">{tool.name}</span>
           </button>
         ))}
@@ -181,12 +229,27 @@ const MobileToolbar: React.FC<MobileToolbarProps> = ({
         <input
           type="range"
           min={1}
-          max={8}
+          max={32}
           value={brush.size}
           onChange={(e) => onBrushChange({ ...brush, size: parseInt(e.target.value) })}
           className="flex-1 blender-slider"
         />
         <span className="text-sm font-bold text-accent w-6 text-center">{brush.size}</span>
+      </div>
+      <div className="flex gap-1 mt-2 overflow-x-auto no-scrollbar">
+        {[1, 2, 4, 8, 16, 32].map((s) => (
+          <button
+            key={s}
+            onClick={() => onBrushChange({ ...brush, size: s })}
+            className={`flex-shrink-0 px-2.5 py-1 rounded text-[10px] font-mono transition-colors ${
+              brush.size === s
+                ? "bg-accent text-white"
+                : "bg-panel-hover text-text-dim hover:text-text"
+            }`}
+          >
+            {s}
+          </button>
+        ))}
       </div>
 
       {/* Quick palette preview */}
@@ -197,7 +260,7 @@ const MobileToolbar: React.FC<MobileToolbarProps> = ({
               key={color}
               onClick={() => onBrushChange({ ...brush, color })}
               className={`w-8 h-8 rounded-lg flex-shrink-0 transition-all border-2 ${
-                brush.color === color ? 'border-white scale-110 shadow-lg' : 'border-transparent'
+                brush.color === color ? "border-white scale-110 shadow-lg" : "border-transparent"
               }`}
               style={{ backgroundColor: color }}
               aria-label={`Select color ${color}`}

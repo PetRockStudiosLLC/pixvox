@@ -1,6 +1,6 @@
 [package]
 name = "pixvox"
-version = "1.0.0"
+version = "1.0.2"
 description = "PixVox - Pixel Art to 3D Voxels"
 authors = ["PixVox Contributors"]
 license = "PixVox Hybrid License (BSL 1.1 + MIT)"

@@ -1,13 +1,13 @@
-import React, { useState, useCallback } from 'react';
-import { CanvasState, BrushState, TimelineState } from '../types/voxel';
-import MultiCanvasView from './MultiCanvasView';
-import VoxelScene from './VoxelScene';
+import React, { useState, useCallback } from "react";
+import { CanvasState, BrushState, TimelineState } from "../types/voxel";
+import MultiCanvasView from "./MultiCanvasView";
+import VoxelScene from "./VoxelScene";
 
-import TopBar from './TopBar';
-import ToolPanel from './ToolPanel';
-import RightPanel from './RightPanel';
-import StatusBar from './StatusBar';
-import Timeline from './Timeline';
+import TopBar from "./TopBar";
+import ToolPanel from "./ToolPanel";
+import RightPanel from "./RightPanel";
+import StatusBar from "./StatusBar";
+import Timeline from "./Timeline";
 
 interface WorkspaceProps {
   canvasState: CanvasState;
@@ -15,15 +15,15 @@ interface WorkspaceProps {
   brush: BrushState;
   onBrushChange: (brush: BrushState) => void;
   onCanvasResize: (width: number, height: number) => void;
-  renderMode: '2d' | '3d';
-  setRenderMode: (mode: '2d' | '3d') => void;
-  voxelMode: 'fast-draft' | 'final-bake';
-  setVoxelMode: (mode: 'fast-draft' | 'final-bake') => void;
+  renderMode: "2d" | "3d";
+  setRenderMode: (mode: "2d" | "3d") => void;
+  voxelMode: "fast-draft" | "final-bake";
+  setVoxelMode: (mode: "fast-draft" | "final-bake") => void;
   handleExportGLTF: () => void;
   handleExportAnimationJSON: () => void;
-  handleExportAlembicABC: (compress: 'delta' | 'snapshot') => void;
+  handleExportAlembicABC: (compress: "delta" | "snapshot") => void;
   handleExportFrameSequence: () => void;
-  handleImportAnimation: (format: 'json' | 'abc') => void;
+  handleImportAnimation: (format: "json" | "abc") => void;
   handleExportPNG: () => void;
   handleExportSpriteSheet: () => void;
   handleExportGIF: () => void;
@@ -37,6 +37,7 @@ interface WorkspaceProps {
   handleMoveLayerUp: () => void;
   handleMoveLayerDown: () => void;
   handleImportImage: () => void;
+  handleFillLayers: (target: number) => void;
   onSaveHistory: (state: CanvasState) => void;
   handlePixelChange: (x: number, y: number, z: number, color: string) => void;
   handleColorPick: (color: string) => void;
@@ -48,28 +49,64 @@ interface WorkspaceProps {
   timeline: TimelineState;
   onTimelineChange: (timeline: TimelineState) => void;
   onFrameChange: (frame: number) => void;
+  onOpenPaletteManager: () => void;
+  onColorSelect: (color: string) => void;
   onKeyframeAdd: () => void;
   onKeyframeDelete: (frame: number) => void;
   onFrameReorder: (fromIndex: number, toIndex: number) => void;
   onFrameDurationChange: (frameIndex: number, duration: number) => void;
- 
 }
 
 const Workspace: React.FC<WorkspaceProps> = ({
-  canvasState, setCanvasState, brush, onBrushChange, onCanvasResize,
-  renderMode, setRenderMode, voxelMode, setVoxelMode,
-  handleExportGLTF, handleExportAnimationJSON, handleExportAlembicABC, handleExportFrameSequence, handleImportAnimation, handleExportPNG, handleExportSpriteSheet, handleExportGIF,
-  handleSave, handleClear, handleSaveProject, handleLoadProject, handleLoadDemo,
-  handleAddLayer, handleDuplicateLayer, handleMoveLayerUp, handleMoveLayerDown,
-  handleImportImage, onSaveHistory, handlePixelChange, handleColorPick, isCtrlPressed,
-  canUndo, canRedo, onUndo, onRedo,
-  timeline, onTimelineChange, onFrameChange, onKeyframeAdd, onKeyframeDelete, onFrameReorder, onFrameDurationChange,
-
+  canvasState,
+  setCanvasState,
+  brush,
+  onBrushChange,
+  onCanvasResize,
+  renderMode,
+  setRenderMode,
+  voxelMode,
+  setVoxelMode,
+  handleExportGLTF,
+  handleExportAnimationJSON,
+  handleExportAlembicABC,
+  handleExportFrameSequence,
+  handleImportAnimation,
+  handleExportPNG,
+  handleExportSpriteSheet,
+  handleExportGIF,
+  handleSave,
+  handleClear,
+  handleSaveProject,
+  handleLoadProject,
+  handleLoadDemo,
+  handleAddLayer,
+  handleDuplicateLayer,
+  handleMoveLayerUp,
+  handleMoveLayerDown,
+  handleImportImage,
+  handleFillLayers,
+  onSaveHistory,
+  handlePixelChange,
+  handleColorPick,
+  isCtrlPressed,
+  canUndo,
+  canRedo,
+  onUndo,
+  onRedo,
+  timeline,
+  onTimelineChange,
+  onFrameChange,
+  onFrameReorder,
+  onKeyframeAdd,
+  onKeyframeDelete,
+  onFrameDurationChange,
+  onOpenPaletteManager,
+  onColorSelect
 }) => {
   const [leftCollapsed, setLeftCollapsed] = useState(false);
   const [rightCollapsed, setRightCollapsed] = useState(false);
   const [timelineCollapsed, setTimelineCollapsed] = useState(false);
- 
 
   const handleNew = () => {
     handleClear();
@@ -95,7 +132,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
         onUndo={onUndo}
         onRedo={onRedo}
         renderMode={renderMode}
-        onToggleRenderMode={() => setRenderMode(renderMode === '2d' ? '3d' : '2d')}
+        onToggleRenderMode={() => setRenderMode(renderMode === "2d" ? "3d" : "2d")}
         canUndo={canUndo}
         canRedo={canRedo}
       />
@@ -119,24 +156,22 @@ const Workspace: React.FC<WorkspaceProps> = ({
                 Grid: {canvasState.width}x{canvasState.height}
               </span>
             </div>
-            {isCtrlPressed.current && (
-              <span className="text-xs text-accent font-bold animate-pulse">Ctrl: Pick</span>
-            )}
+            {isCtrlPressed.current && <span className="text-xs text-accent font-bold animate-pulse">Ctrl: Pick</span>}
           </div>
 
           <div className="flex-1 min-h-0 bg-surface p-1 overflow-hidden flex flex-col">
             {/* 3D mode toolbar */}
-              {renderMode === '3d' && (
-                <div className="flex items-center justify-end gap-2 px-2 py-1 flex-shrink-0">
-                  <button
-                    onClick={() => setVoxelMode(voxelMode === 'fast-draft' ? 'final-bake' : 'fast-draft')}
-                    className="px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded text-xs font-bold text-gray-300 transition-colors"
-                  >
-                    {voxelMode === 'fast-draft' ? 'Draft' : 'Final'}
-                  </button>
-                </div>
-              )}
-            {renderMode === '2d' ? (
+            {renderMode === "3d" && (
+              <div className="flex items-center justify-end gap-2 px-2 py-1 flex-shrink-0">
+                <button
+                  onClick={() => setVoxelMode(voxelMode === "fast-draft" ? "final-bake" : "fast-draft")}
+                  className="px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded text-xs font-bold text-gray-300 transition-colors"
+                >
+                  {voxelMode === "fast-draft" ? "Draft" : "Final"}
+                </button>
+              </div>
+            )}
+            {renderMode === "2d" ? (
               <MultiCanvasView
                 canvasState={canvasState}
                 setCanvasState={setCanvasState}
@@ -147,8 +182,8 @@ const Workspace: React.FC<WorkspaceProps> = ({
                 isCtrlPressed={isCtrlPressed}
               />
             ) : (
-<VoxelScene canvasState={canvasState} mode={voxelMode} brush={brush} onPixelChange={handlePixelChange} />
-             )}
+              <VoxelScene canvasState={canvasState} mode={voxelMode} brush={brush} onPixelChange={handlePixelChange} />
+            )}
           </div>
 
           <Timeline
@@ -163,11 +198,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
             onToggle={() => setTimelineCollapsed(!timelineCollapsed)}
           />
 
-          <StatusBar
-            canvasState={canvasState}
-            brush={brush}
-            isCtrlPressed={isCtrlPressed}
-          />
+          <StatusBar canvasState={canvasState} brush={brush} isCtrlPressed={isCtrlPressed} />
         </div>
 
         <RightPanel
@@ -180,10 +211,14 @@ const Workspace: React.FC<WorkspaceProps> = ({
           onMoveLayerUp={handleMoveLayerUp}
           onMoveLayerDown={handleMoveLayerDown}
           onImportImage={handleImportImage}
+          onFillLayers={handleFillLayers}
           renderMode={renderMode}
-          
           collapsed={rightCollapsed}
           onToggle={() => setRightCollapsed(!rightCollapsed)}
+          currentPalette={brush.palette || []}
+          onPaletteChange={(colors) => onBrushChange({ ...brush, palette: colors, color: colors[0] })}
+          onColorSelect={onColorSelect}
+          onOpenPaletteManager={onOpenPaletteManager}
         />
       </div>
     </div>

@@ -1,0 +1,87 @@
+import js from '@eslint/js';
+import tseslint from '@typescript-eslint/eslint-plugin';
+import tsParser from '@typescript-eslint/parser';
+import reactHooks from 'eslint-plugin-react-hooks';
+import prettierPlugin from 'eslint-plugin-prettier/recommended';
+
+export default [
+  js.configs.recommended,
+  {
+    files: ['src/**/*.{ts,tsx}'],
+    ignores: ['node_modules/', 'dist/', 'src-tauri/', 'build/', 'src/vite-env.d.ts'],
+    languageOptions: {
+      parser: tsParser,
+      globals: {
+        React: 'readonly',
+        window: 'readonly',
+        document: 'readonly',
+        console: 'writable',
+        navigator: 'readonly',
+        setTimeout: 'writable',
+        clearTimeout: 'writable',
+        setInterval: 'writable',
+        clearInterval: 'writable',
+        TextEncoder: 'writable',
+        TextDecoder: 'writable',
+        requestAnimationFrame: 'writable',
+        cancelAnimationFrame: 'writable',
+        localStorage: 'writable',
+        Blob: 'writable',
+        URL: 'writable',
+        HTMLElement: 'readonly',
+        HTMLDivElement: 'readonly',
+        HTMLCanvasElement: 'readonly',
+        HTMLInputElement: 'readonly',
+        HTMLSelectElement: 'readonly',
+        HTMLImageElement: 'readonly',
+        Image: 'readonly',
+        OffscreenCanvas: 'readonly',
+        WheelEvent: 'readonly',
+        ResizeObserver: 'readonly',
+        ResizeObserverEntry: 'readonly',
+        TouchEvent: 'readonly',
+        KeyboardEvent: 'readonly',
+        MouseEvent: 'readonly',
+        DragEvent: 'readonly',
+        PointerEvent: 'readonly',
+        ClipboardEvent: 'readonly',
+        Node: 'readonly',
+        Event: 'readonly',
+        File: 'readonly',
+        WritableStream: 'readonly',
+        DOMException: 'readonly',
+        btoa: 'readonly',
+        atob: 'readonly',
+        GPUShaderStage: 'readonly',
+        GPUBufferUsage: 'readonly',
+        GPUMapMode: 'readonly',
+      },
+      parserOptions: {
+        ecmaVersion: 'latest',
+        sourceType: 'module',
+        ecmaFeatures: { jsx: true },
+      },
+    },
+    plugins: {
+      '@typescript-eslint': tseslint,
+      'react-hooks': reactHooks,
+    },
+    rules: {
+      'react-hooks/rules-of-hooks': 'error',
+      '@typescript-eslint/no-unused-vars': [
+        'warn',
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+          caughtErrorsIgnorePattern: '^_',
+        },
+      ],
+      '@typescript-eslint/no-explicit-any': 'warn',
+      'no-console': ['warn', { allow: ['warn', 'error'] }],
+      'no-unused-vars': 'off',
+      'no-useless-escape': 'warn',
+      'no-useless-assignment': 'warn',
+    },
+  },
+  prettierPlugin,
+];

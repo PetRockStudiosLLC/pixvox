@@ -1,5 +1,15 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { IconSave, IconLoad, IconExport, IconUndo, IconRedo, IconTrash, IconGrid, IconCube, IconChevronDown } from './Icons';
+import React, { useState, useRef, useEffect } from "react";
+import {
+  IconSave,
+  IconLoad,
+  IconExport,
+  IconUndo,
+  IconRedo,
+  IconTrash,
+  IconGrid,
+  IconCube,
+  IconChevronDown
+} from "./Icons";
 
 interface TopBarProps {
   onNew: () => void;
@@ -7,10 +17,10 @@ interface TopBarProps {
   onSaveProject: () => void;
   onLoadProject: () => void;
   onLoadDemo: () => void;
-  onImportAnimation: (format: 'json' | 'abc') => void;
+  onImportAnimation: (format: "json" | "abc") => void;
   onExportGLTF: () => void;
   onExportAnimationJSON: () => void;
-  onExportAlembicABC: (compress: 'delta' | 'snapshot') => void;
+  onExportAlembicABC: (compress: "delta" | "snapshot") => void;
   onExportFrameSequence: () => void;
   onExportPNG: () => void;
   onExportSpriteSheet: () => void;
@@ -18,17 +28,33 @@ interface TopBarProps {
   onClear: () => void;
   onUndo: () => void;
   onRedo: () => void;
-  renderMode: '2d' | '3d';
+  renderMode: "2d" | "3d";
   onToggleRenderMode: () => void;
   canUndo: boolean;
   canRedo: boolean;
 }
 
 const TopBar: React.FC<TopBarProps> = ({
-  onNew, onSave, onSaveProject, onLoadProject, onLoadDemo, onImportAnimation, onExportGLTF,
-  onExportAnimationJSON, onExportAlembicABC, onExportFrameSequence, onExportPNG,
-  onExportSpriteSheet, onExportGIF, onClear,
-  onUndo, onRedo, renderMode, onToggleRenderMode, canUndo, canRedo
+  onNew,
+  onSave,
+  onSaveProject,
+  onLoadProject,
+  onLoadDemo,
+  onImportAnimation,
+  onExportGLTF,
+  onExportAnimationJSON,
+  onExportAlembicABC,
+  onExportFrameSequence,
+  onExportPNG,
+  onExportSpriteSheet,
+  onExportGIF,
+  onClear,
+  onUndo,
+  onRedo,
+  renderMode,
+  onToggleRenderMode,
+  canUndo,
+  canRedo
 }) => {
   const [fileMenuOpen, setFileMenuOpen] = useState(false);
   const [exportMenuOpen, setExportMenuOpen] = useState(false);
@@ -41,63 +67,122 @@ const TopBar: React.FC<TopBarProps> = ({
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
         setFileMenuOpen(false);
         setExportMenuOpen(false);
-setAbcMenuOpen(false);
+        setAbcMenuOpen(false);
         setImportMenuOpen(false);
       }
     };
-    document.addEventListener('mousedown', handleClick);
-    return () => document.removeEventListener('mousedown', handleClick);
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
   return (
-    <div ref={menuRef} className="h-8 bg-panel-header border-b border-border flex items-center px-2 gap-1 flex-shrink-0 select-none" style={{ paddingTop: 'var(--status-bar-height, env(safe-area-inset-top))' }}>
+    <div
+      ref={menuRef}
+      className="h-8 bg-panel-header border-b border-border flex items-center px-2 gap-1 flex-shrink-0 select-none"
+      style={{ paddingTop: "var(--status-bar-height, env(safe-area-inset-top))" }}
+    >
       <span className="text-accent font-bold text-xs tracking-wider mr-3">PIXVOX</span>
 
       <div className="relative">
         <button
-          onClick={() => { setFileMenuOpen(!fileMenuOpen); setExportMenuOpen(false); setAbcMenuOpen(false); }}
+          onClick={() => {
+            setFileMenuOpen(!fileMenuOpen);
+            setExportMenuOpen(false);
+            setAbcMenuOpen(false);
+          }}
           className="blender-icon-btn text-xs gap-1 flex items-center px-2"
         >
           File <IconChevronDown size={10} />
         </button>
         {fileMenuOpen && (
           <div className="absolute top-full left-0 mt-0.5 bg-panel border border-border-light rounded-sm shadow-lg py-0.5 z-50 min-w-[160px]">
-            <button onClick={() => { onNew(); setFileMenuOpen(false); }} className="w-full px-3 py-1.5 text-left text-xs hover:bg-panel-hover flex items-center gap-2">
+            <button
+              onClick={() => {
+                onNew();
+                setFileMenuOpen(false);
+              }}
+              className="w-full px-3 py-1.5 text-left text-xs hover:bg-panel-hover flex items-center gap-2"
+            >
               <span className="w-4">+</span> New
             </button>
-            <button onClick={() => { onSave(); setFileMenuOpen(false); }} className="w-full px-3 py-1.5 text-left text-xs hover:bg-panel-hover flex items-center gap-2">
+            <button
+              onClick={() => {
+                onSave();
+                setFileMenuOpen(false);
+              }}
+              className="w-full px-3 py-1.5 text-left text-xs hover:bg-panel-hover flex items-center gap-2"
+            >
               <IconSave size={12} /> Save
             </button>
-            <button onClick={() => { onSaveProject(); setFileMenuOpen(false); }} className="w-full px-3 py-1.5 text-left text-xs hover:bg-panel-hover flex items-center gap-2">
+            <button
+              onClick={() => {
+                onSaveProject();
+                setFileMenuOpen(false);
+              }}
+              className="w-full px-3 py-1.5 text-left text-xs hover:bg-panel-hover flex items-center gap-2"
+            >
               <IconSave size={12} /> Save to File
             </button>
-<button onClick={() => { onLoadProject(); setFileMenuOpen(false); }} className="w-full px-3 py-1.5 text-left text-xs hover:bg-panel-hover flex items-center gap-2">
+            <button
+              onClick={() => {
+                onLoadProject();
+                setFileMenuOpen(false);
+              }}
+              className="w-full px-3 py-1.5 text-left text-xs hover:bg-panel-hover flex items-center gap-2"
+            >
               <IconLoad size={12} /> Load Project
-             </button>
-            <button onClick={() => { onLoadDemo(); setFileMenuOpen(false); }} className="w-full px-3 py-1.5 text-left text-xs hover:bg-panel-hover flex items-center gap-2">
+            </button>
+            <button
+              onClick={() => {
+                onLoadDemo();
+                setFileMenuOpen(false);
+              }}
+              className="w-full px-3 py-1.5 text-left text-xs hover:bg-panel-hover flex items-center gap-2"
+            >
               <IconLoad size={12} /> Load Demo (.json)
-             </button>
+            </button>
             <div className="my-0.5 h-px bg-border" />
             <div className="relative">
               <button
-                onClick={() => { setImportMenuOpen(!importMenuOpen); setFileMenuOpen(false); }}
+                onClick={() => {
+                  setImportMenuOpen(!importMenuOpen);
+                  setFileMenuOpen(false);
+                }}
                 className="w-full px-3 py-1.5 text-left text-xs hover:bg-panel-hover flex items-center gap-2"
               >
                 <IconLoad size={12} /> Import Animation <IconChevronDown size={10} />
               </button>
               {importMenuOpen && (
                 <div className="absolute left-full top-0 ml-0.5 bg-panel border border-border-light rounded-sm shadow-lg py-0.5 z-50 min-w-[140px]">
-                  <button onClick={() => { onImportAnimation('json'); setImportMenuOpen(false); }} className="w-full px-3 py-1.5 text-left text-xs hover:bg-panel-hover flex items-center gap-2">
+                  <button
+                    onClick={() => {
+                      onImportAnimation("json");
+                      setImportMenuOpen(false);
+                    }}
+                    className="w-full px-3 py-1.5 text-left text-xs hover:bg-panel-hover flex items-center gap-2"
+                  >
                     <IconLoad size={12} /> Animation JSON
                   </button>
-                 <button onClick={() => { onImportAnimation('abc'); setImportMenuOpen(false); }} className="w-full px-3 py-1.5 text-left text-xs hover:bg-panel-hover flex items-center gap-2">
-                     <IconLoad size={12} /> Alembic ABC (.abc)
+                  <button
+                    onClick={() => {
+                      onImportAnimation("abc");
+                      setImportMenuOpen(false);
+                    }}
+                    className="w-full px-3 py-1.5 text-left text-xs hover:bg-panel-hover flex items-center gap-2"
+                  >
+                    <IconLoad size={12} /> Alembic ABC (.abc)
                   </button>
                 </div>
               )}
             </div>
             <div className="my-0.5 h-px bg-border" />
-            <button onClick={() => { onClear(); setFileMenuOpen(false); }} className="w-full px-3 py-1.5 text-left text-xs hover:bg-panel-hover flex items-center gap-2 text-danger">
+            <button
+              onClick={() => {
+                onClear();
+                setFileMenuOpen(false);
+              }}
+              className="w-full px-3 py-1.5 text-left text-xs hover:bg-panel-hover flex items-center gap-2 text-danger"
+            >
               <IconTrash size={12} /> Clear All
             </button>
           </div>
@@ -106,7 +191,11 @@ setAbcMenuOpen(false);
 
       <div className="relative">
         <button
-          onClick={() => { setExportMenuOpen(!exportMenuOpen); setFileMenuOpen(false); setAbcMenuOpen(false); }}
+          onClick={() => {
+            setExportMenuOpen(!exportMenuOpen);
+            setFileMenuOpen(false);
+            setAbcMenuOpen(false);
+          }}
           className="blender-icon-btn text-xs gap-1 flex items-center px-2"
         >
           Export <IconChevronDown size={10} />
@@ -114,44 +203,95 @@ setAbcMenuOpen(false);
         {exportMenuOpen && (
           <div className="absolute top-full left-0 mt-0.5 bg-panel border border-border-light rounded-sm shadow-lg py-0.5 z-50 min-w-[180px]">
             <div className="px-3 py-1 text-[10px] uppercase font-bold text-text-dim">Image</div>
-            <button onClick={() => { onExportPNG(); setExportMenuOpen(false); }} className="w-full px-3 py-1.5 text-left text-xs hover:bg-panel-hover flex items-center gap-2">
+            <button
+              onClick={() => {
+                onExportPNG();
+                setExportMenuOpen(false);
+              }}
+              className="w-full px-3 py-1.5 text-left text-xs hover:bg-panel-hover flex items-center gap-2"
+            >
               <IconExport size={12} /> PNG (Current Frame)
             </button>
-            <button onClick={() => { onExportSpriteSheet(); setExportMenuOpen(false); }} className="w-full px-3 py-1.5 text-left text-xs hover:bg-panel-hover flex items-center gap-2">
+            <button
+              onClick={() => {
+                onExportSpriteSheet();
+                setExportMenuOpen(false);
+              }}
+              className="w-full px-3 py-1.5 text-left text-xs hover:bg-panel-hover flex items-center gap-2"
+            >
               <IconExport size={12} /> Sprite Sheet
             </button>
-            <button onClick={() => { onExportGIF(); setExportMenuOpen(false); }} className="w-full px-3 py-1.5 text-left text-xs hover:bg-panel-hover flex items-center gap-2">
+            <button
+              onClick={() => {
+                onExportGIF();
+                setExportMenuOpen(false);
+              }}
+              className="w-full px-3 py-1.5 text-left text-xs hover:bg-panel-hover flex items-center gap-2"
+            >
               <IconExport size={12} /> Animated GIF
             </button>
             <div className="my-0.5 h-px bg-border" />
             <div className="px-3 py-1 text-[10px] uppercase font-bold text-text-dim">3D Model</div>
-            <button onClick={() => { onExportGLTF(); setExportMenuOpen(false); }} className="w-full px-3 py-1.5 text-left text-xs hover:bg-panel-hover flex items-center gap-2">
+            <button
+              onClick={() => {
+                onExportGLTF();
+                setExportMenuOpen(false);
+              }}
+              className="w-full px-3 py-1.5 text-left text-xs hover:bg-panel-hover flex items-center gap-2"
+            >
               <IconExport size={12} /> GLTF (Static)
             </button>
             <div className="my-0.5 h-px bg-border" />
             <div className="px-3 py-1 text-[10px] uppercase font-bold text-text-dim">Animation</div>
-            <button onClick={() => { onExportAnimationJSON(); setExportMenuOpen(false); }} className="w-full px-3 py-1.5 text-left text-xs hover:bg-panel-hover flex items-center gap-2">
+            <button
+              onClick={() => {
+                onExportAnimationJSON();
+                setExportMenuOpen(false);
+              }}
+              className="w-full px-3 py-1.5 text-left text-xs hover:bg-panel-hover flex items-center gap-2"
+            >
               <IconExport size={12} /> Animation JSON
             </button>
             <div className="relative">
               <button
-                onClick={() => { setAbcMenuOpen(!abcMenuOpen); setExportMenuOpen(false); }}
+                onClick={() => {
+                  setAbcMenuOpen(!abcMenuOpen);
+                  setExportMenuOpen(false);
+                }}
                 className="w-full px-3 py-1.5 text-left text-xs hover:bg-panel-hover flex items-center gap-2"
               >
-               <IconExport size={12} /> Alembic ABC (.abc) <IconChevronDown size={10} />
-               </button>
-               {abcMenuOpen && (
-                 <div className="absolute left-full top-0 ml-0.5 bg-panel border border-border-light rounded-sm shadow-lg py-0.5 z-50 min-w-[140px]">
-                   <button onClick={() => { onExportAlembicABC('delta'); setAbcMenuOpen(false); }} className="w-full px-3 py-1.5 text-left text-xs hover:bg-panel-hover flex items-center gap-2">
-                     <IconExport size={12} /> Delta (Compressed)
-                   </button>
-                  <button onClick={() => { onExportAlembicABC('snapshot'); setAbcMenuOpen(false); }} className="w-full px-3 py-1.5 text-left text-xs hover:bg-panel-hover flex items-center gap-2">
-                     <IconExport size={12} /> Snapshot (Full)
-                   </button>
-                 </div>
+                <IconExport size={12} /> Alembic ABC (.abc) <IconChevronDown size={10} />
+              </button>
+              {abcMenuOpen && (
+                <div className="absolute left-full top-0 ml-0.5 bg-panel border border-border-light rounded-sm shadow-lg py-0.5 z-50 min-w-[140px]">
+                  <button
+                    onClick={() => {
+                      onExportAlembicABC("delta");
+                      setAbcMenuOpen(false);
+                    }}
+                    className="w-full px-3 py-1.5 text-left text-xs hover:bg-panel-hover flex items-center gap-2"
+                  >
+                    <IconExport size={12} /> Delta (Compressed)
+                  </button>
+                  <button
+                    onClick={() => {
+                      onExportAlembicABC("snapshot");
+                      setAbcMenuOpen(false);
+                    }}
+                    className="w-full px-3 py-1.5 text-left text-xs hover:bg-panel-hover flex items-center gap-2"
+                  >
+                    <IconExport size={12} /> Snapshot (Full)
+                  </button>
+                </div>
               )}
             </div>
-            <button onClick={() => { onExportFrameSequence(); setExportMenuOpen(false); }} className="w-full px-3 py-1.5 text-left text-xs hover:bg-panel-hover flex items-center gap-2">
+            <button
+              onClick={() => {
+                onExportFrameSequence();
+                setExportMenuOpen(false);
+              }}
+              className="w-full px-3 py-1.5 text-left text-xs hover:bg-panel-hover flex items-center gap-2"
+            >
               <IconExport size={12} /> Frame Sequence (.zip)
             </button>
           </div>
@@ -171,14 +311,14 @@ setAbcMenuOpen(false);
 
       <button
         onClick={onToggleRenderMode}
-        className={`blender-icon-btn ${renderMode === '2d' ? 'blender-icon-btn-active' : ''}`}
+        className={`blender-icon-btn ${renderMode === "2d" ? "blender-icon-btn-active" : ""}`}
         title="2D Canvas (Tab)"
       >
         <IconGrid size={14} />
       </button>
       <button
         onClick={onToggleRenderMode}
-        className={`blender-icon-btn ${renderMode === '3d' ? 'blender-icon-btn-active' : ''}`}
+        className={`blender-icon-btn ${renderMode === "3d" ? "blender-icon-btn-active" : ""}`}
         title="3D View (Tab)"
       >
         <IconCube size={14} />

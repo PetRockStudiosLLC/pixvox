@@ -1,11 +1,11 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef } from "react";
+import type { TimelineState } from "../types/voxel";
 
-export function usePlayback(
-  timeline: any,
-  handleFrameChange: (frame: number) => void
-) {
+export function usePlayback(timeline: TimelineState, handleFrameChange: (frame: number) => void) {
   const tickCountRef = useRef(0);
-  useEffect(() => { tickCountRef.current = 0; }, [timeline.currentFrame]);
+  useEffect(() => {
+    tickCountRef.current = 0;
+  }, [timeline.currentFrame]);
 
   useEffect(() => {
     if (!timeline.playing) return;

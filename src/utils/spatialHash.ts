@@ -1,4 +1,4 @@
-import { VoxelData } from '../types/voxel';
+import { VoxelData } from "../types/voxel";
 
 export class SpatialHash {
   private map: Map<string, VoxelData>;

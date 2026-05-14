@@ -1,7 +1,7 @@
-import React, { useRef, useEffect, useCallback, useState } from 'react';
-import { CanvasState, BrushState } from '../types/voxel';
-import { getPixel } from '../utils/canvasBuffer';
-import { getBrush, BrushContext, PixelChange } from '../utils/brushes';
+import React, { useRef, useEffect, useCallback, useState } from "react";
+import { CanvasState, BrushState } from "../types/voxel";
+import { getPixel } from "../utils/canvasBuffer";
+import { getBrush, BrushContext, PixelChange } from "../utils/brushes";
 
 interface MultiCanvasViewProps {
   canvasState: CanvasState;
@@ -16,7 +16,7 @@ interface MultiCanvasViewProps {
   onRenameLayer?: (layer: number, name: string) => void;
 }
 
-type ViewType = 'main' | 'front' | 'left' | 'right' | 'top' | 'bottom';
+type ViewType = "main" | "front" | "left" | "right" | "top" | "bottom";
 
 interface ViewConfig {
   type: ViewType;
@@ -30,57 +30,57 @@ interface ViewConfig {
 
 const views: ViewConfig[] = [
   {
-    type: 'main',
-    label: 'Main (X-Y)',
+    type: "main",
+    label: "Main (X-Y)",
     getRangeX: (cs) => [0, cs.width],
     getRangeY: (cs) => [0, cs.height],
     to3D: (cx, cy, cs, layerValue) => ({ x: cx, y: cy, z: layerValue }),
-    layerLabel: 'Z',
+    layerLabel: "Z",
     layerRange: (cs) => [0, cs.layers]
   },
   {
-    type: 'front',
-    label: 'Front (X-Y)',
+    type: "front",
+    label: "Front (X-Y)",
     getRangeX: (cs) => [0, cs.width],
     getRangeY: (cs) => [0, cs.height],
     to3D: (cx, cy, cs, layerValue) => ({ x: cx, y: cy, z: layerValue }),
-    layerLabel: 'Z',
+    layerLabel: "Z",
     layerRange: (cs) => [0, cs.layers]
   },
   {
-    type: 'left',
-    label: 'Left (Z-Y)',
+    type: "left",
+    label: "Left (Z-Y)",
     getRangeX: (cs) => [0, cs.layers],
     getRangeY: (cs) => [0, cs.height],
     to3D: (cx, cy, cs, layerValue) => ({ x: layerValue, y: cy, z: cx }),
-    layerLabel: 'X',
+    layerLabel: "X",
     layerRange: (cs) => [0, cs.width]
   },
   {
-    type: 'right',
-    label: 'Right (Z-Y)',
+    type: "right",
+    label: "Right (Z-Y)",
     getRangeX: (cs) => [0, cs.layers],
     getRangeY: (cs) => [0, cs.height],
     to3D: (cx, cy, cs, layerValue) => ({ x: layerValue, y: cy, z: cx }),
-    layerLabel: 'X',
+    layerLabel: "X",
     layerRange: (cs) => [0, cs.width]
   },
   {
-    type: 'top',
-    label: 'Top (X-Z)',
+    type: "top",
+    label: "Top (X-Z)",
     getRangeX: (cs) => [0, cs.width],
     getRangeY: (cs) => [0, cs.layers],
     to3D: (cx, cy, cs, layerValue) => ({ x: cx, y: layerValue, z: cy }),
-    layerLabel: 'Y',
+    layerLabel: "Y",
     layerRange: (cs) => [0, cs.height]
   },
   {
-    type: 'bottom',
-    label: 'Bottom (X-Z)',
+    type: "bottom",
+    label: "Bottom (X-Z)",
     getRangeX: (cs) => [0, cs.width],
     getRangeY: (cs) => [0, cs.layers],
     to3D: (cx, cy, cs, layerValue) => ({ x: cx, y: layerValue, z: cy }),
-    layerLabel: 'Y',
+    layerLabel: "Y",
     layerRange: (cs) => [0, cs.height]
   }
 ];
@@ -104,9 +104,29 @@ const CanvasView: React.FC<{
   onToggleVisibility?: (layer: number) => void;
   onToggleLock?: (layer: number) => void;
   onRenameLayer?: (layer: number, name: string) => void;
-}> = ({ config, canvasState, brush, onPixelChange, onSaveHistory, setCanvasState, scale, setScale, layerValue, setLayerValue, isActive, viewType, onActivate, onColorPick, isCtrlPressed, onToggleVisibility, onToggleLock, onRenameLayer }) => {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+}> = ({
+  config,
+  canvasState,
+  brush,
+  onPixelChange,
+  onSaveHistory,
+  setCanvasState,
+  scale,
+  setScale,
+  layerValue,
+  setLayerValue,
+  isActive,
+  viewType,
+  onActivate,
+  onColorPick,
+  isCtrlPressed,
+  onToggleVisibility,
+  onToggleLock,
+  onRenameLayer
+}) => {
+const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const canvasWrapperRef = useRef<HTMLDivElement>(null);
   const isDrawing = useRef(false);
   const lastPixel = useRef<{ x: number; y: number } | null>(null);
   const pendingChanges = useRef<PixelChange[]>([]);
@@ -114,6 +134,8 @@ const CanvasView: React.FC<{
   const [isPanning, setIsPanning] = useState(false);
   const lastPanPoint = useRef({ x: 0, y: 0 });
   const [containerSize, setContainerSize] = useState({ width: 300, height: 300 });
+  const mousePos = useRef<{ x: number; y: number } | null>(null);
+  const [mouseScreenPos, setMouseScreenPos] = useState<{ x: number; y: number } | null>(null);
 
   // Track actual container size
   useEffect(() => {
@@ -139,29 +161,25 @@ const CanvasView: React.FC<{
   const viewHeight = rangeYEnd - rangeYStart;
 
   // Calculate pixelSize based on ACTUAL view dimensions (not canvasState)
-  const pixelSize = Math.min(
-    containerSize.width / viewWidth,
-    containerSize.height / viewHeight,
-    20
-  ) * scale;
+  const pixelSize = Math.min(containerSize.width / viewWidth, containerSize.height / viewHeight, 20) * scale;
 
   const drawCanvas = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
     canvas.width = viewWidth * pixelSize;
     canvas.height = viewHeight * pixelSize;
 
-    ctx.fillStyle = '#2a2a3e';
+    ctx.fillStyle = "#2a2a3e";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     for (let py = 0; py < viewHeight; py++) {
       for (let px = 0; px < viewWidth; px++) {
         const coords = config.to3D(px + rangeXStart, py + rangeYStart, canvasState, layerValue);
         const color = getPixel(canvasState, coords.x, coords.y, coords.z);
-        if (color === '#00000000' || (color.length === 9 && color.endsWith('00'))) {
+        if (color === "#00000000" || (color.length === 9 && color.slice(7) === "00")) {
           continue;
         }
         ctx.fillStyle = color.length === 9 ? color.slice(0, 7) : color;
@@ -169,22 +187,7 @@ const CanvasView: React.FC<{
       }
     }
 
-    if (lastPixel.current && brush.size > 1) {
-      const bx = lastPixel.current.x;
-      const by = lastPixel.current.y;
-      ctx.strokeStyle = brush.tool === 'eraser' ? '#ff0000' : '#ffffff';
-      ctx.lineWidth = 1;
-      ctx.setLineDash([3, 3]);
-      ctx.strokeRect(bx * pixelSize, by * pixelSize, brush.size * pixelSize, brush.size * pixelSize);
-      ctx.setLineDash([]);
-
-      ctx.fillStyle = brush.tool === 'eraser' ? '#ff0000' : '#ffffff';
-      ctx.beginPath();
-      ctx.arc(bx * pixelSize + pixelSize / 2, by * pixelSize + pixelSize / 2, 2, 0, Math.PI * 2);
-      ctx.fill();
-    }
-
-    ctx.strokeStyle = '#444';
+    ctx.strokeStyle = "#444";
     ctx.lineWidth = 0.5;
     for (let x = 0; x <= viewWidth; x++) {
       ctx.beginPath();
@@ -198,7 +201,18 @@ const CanvasView: React.FC<{
       ctx.lineTo(viewWidth * pixelSize, y * pixelSize);
       ctx.stroke();
     }
-  }, [canvasState, pixelSize, brush, config, lastPixel.current, viewWidth, viewHeight, rangeXStart, rangeYStart, layerValue]);
+  }, [
+    canvasState,
+    pixelSize,
+    brush,
+    config,
+    lastPixel.current,
+    viewWidth,
+    viewHeight,
+    rangeXStart,
+    rangeYStart,
+    layerValue
+  ]);
 
   useEffect(() => {
     drawCanvas();
@@ -208,15 +222,16 @@ const CanvasView: React.FC<{
     const canvas = canvasRef.current;
     if (!canvas) return null;
     const rect = canvas.getBoundingClientRect();
-    const adjustedX = (e.clientX - rect.left - offset.x) / pixelSize;
-    const adjustedY = (e.clientY - rect.top - offset.y) / pixelSize;
+    const adjustedX = (e.clientX - rect.left) / pixelSize;
+    const adjustedY = (e.clientY - rect.top) / pixelSize;
     const x = Math.floor(adjustedX);
     const y = Math.floor(adjustedY);
     if (x < 0 || x >= viewWidth || y < 0 || y >= viewHeight) return null;
     return { x, y };
   };
 
-    const applyBrush = useCallback((canvasX: number, canvasY: number): PixelChange[] => {
+  const applyBrush = useCallback(
+    (canvasX: number, canvasY: number): PixelChange[] => {
       const brushHandler = getBrush(brush.tool);
       if (!brushHandler) return [];
 
@@ -234,12 +249,15 @@ const CanvasView: React.FC<{
       };
 
       return brushHandler.getChanges(ctx);
-    }, [canvasState, brush, config, rangeXStart, rangeYStart, layerValue]);
+    },
+    [canvasState, brush, config, rangeXStart, rangeYStart, layerValue]
+  );
 
-    const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
+  const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
     onActivate(viewType);
 
-    if (e.button === 1) { // Middle click for panning
+    if (e.button === 1) {
+      // Middle click for panning
       setIsPanning(true);
       const canvas = canvasRef.current;
       if (!canvas) return;
@@ -247,22 +265,22 @@ const CanvasView: React.FC<{
       lastPanPoint.current = { x: e.clientX - rect.left, y: e.clientY - rect.top };
       return;
     }
-    
+
     const coords = getPixelCoords(e);
     if (!coords) return;
-    
+
     // CTRL+click: pick color and add to palette
     if (isCtrlPressed?.current && onColorPick) {
       const canvasX = coords.x + rangeXStart;
       const canvasY = coords.y + rangeYStart;
       const coords3D = config.to3D(canvasX, canvasY, canvasState, layerValue);
       const color = getPixel(canvasState, coords3D.x, coords3D.y, coords3D.z);
-      if (color && color !== '#00000000') {
+      if (color && color !== "#00000000") {
         onColorPick(color.length === 9 ? color.slice(0, 7) : color);
       }
       return;
     }
-    
+
     isDrawing.current = true;
     pendingChanges.current = [];
 
@@ -274,125 +292,131 @@ const CanvasView: React.FC<{
     lastPixel.current = coords;
   };
 
-const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
-      if (isPanning) {
-        const canvas = canvasRef.current;
-        if (!canvas) return;
-        const rect = canvas.getBoundingClientRect();
-        const currentPoint = { x: e.clientX - rect.left, y: e.clientY - rect.top };
-        const dx = currentPoint.x - lastPanPoint.current.x;
-        const dy = currentPoint.y - lastPanPoint.current.y;
-        setOffset(prev => ({ x: prev.x + dx, y: prev.y + dy }));
-        lastPanPoint.current = currentPoint;
-        return;
-      }
-      if (!isDrawing.current) return;
-      const coords = getPixelCoords(e);
-      if (!coords) return;
-      if (lastPixel.current && coords.x === lastPixel.current.x && coords.y === lastPixel.current.y) return;
+  const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (isPanning) {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const rect = canvas.getBoundingClientRect();
+      const currentPoint = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+      const dx = currentPoint.x - lastPanPoint.current.x;
+      const dy = currentPoint.y - lastPanPoint.current.y;
+      setOffset((prev) => ({ x: prev.x + dx, y: prev.y + dy }));
+      lastPanPoint.current = currentPoint;
+      return;
+    }
+    const coords = getPixelCoords(e);
+    if (coords) {
+      mousePos.current = coords;
+      setMouseScreenPos({ x: e.clientX, y: e.clientY });
+    }
+    if (!isDrawing.current) return;
+    if (!coords) return;
+    if (lastPixel.current && coords.x === lastPixel.current.x && coords.y === lastPixel.current.y) return;
 
-      // Collect brush changes
-      const changes = applyBrush(coords.x, coords.y);
-      pendingChanges.current.push(...changes);
+    // Collect brush changes
+    const changes = applyBrush(coords.x, coords.y);
+    pendingChanges.current.push(...changes);
 
-      // Update lastPixel to new position
-      lastPixel.current = coords;
-    };
+    // Update lastPixel to new position
+    lastPixel.current = coords;
+  };
 
-    const handleMouseUp = () => {
-      if (isDrawing.current && pendingChanges.current.length > 0) {
-        const changes = pendingChanges.current;
-        pendingChanges.current = [];
-        isDrawing.current = false;
-        lastPixel.current = null;
-        setIsPanning(false);
+  const handleMouseUp = () => {
+    if (isDrawing.current && pendingChanges.current.length > 0) {
+      const changes = pendingChanges.current;
+      pendingChanges.current = [];
+      isDrawing.current = false;
+      lastPixel.current = null;
+      setIsPanning(false);
 
-        // Merge all changes into a single pixels map
-        const merged = new Map(canvasState.pixels);
-        for (const { x, y, color } of changes) {
-          const key = `${x},${y},${layerValue}`;
-          if (color === '#00000000' || color.endsWith('00')) {
-            merged.delete(key);
-          } else {
-            merged.set(key, color);
-          }
+      // Merge all changes into a single pixels map
+      const merged = new Map(canvasState.pixels);
+      for (const { x, y, z, color } of changes) {
+        const key = `${x},${y},${z}`;
+        if (color === "#00000000" || (color.length === 9 && color.slice(7) === "00")) {
+          merged.delete(key);
+        } else {
+          merged.set(key, color);
         }
-
-        setCanvasState((prev: CanvasState) => {
-          const next = { ...prev, pixels: merged };
-          onSaveHistory(next);
-          return next;
-        });
-      } else {
-        isDrawing.current = false;
-        lastPixel.current = null;
-        setIsPanning(false);
       }
-    };
 
-const handleTouchStart = (e: React.TouchEvent<HTMLCanvasElement>) => {
-        e.preventDefault();
-        const touch = e.touches[0];
-        if (!touch) return;
-        const coords = getPixelCoords({
-          clientX: touch.clientX,
-          clientY: touch.clientY,
-        } as unknown as React.MouseEvent<HTMLCanvasElement>);
-        if (!coords) return;
-        
-        onActivate(viewType);
-        
-        // CTRL+touch: pick color and add to palette
-        if (isCtrlPressed?.current && onColorPick) {
-          const canvasX = coords.x + rangeXStart;
-          const canvasY = coords.y + rangeYStart;
-          const coords3D = config.to3D(canvasX, canvasY, canvasState, layerValue);
-          const color = getPixel(canvasState, coords3D.x, coords3D.y, coords3D.z);
-          if (color && color !== '#00000000') {
-            onColorPick(color.length === 9 ? color.slice(0, 7) : color);
-          }
-          return;
-        }
-        
-        isDrawing.current = true;
-        pendingChanges.current = [];
-        const changes = applyBrush(coords.x, coords.y);
-        pendingChanges.current.push(...changes);
-        lastPixel.current = coords;
-      };
+      setCanvasState((prev: CanvasState) => {
+        const next = { ...prev, pixels: merged };
+        onSaveHistory(next);
+        return next;
+      });
+    } else {
+      isDrawing.current = false;
+      lastPixel.current = null;
+      setIsPanning(false);
+    }
+  };
 
-const handleTouchMove = (e: React.TouchEvent<HTMLCanvasElement>) => {
-        e.preventDefault();
-        const touch = e.touches[0];
-        if (!touch) return;
-        const coords = getPixelCoords({
-          clientX: touch.clientX,
-          clientY: touch.clientY,
-        } as unknown as React.MouseEvent<HTMLCanvasElement>);
-        if (!coords) return;
-        if (lastPixel.current && coords.x === lastPixel.current.x && coords.y === lastPixel.current.y) return;
+  const handleTouchStart = (e: React.TouchEvent<HTMLCanvasElement>) => {
+    e.preventDefault();
+    const touch = e.touches[0];
+    if (!touch) return;
+    const coords = getPixelCoords({
+      clientX: touch.clientX,
+      clientY: touch.clientY
+    } as unknown as React.MouseEvent<HTMLCanvasElement>);
+    if (!coords) return;
 
-        const changes = applyBrush(coords.x, coords.y);
-        pendingChanges.current.push(...changes);
-        lastPixel.current = coords;
-      };
+    onActivate(viewType);
 
-    const handleTouchEnd = (e: React.TouchEvent<HTMLCanvasElement>) => {
-      e.preventDefault();
-      handleMouseUp();
-    };
+    // CTRL+touch: pick color and add to palette
+    if (isCtrlPressed?.current && onColorPick) {
+      const canvasX = coords.x + rangeXStart;
+      const canvasY = coords.y + rangeYStart;
+      const coords3D = config.to3D(canvasX, canvasY, canvasState, layerValue);
+      const color = getPixel(canvasState, coords3D.x, coords3D.y, coords3D.z);
+      if (color && color !== "#00000000") {
+        onColorPick(color.length === 9 ? color.slice(0, 7) : color);
+      }
+      return;
+    }
 
-    const [layerMin, layerMax] = config.layerRange(canvasState);
+    isDrawing.current = true;
+    pendingChanges.current = [];
+    const changes = applyBrush(coords.x, coords.y);
+    pendingChanges.current.push(...changes);
+    lastPixel.current = coords;
+  };
 
-return (
-    <div 
-      className={`w-full h-full flex flex-col rounded-lg overflow-hidden ${isActive ? 'ring-2 ring-accent' : 'ring-1 ring-border'}`}
+  const handleTouchMove = (e: React.TouchEvent<HTMLCanvasElement>) => {
+    e.preventDefault();
+    const touch = e.touches[0];
+    if (!touch) return;
+    const coords = getPixelCoords({
+      clientX: touch.clientX,
+      clientY: touch.clientY
+    } as unknown as React.MouseEvent<HTMLCanvasElement>);
+    if (!coords) return;
+    if (lastPixel.current && coords.x === lastPixel.current.x && coords.y === lastPixel.current.y) return;
+
+    const changes = applyBrush(coords.x, coords.y);
+    pendingChanges.current.push(...changes);
+    lastPixel.current = coords;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent<HTMLCanvasElement>) => {
+    e.preventDefault();
+    handleMouseUp();
+  };
+
+  const [layerMin, layerMax] = config.layerRange(canvasState);
+
+  return (
+    <div
+      className={`w-full h-full flex flex-col rounded-lg overflow-hidden ${isActive ? "ring-2 ring-accent" : "ring-1 ring-border"}`}
       onMouseEnter={() => onActivate(viewType)}
     >
       {/* Compact view header for mobile */}
       <div className="bg-panel-header px-2 py-1.5 border-b border-border flex items-center justify-between flex-shrink-0">
-        <span className="text-xs font-bold text-accent">{config.label.split(' ')[0]}</span>
-        <span className="text-xs font-mono text-text-dim">{config.layerLabel}={layerValue}</span>
+        <span className="text-xs font-bold text-accent">{config.label.split(" ")[0]}</span>
+        <span className="text-xs font-mono text-text-dim">
+          {config.layerLabel}={layerValue}
+        </span>
       </div>
       {/* Layer slider - compact for mobile */}
       <div className="px-2 py-1.5 bg-panel border-b border-border flex items-center gap-2 flex-shrink-0">
@@ -408,33 +432,68 @@ return (
         <span className="text-[10px] text-text-dim">{layerMax - 1}</span>
       </div>
       {/* Canvas - properly constrained */}
-      <div className="flex-1 relative p-2 overflow-hidden flex items-center justify-center bg-surface min-h-0">
+      <div
+        ref={canvasWrapperRef}
+        className="flex-1 relative p-2 overflow-hidden flex items-center justify-center bg-surface min-h-0"
+      >
         <canvas
-           ref={canvasRef}
-           onMouseDown={handleMouseDown}
-           onMouseMove={handleMouseMove}
-           onMouseUp={handleMouseUp}
-           onMouseLeave={handleMouseUp}
-           onTouchStart={handleTouchStart}
-           onTouchMove={handleTouchMove}
-           onTouchEnd={handleTouchEnd}
-           onContextMenu={(e) => e.preventDefault()}
-           className="cursor-crosshair touch-none"
-           style={{
-             imageRendering: 'pixelated',
-             transform: `translate(${offset.x}px, ${offset.y}px)`
-           } as React.CSSProperties}
+          ref={canvasRef}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={() => {
+            handleMouseUp();
+            mousePos.current = null;
+            setMouseScreenPos(null);
+          }}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          onContextMenu={(e) => e.preventDefault()}
+          className="cursor-crosshair touch-none"
+          style={
+            {
+              imageRendering: "pixelated",
+              transform: `translate(${offset.x}px, ${offset.y}px)`
+            } as React.CSSProperties
+          }
         />
+        {/* Brush preview overlay - centered on cursor using fixed positioning */}
+        {mouseScreenPos && brush.size > 1 && (
+          <div
+            className="fixed pointer-events-none"
+            style={{
+              left: mouseScreenPos.x - (brush.size * pixelSize) / 2,
+              top: mouseScreenPos.y - (brush.size * pixelSize) / 2,
+              width: brush.size * pixelSize,
+              height: brush.size * pixelSize,
+              border: brush.tool === "eraser" ? "1.5px solid #ff4444" : "1.5px solid #ffffff",
+              borderRadius: 2,
+              boxSizing: "border-box"
+            }}
+          />
+        )}
       </div>
     </div>
   );
 };
 
-  const MultiCanvasView: React.FC<MultiCanvasViewProps> = ({ canvasState, setCanvasState, brush, onPixelChange, onSaveHistory, onColorPick, isCtrlPressed,
-    onToggleVisibility, onToggleLock, onRenameLayer }) => {
+const MultiCanvasView: React.FC<MultiCanvasViewProps> = ({
+  canvasState,
+  setCanvasState,
+  brush,
+  onPixelChange,
+  onSaveHistory,
+  onColorPick,
+  isCtrlPressed,
+  onToggleVisibility,
+  onToggleLock,
+  onRenameLayer
+}) => {
   const [scale, setScale] = useState(1);
-  const [activeView, setActiveView] = useState<ViewType>('main');
+  const [activeView, setActiveView] = useState<ViewType>("main");
   const containerRef = useRef<HTMLDivElement>(null);
+  const canvasContainerRef = useRef<HTMLDivElement>(null);
 
   const activeViewRef = useRef<ViewType>(activeView);
   const canvasStateRef = useRef(canvasState);
@@ -475,17 +534,49 @@ return (
     return () => observer.disconnect();
   }, []);
 
-  useEffect(() => { activeViewRef.current = activeView; }, [activeView]);
-  useEffect(() => { canvasStateRef.current = canvasState; }, [canvasState]);
+  useEffect(() => {
+    activeViewRef.current = activeView;
+  }, [activeView]);
+  useEffect(() => {
+    canvasStateRef.current = canvasState;
+  }, [canvasState]);
+
+  // Wheel zoom
+  useEffect(() => {
+    const container = canvasContainerRef.current;
+    if (!container) return;
+
+    const handleWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      const delta = e.deltaY < 0 ? 1.1 : 0.9;
+      setScale((prev) => {
+        const newScale = Math.min(Math.max(prev * delta, 0.25), 8);
+        return newScale;
+      });
+    };
+
+    container.addEventListener("wheel", handleWheel, { passive: false });
+    return () => {
+      container.removeEventListener("wheel", handleWheel);
+    };
+  }, []);
+
+  const zoomIn = () => setScale((prev) => Math.min(prev * 1.25, 8));
+  const zoomOut = () => setScale((prev) => Math.max(prev / 1.25, 0.25));
+  const resetZoom = () => setScale(1);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const currentView = activeViewRef.current;
       const cs = canvasStateRef.current;
 
-       const viewKeys: Record<string, ViewType> = {
-        '1': 'main', '2': 'front', '3': 'left',
-        '4': 'right', '5': 'top', '6': 'bottom'
+      const viewKeys: Record<string, ViewType> = {
+        "1": "main",
+        "2": "front",
+        "3": "left",
+        "4": "right",
+        "5": "top",
+        "6": "bottom"
       };
 
       if (viewKeys[e.key] && !e.ctrlKey && !e.altKey && !e.shiftKey) {
@@ -494,59 +585,72 @@ return (
         return;
       }
 
-      if ((e.key === 'q' || e.key === 'Q') && !e.ctrlKey) {
+      if ((e.key === "q" || e.key === "Q") && !e.ctrlKey) {
         e.preventDefault();
         switch (currentView) {
-          case 'main': case 'front':
-            setMainLayer(prev => Math.max(0, prev - 1)); break;
-          case 'left':
-            setLeftLayer(prev => Math.max(0, prev - 1)); break;
-          case 'right':
-            setRightLayer(prev => Math.max(0, prev - 1)); break;
-          case 'top':
-            setTopLayer(prev => Math.max(0, prev - 1)); break;
-          case 'bottom':
-            setBottomLayer(prev => Math.max(0, prev - 1)); break;
+          case "main":
+          case "front":
+            setMainLayer((prev) => Math.max(0, prev - 1));
+            break;
+          case "left":
+            setLeftLayer((prev) => Math.max(0, prev - 1));
+            break;
+          case "right":
+            setRightLayer((prev) => Math.max(0, prev - 1));
+            break;
+          case "top":
+            setTopLayer((prev) => Math.max(0, prev - 1));
+            break;
+          case "bottom":
+            setBottomLayer((prev) => Math.max(0, prev - 1));
+            break;
         }
       }
 
-      if ((e.key === 'e' || e.key === 'E') && !e.ctrlKey) {
+      if ((e.key === "e" || e.key === "E") && !e.ctrlKey) {
         e.preventDefault();
         switch (currentView) {
-          case 'main': case 'front':
-            setMainLayer(prev => Math.min(cs.layers - 1, prev + 1)); break;
-          case 'left':
-            setLeftLayer(prev => Math.min(cs.width - 1, prev + 1)); break;
-          case 'right':
-            setRightLayer(prev => Math.min(cs.width - 1, prev + 1)); break;
-          case 'top':
-            setTopLayer(prev => Math.min(cs.height - 1, prev + 1)); break;
-          case 'bottom':
-            setBottomLayer(prev => Math.min(cs.height - 1, prev + 1)); break;
+          case "main":
+          case "front":
+            setMainLayer((prev) => Math.min(cs.layers - 1, prev + 1));
+            break;
+          case "left":
+            setLeftLayer((prev) => Math.min(cs.width - 1, prev + 1));
+            break;
+          case "right":
+            setRightLayer((prev) => Math.min(cs.width - 1, prev + 1));
+            break;
+          case "top":
+            setTopLayer((prev) => Math.min(cs.height - 1, prev + 1));
+            break;
+          case "bottom":
+            setBottomLayer((prev) => Math.min(cs.height - 1, prev + 1));
+            break;
         }
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
   const getLayerProps = (viewType: ViewType) => {
     switch (viewType) {
-      case 'main': case 'front':
+      case "main":
+      case "front":
         return { layerValue: mainLayer, setLayerValue: setMainLayer };
-      case 'left':
+      case "left":
         return { layerValue: leftLayer, setLayerValue: setLeftLayer };
-      case 'right':
+      case "right":
         return { layerValue: rightLayer, setLayerValue: setRightLayer };
-      case 'top':
+      case "top":
         return { layerValue: topLayer, setLayerValue: setTopLayer };
-      case 'bottom':
+      case "bottom":
         return { layerValue: bottomLayer, setLayerValue: setBottomLayer };
     }
   };
 
-  const activeViewConfig = views.find(v => v.type === activeView);
+  const activeViewConfig = views.find((v) => v.type === activeView);
   const layerProps = getLayerProps(activeView);
 
   return (
@@ -559,42 +663,65 @@ return (
             onClick={() => setActiveView(v.type)}
             className={`px-3 py-2 rounded-lg text-xs font-bold uppercase whitespace-nowrap transition-all duration-200 touch-target-min flex-shrink-0 ${
               activeView === v.type
-                ? 'bg-accent text-white shadow-lg'
-                : 'bg-panel-hover text-text-dim hover:bg-panel-active'
+                ? "bg-accent text-white shadow-lg"
+                : "bg-panel-hover text-text-dim hover:bg-panel-active"
             }`}
           >
-            {v.label.split(' ')[0]}
+            {v.label.split(" ")[0]}
           </button>
         ))}
       </div>
 
       {/* Canvas area - properly sized to container with edge padding */}
-      <div className="flex-1 p-2 md:p-4 flex items-center justify-center overflow-hidden min-h-0 relative">
-        {/* Scale indicator */}
-        <div className="absolute top-1 right-1 z-10 text-[10px] bg-black/50 text-white px-1.5 py-0.5 rounded pointer-events-none">
-          {scale}x
+      <div
+        ref={canvasContainerRef}
+        className="flex-1 p-2 md:p-4 flex items-center justify-center overflow-hidden min-h-0 relative"
+      >
+        {/* Zoom controls */}
+        <div className="absolute bottom-2 left-2 z-10 flex items-center gap-1 bg-panel/90 backdrop-blur-sm rounded-lg border border-border overflow-hidden">
+          <button
+            onClick={zoomOut}
+            className="px-2 py-1 text-xs font-bold text-text-dim hover:text-text hover:bg-panel-active transition-colors"
+            title="Zoom out"
+          >
+            −
+          </button>
+          <button
+            onClick={resetZoom}
+            className="px-2 py-1 text-[10px] font-mono text-text-dim hover:text-text hover:bg-panel-active transition-colors"
+            title="Reset zoom"
+          >
+            {scale.toFixed(1)}x
+          </button>
+          <button
+            onClick={zoomIn}
+            className="px-2 py-1 text-xs font-bold text-text-dim hover:text-text hover:bg-panel-active transition-colors"
+            title="Zoom in"
+          >
+            +
+          </button>
         </div>
         {activeViewConfig && (
           <CanvasView
-              config={activeViewConfig}
-              canvasState={canvasState}
-              brush={brush}
-              onPixelChange={onPixelChange}
-              onSaveHistory={onSaveHistory}
-              setCanvasState={setCanvasState}
-              scale={scale}
-              setScale={setScale}
-              layerValue={layerProps.layerValue}
-              setLayerValue={layerProps.setLayerValue}
-              isActive={true}
-              viewType={activeView}
-              onActivate={setActiveView}
-              onColorPick={onColorPick}
-              isCtrlPressed={isCtrlPressed}
-              onToggleVisibility={onToggleVisibility}
-              onToggleLock={onToggleLock}
-              onRenameLayer={onRenameLayer}
-            />
+            config={activeViewConfig}
+            canvasState={canvasState}
+            brush={brush}
+            onPixelChange={onPixelChange}
+            onSaveHistory={onSaveHistory}
+            setCanvasState={setCanvasState}
+            scale={scale}
+            setScale={setScale}
+            layerValue={layerProps.layerValue}
+            setLayerValue={layerProps.setLayerValue}
+            isActive={true}
+            viewType={activeView}
+            onActivate={setActiveView}
+            onColorPick={onColorPick}
+            isCtrlPressed={isCtrlPressed}
+            onToggleVisibility={onToggleVisibility}
+            onToggleLock={onToggleLock}
+            onRenameLayer={onRenameLayer}
+          />
         )}
       </div>
     </div>

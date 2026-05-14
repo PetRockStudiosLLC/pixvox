@@ -1,5 +1,5 @@
-import React, { useState, useCallback, useRef } from 'react';
-import { TimelineState, FrameData } from '../../types/voxel';
+import React, { useState, useCallback, useRef } from "react";
+import { TimelineState, FrameData } from "../../types/voxel";
 
 interface MobileTimelineProps {
   timeline: TimelineState;
@@ -18,7 +18,7 @@ const MobileTimeline: React.FC<MobileTimelineProps> = ({
   onKeyframeAdd,
   onKeyframeDelete,
   onFrameReorder,
-  onFrameDurationChange,
+  onFrameDurationChange
 }) => {
   const [showFrameDetails, setShowFrameDetails] = useState<number | null>(null);
   const [draggedFrame, setDraggedFrame] = useState<number | null>(null);
@@ -28,37 +28,52 @@ const MobileTimeline: React.FC<MobileTimelineProps> = ({
     onTimelineChange({ ...timeline, playing: !timeline.playing });
   }, [timeline, onTimelineChange]);
 
-  const handleFrameTap = useCallback((index: number) => {
-    onFrameChange(index);
-  }, [onFrameChange]);
-
-  const handleKeyframeToggle = useCallback((index: number) => {
-    if (index === timeline.currentFrame) {
-      onKeyframeAdd();
-    } else {
+  const handleFrameTap = useCallback(
+    (index: number) => {
       onFrameChange(index);
-      setTimeout(() => onKeyframeAdd(), 50);
-    }
-  }, [timeline.currentFrame, onFrameChange, onKeyframeAdd]);
+    },
+    [onFrameChange]
+  );
+
+  const handleKeyframeToggle = useCallback(
+    (index: number) => {
+      if (index === timeline.currentFrame) {
+        onKeyframeAdd();
+      } else {
+        onFrameChange(index);
+        setTimeout(() => onKeyframeAdd(), 50);
+      }
+    },
+    [timeline.currentFrame, onFrameChange, onKeyframeAdd]
+  );
 
   const handleFrameLongPress = useCallback((index: number) => {
     setShowFrameDetails(index);
   }, []);
 
-  const handleDurationChange = useCallback((frameIndex: number, duration: number) => {
-    if (onFrameDurationChange) {
-      onFrameDurationChange(frameIndex, duration);
-    }
-    setShowFrameDetails(null);
-  }, [onFrameDurationChange]);
+  const handleDurationChange = useCallback(
+    (frameIndex: number, duration: number) => {
+      if (onFrameDurationChange) {
+        onFrameDurationChange(frameIndex, duration);
+      }
+      setShowFrameDetails(null);
+    },
+    [onFrameDurationChange]
+  );
 
-  const handleFramesCountChange = useCallback((totalFrames: number) => {
-    onTimelineChange({ ...timeline, totalFrames: Math.max(1, Math.min(120, totalFrames)) });
-  }, [timeline, onTimelineChange]);
+  const handleFramesCountChange = useCallback(
+    (totalFrames: number) => {
+      onTimelineChange({ ...timeline, totalFrames: Math.max(1, Math.min(120, totalFrames)) });
+    },
+    [timeline, onTimelineChange]
+  );
 
-  const handleFPSChange = useCallback((fps: number) => {
-    onTimelineChange({ ...timeline, fps: Math.max(1, Math.min(60, fps)) });
-  }, [timeline, onTimelineChange]);
+  const handleFPSChange = useCallback(
+    (fps: number) => {
+      onTimelineChange({ ...timeline, fps: Math.max(1, Math.min(60, fps)) });
+    },
+    [timeline, onTimelineChange]
+  );
 
   const handleLoopToggle = useCallback(() => {
     onTimelineChange({ ...timeline, loop: !timeline.loop });
@@ -87,7 +102,7 @@ const MobileTimeline: React.FC<MobileTimelineProps> = ({
     if (scrollRef.current) {
       const frameEl = scrollRef.current.children[timeline.currentFrame] as HTMLElement;
       if (frameEl) {
-        frameEl.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+        frameEl.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
       }
     }
   }, [timeline.currentFrame]);
@@ -122,10 +137,10 @@ const MobileTimeline: React.FC<MobileTimelineProps> = ({
           onClick={handlePlayPause}
           className={`w-12 h-12 flex items-center justify-center rounded-xl transition-all touch-target-min ${
             timeline.playing
-              ? 'bg-accent text-white active:bg-accent-hover'
-              : 'bg-accent-dim text-text-bright active:bg-accent'
+              ? "bg-accent text-white active:bg-accent-hover"
+              : "bg-accent-dim text-text-bright active:bg-accent"
           }`}
-          aria-label={timeline.playing ? 'Pause' : 'Play'}
+          aria-label={timeline.playing ? "Pause" : "Play"}
         >
           {timeline.playing ? (
             <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
@@ -173,11 +188,9 @@ const MobileTimeline: React.FC<MobileTimelineProps> = ({
         <button
           onClick={handleLoopToggle}
           className={`w-10 h-10 flex items-center justify-center rounded transition-colors touch-target-min ${
-            timeline.loop
-              ? 'bg-accent-dim text-text-bright'
-              : 'bg-panel-hover text-text-dim active:text-text'
+            timeline.loop ? "bg-accent-dim text-text-bright" : "bg-panel-hover text-text-dim active:text-text"
           }`}
-          aria-label={timeline.loop ? 'Loop on' : 'Loop off'}
+          aria-label={timeline.loop ? "Loop on" : "Loop off"}
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
@@ -225,11 +238,7 @@ const MobileTimeline: React.FC<MobileTimelineProps> = ({
       </div>
 
       {/* Frame Strip - horizontally scrollable */}
-      <div
-        ref={scrollRef}
-        className="flex gap-1 p-3 overflow-x-auto no-scrollbar"
-        style={{ minHeight: '80px' }}
-      >
+      <div ref={scrollRef} className="flex gap-1 p-3 overflow-x-auto no-scrollbar" style={{ minHeight: "80px" }}>
         {Array.from({ length: timeline.totalFrames }, (_, i) => {
           const frame = timeline.frames[i];
           const isCurrent = i === timeline.currentFrame;
@@ -241,9 +250,9 @@ const MobileTimeline: React.FC<MobileTimelineProps> = ({
             <div
               key={i}
               className={`flex-shrink-0 flex flex-col items-center gap-1 transition-all duration-150 ${
-                isDragged ? 'opacity-50 scale-95' : ''
+                isDragged ? "opacity-50 scale-95" : ""
               }`}
-              style={{ width: '60px' }}
+              style={{ width: "60px" }}
               onTouchStart={(e) => {
                 const touch = e.touches[0];
                 const startX = touch.clientX;
@@ -259,15 +268,15 @@ const MobileTimeline: React.FC<MobileTimelineProps> = ({
                 };
 
                 const handleEnd = (me: TouchEvent) => {
-                  document.removeEventListener('touchmove', handleMove);
-                  document.removeEventListener('touchend', handleEnd);
+                  document.removeEventListener("touchmove", handleMove);
+                  document.removeEventListener("touchend", handleEnd);
                   if (!isDragging) {
                     handleFrameTap(i);
                   }
                 };
 
-                document.addEventListener('touchmove', handleMove, { passive: true });
-                document.addEventListener('touchend', handleEnd);
+                document.addEventListener("touchmove", handleMove, { passive: true });
+                document.addEventListener("touchend", handleEnd);
               }}
               onClick={() => handleFrameTap(i)}
               onContextMenu={(e) => {
@@ -279,10 +288,10 @@ const MobileTimeline: React.FC<MobileTimelineProps> = ({
               <div
                 className={`w-12 h-12 rounded border-2 transition-all touch-target-min flex items-center justify-center relative ${
                   isCurrent
-                    ? 'border-accent bg-panel-active shadow-lg shadow-accent/20'
+                    ? "border-accent bg-panel-active shadow-lg shadow-accent/20"
                     : hasKeyframe
-                    ? 'border-warning bg-panel-hover'
-                    : 'border-border bg-surface'
+                      ? "border-warning bg-panel-hover"
+                      : "border-border bg-surface"
                 }`}
               >
                 {/* Mini canvas preview */}
@@ -294,9 +303,7 @@ const MobileTimeline: React.FC<MobileTimelineProps> = ({
                         <div
                           key={j}
                           className={`${
-                            frame && frame.pixels.size > 0 && hash > 0.4
-                              ? 'bg-accent/30'
-                              : 'bg-transparent'
+                            frame && frame.pixels.size > 0 && hash > 0.4 ? "bg-accent/30" : "bg-transparent"
                           }`}
                         />
                       );
@@ -318,11 +325,7 @@ const MobileTimeline: React.FC<MobileTimelineProps> = ({
               </div>
 
               {/* Frame number */}
-              <span
-                className={`text-[9px] font-mono ${
-                  isCurrent ? 'text-accent font-bold' : 'text-text-dim'
-                }`}
-              >
+              <span className={`text-[9px] font-mono ${isCurrent ? "text-accent font-bold" : "text-text-dim"}`}>
                 {i + 1}
               </span>
             </div>
@@ -334,9 +337,7 @@ const MobileTimeline: React.FC<MobileTimelineProps> = ({
       {showFrameDetails !== null && (
         <div className="border-t border-border bg-panel-header p-3 space-y-3 animate-slide-up">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-text">
-              Frame {showFrameDetails + 1} Details
-            </span>
+            <span className="text-xs font-bold text-text">Frame {showFrameDetails + 1} Details</span>
             <button
               onClick={() => setShowFrameDetails(null)}
               className="w-8 h-8 flex items-center justify-center rounded bg-panel-hover active:bg-panel-active text-text-dim touch-target-min"
@@ -351,7 +352,12 @@ const MobileTimeline: React.FC<MobileTimelineProps> = ({
               <label className="text-[10px] font-bold text-text-dim uppercase">Duration</label>
               <div className="flex items-center gap-2">
                 <button
-                  onClick={() => handleDurationChange(showFrameDetails, Math.max(1, (timeline.frames[showFrameDetails]?.duration || 1) - 1))}
+                  onClick={() =>
+                    handleDurationChange(
+                      showFrameDetails,
+                      Math.max(1, (timeline.frames[showFrameDetails]?.duration || 1) - 1)
+                    )
+                  }
                   className="w-8 h-8 flex items-center justify-center rounded bg-panel-hover active:bg-panel-active text-text-dim touch-target-min"
                 >
                   −
@@ -360,7 +366,9 @@ const MobileTimeline: React.FC<MobileTimelineProps> = ({
                   {timeline.frames[showFrameDetails]?.duration || 1}
                 </span>
                 <button
-                  onClick={() => handleDurationChange(showFrameDetails, (timeline.frames[showFrameDetails]?.duration || 1) + 1)}
+                  onClick={() =>
+                    handleDurationChange(showFrameDetails, (timeline.frames[showFrameDetails]?.duration || 1) + 1)
+                  }
                   className="w-8 h-8 flex items-center justify-center rounded bg-panel-hover active:bg-panel-active text-text-dim touch-target-min"
                 >
                   +
@@ -381,19 +389,17 @@ const MobileTimeline: React.FC<MobileTimelineProps> = ({
                 }}
                 className={`w-full py-2 rounded text-xs font-bold transition-colors touch-target-min ${
                   timeline.frames[showFrameDetails]?.hasKeyframe
-                    ? 'bg-warning text-white'
-                    : 'bg-panel-hover text-text-dim active:text-text'
+                    ? "bg-warning text-white"
+                    : "bg-panel-hover text-text-dim active:text-text"
                 }`}
               >
-                {timeline.frames[showFrameDetails]?.hasKeyframe ? 'Has Keyframe' : 'Add Keyframe'}
+                {timeline.frames[showFrameDetails]?.hasKeyframe ? "Has Keyframe" : "Add Keyframe"}
               </button>
             </div>
           </div>
 
           {/* Pixel count */}
-          <div className="text-[10px] text-text-dim">
-            Voxels: {timeline.frames[showFrameDetails]?.pixels.size || 0}
-          </div>
+          <div className="text-[10px] text-text-dim">Voxels: {timeline.frames[showFrameDetails]?.pixels.size || 0}</div>
         </div>
       )}
     </div>

@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { ColorPalette, loadPalettes, savePalettes, generateRandomPalette } from '../utils/paletteManager';
-import { IconPlus, IconClose, IconSave } from './Icons';
+import React, { useState, useEffect, useCallback } from "react";
+import { ColorPalette, loadPalettes, savePalettes, generateRandomPalette } from "../utils/paletteManager";
+import { IconPlus, IconClose, IconSave } from "./Icons";
 
 interface PaletteManagerProps {
   currentColors: string[];
@@ -9,8 +9,10 @@ interface PaletteManagerProps {
 
 const PaletteManager: React.FC<PaletteManagerProps> = ({ currentColors, onLoadPalette }) => {
   const [palettes, setPalettes] = useState<ColorPalette[]>([]);
-  const [newPaletteName, setNewPaletteName] = useState('');
-  const [generateType, setGenerateType] = useState<'complementary' | 'analogous' | 'triadic' | 'split-complementary' | 'monochromatic' | 'random'>('triadic');
+  const [newPaletteName, setNewPaletteName] = useState("");
+  const [generateType, setGenerateType] = useState<
+    "complementary" | "analogous" | "triadic" | "split-complementary" | "monochromatic" | "random"
+  >("triadic");
   const [generateCount, setGenerateCount] = useState(8);
 
   useEffect(() => {
@@ -27,23 +29,29 @@ const PaletteManager: React.FC<PaletteManagerProps> = ({ currentColors, onLoadPa
     const updated = [...palettes, newPalette];
     setPalettes(updated);
     savePalettes(updated);
-    setNewPaletteName('');
+    setNewPaletteName("");
   }, [newPaletteName, currentColors, palettes]);
 
-  const handleDeletePalette = useCallback((index: number) => {
-    const updated = palettes.filter((_, i) => i !== index);
-    setPalettes(updated);
-    savePalettes(updated);
-  }, [palettes]);
+  const handleDeletePalette = useCallback(
+    (index: number) => {
+      const updated = palettes.filter((_, i) => i !== index);
+      setPalettes(updated);
+      savePalettes(updated);
+    },
+    [palettes]
+  );
 
   const handleGeneratePalette = useCallback(() => {
     const colors = generateRandomPalette(generateType, generateCount);
     onLoadPalette(colors);
   }, [generateType, generateCount, onLoadPalette]);
 
-  const handleLoadPalette = useCallback((palette: ColorPalette) => {
-    onLoadPalette(palette.colors);
-  }, [onLoadPalette]);
+  const handleLoadPalette = useCallback(
+    (palette: ColorPalette) => {
+      onLoadPalette(palette.colors);
+    },
+    [onLoadPalette]
+  );
 
   return (
     <div className="flex flex-col gap-3">
@@ -56,7 +64,7 @@ const PaletteManager: React.FC<PaletteManagerProps> = ({ currentColors, onLoadPa
             onChange={(e) => setNewPaletteName(e.target.value)}
             placeholder="Name..."
             className="flex-1 px-2 py-1.5 bg-surface text-text rounded-sm border border-border-light focus:border-accent outline-none transition-colors text-xs"
-            onKeyDown={(e) => e.key === 'Enter' && handleSavePalette()}
+            onKeyDown={(e) => e.key === "Enter" && handleSavePalette()}
           />
           <button
             onClick={handleSavePalette}
@@ -72,7 +80,17 @@ const PaletteManager: React.FC<PaletteManagerProps> = ({ currentColors, onLoadPa
         <div className="space-y-2">
           <select
             value={generateType}
-            onChange={(e) => setGenerateType(e.target.value as 'complementary' | 'analogous' | 'triadic' | 'split-complementary' | 'monochromatic' | 'random')}
+            onChange={(e) =>
+              setGenerateType(
+                e.target.value as
+                  | "complementary"
+                  | "analogous"
+                  | "triadic"
+                  | "split-complementary"
+                  | "monochromatic"
+                  | "random"
+              )
+            }
             className="w-full px-2 py-1.5 bg-surface text-text rounded-sm border border-border-light outline-none appearance-none text-xs"
           >
             <option value="triadic">Triadic</option>
@@ -114,16 +132,15 @@ const PaletteManager: React.FC<PaletteManagerProps> = ({ currentColors, onLoadPa
             </div>
           )}
           {palettes.map((palette, index) => (
-            <div key={palette.createdAt} className="bg-panel border border-border rounded-sm p-2 flex items-center gap-2 group">
+            <div
+              key={palette.createdAt}
+              className="bg-panel border border-border rounded-sm p-2 flex items-center gap-2 group"
+            >
               <div className="flex-1 min-w-0" onClick={() => handleLoadPalette(palette)}>
                 <span className="block text-xs font-medium text-text truncate">{palette.name}</span>
                 <div className="flex gap-0.5 mt-1">
                   {palette.colors.map((color, i) => (
-                    <div
-                      key={i}
-                      className="w-4 h-4 rounded-sm flex-shrink-0"
-                      style={{ backgroundColor: color }}
-                    />
+                    <div key={i} className="w-4 h-4 rounded-sm flex-shrink-0" style={{ backgroundColor: color }} />
                   ))}
                 </div>
               </div>

@@ -1,29 +1,36 @@
-import React, { useRef, useEffect, useCallback, useState } from 'react';
-import * as THREE from 'three';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { CanvasState, BrushState } from '../types/voxel';
-import { SpatialHash } from '../utils/spatialHash';
-import { greedyMesh } from '../utils/greedyMesher';
-import { buildMergedGeometry, createVoxelBox } from '../utils/meshBuilder';
-import Viewcube from './Viewcube';
+import React, { useRef, useEffect, useCallback, useState } from "react";
+import * as THREE from "three";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { CanvasState, BrushState } from "../types/voxel";
+import { SpatialHash } from "../utils/spatialHash";
+import { greedyMesh } from "../utils/greedyMesher";
+import { buildMergedGeometry, createVoxelBox } from "../utils/meshBuilder";
+import Viewcube from "./Viewcube";
 
 interface VoxelSceneProps {
   canvasState: CanvasState;
-  mode: 'fast-draft' | 'final-bake';
+  mode: "fast-draft" | "final-bake";
   brush?: BrushState;
   onPixelChange?: (x: number, y: number, z: number, color: string) => void;
   onTypeChange?: (x: number, y: number, z: number, type: string | null) => void;
   onSceneReady?: (scene: THREE.Scene) => void;
 }
 
-const VoxelScene: React.FC<VoxelSceneProps> = ({ canvasState, mode, brush, onPixelChange, onTypeChange, onSceneReady }) => {
+const VoxelScene: React.FC<VoxelSceneProps> = ({
+  canvasState,
+  mode,
+  brush,
+  onPixelChange,
+  onTypeChange,
+  onSceneReady
+}) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
   const controlsRef = useRef<OrbitControls | null>(null);
   const voxelMeshesRef = useRef<THREE.Object3D[]>([]);
-  const [currentView, setCurrentView] = useState<'main' | 'front' | 'left' | 'right' | 'top' | 'bottom'>('main');
+  const [currentView, setCurrentView] = useState<"main" | "front" | "left" | "right" | "top" | "bottom">("main");
 
   // Editing state
   const highlightMeshRef = useRef<THREE.Mesh | null>(null);
@@ -37,24 +44,32 @@ const VoxelScene: React.FC<VoxelSceneProps> = ({ canvasState, mode, brush, onPix
   const canvasStateRef = useRef(canvasState);
   const shiftHeldRef = useRef(false);
 
-  useEffect(() => { brushRef.current = brush; }, [brush]);
-  useEffect(() => { onPixelChangeRef.current = onPixelChange; }, [onPixelChange]);
-  useEffect(() => { onTypeChangeRef.current = onTypeChange; });
-  useEffect(() => { canvasStateRef.current = canvasState; }, [canvasState]);
+  useEffect(() => {
+    brushRef.current = brush;
+  }, [brush]);
+  useEffect(() => {
+    onPixelChangeRef.current = onPixelChange;
+  }, [onPixelChange]);
+  useEffect(() => {
+    onTypeChangeRef.current = onTypeChange;
+  });
+  useEffect(() => {
+    canvasStateRef.current = canvasState;
+  }, [canvasState]);
 
   // Track Shift key
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Shift') shiftHeldRef.current = true;
+      if (e.key === "Shift") shiftHeldRef.current = true;
     };
     const onKeyUp = (e: KeyboardEvent) => {
-      if (e.key === 'Shift') shiftHeldRef.current = false;
+      if (e.key === "Shift") shiftHeldRef.current = false;
     };
-    window.addEventListener('keydown', onKeyDown);
-    window.addEventListener('keyup', onKeyUp);
+    window.addEventListener("keydown", onKeyDown);
+    window.addEventListener("keyup", onKeyUp);
     return () => {
-      window.removeEventListener('keydown', onKeyDown);
-      window.removeEventListener('keyup', onKeyUp);
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("keyup", onKeyUp);
     };
   }, []);
 
@@ -68,7 +83,7 @@ const VoxelScene: React.FC<VoxelSceneProps> = ({ canvasState, mode, brush, onPix
     const { width, height, layers, pixels } = canvasState;
 
     for (const [key, color] of pixels) {
-      const [x, y, z] = key.split(',').map(Number);
+      const [x, y, z] = key.split(",").map(Number);
       // Flip Y coordinate to match 3D space (canvas Y=0 is top, 3D Y=0 is bottom)
       const flippedY = height - 1 - y;
       if (x >= 0 && x < width && flippedY >= 0 && flippedY < height && z >= 0 && z < layers) {
@@ -80,30 +95,30 @@ const VoxelScene: React.FC<VoxelSceneProps> = ({ canvasState, mode, brush, onPix
   }, [canvasState]);
 
   // Handle view change from Viewcube
-  const handleViewChange = useCallback((view: 'main' | 'front' | 'left' | 'right' | 'top' | 'bottom') => {
+  const handleViewChange = useCallback((view: "main" | "front" | "left" | "right" | "top" | "bottom") => {
     setCurrentView(view);
     if (!cameraRef.current || !controlsRef.current) return;
     const camera = cameraRef.current;
     const controls = controlsRef.current;
 
     switch (view) {
-      case 'main':
+      case "main":
         camera.position.set(20, 20, 20);
         break;
-      case 'front':
+      case "front":
         camera.position.set(0, 10, 20);
         break;
-      case 'left':
+      case "left":
         camera.position.set(-20, 10, 0);
         break;
-      case 'right':
+      case "right":
         camera.position.set(20, 10, 0);
         break;
-      case 'top':
+      case "top":
         camera.position.set(0, 20, 0);
         camera.lookAt(0, 0, 0);
         break;
-      case 'bottom':
+      case "bottom":
         camera.position.set(0, -20, 0);
         camera.lookAt(0, 0, 0);
         break;
@@ -139,7 +154,7 @@ const VoxelScene: React.FC<VoxelSceneProps> = ({ canvasState, mode, brush, onPix
     return { x, y: canvasY, z };
   }, []);
 
-// Raycast to find voxel at screen position using 3D DDA raymarching
+  // Raycast to find voxel at screen position using 3D DDA raymarching
   const raycastVoxel = useCallback((mouseX: number, mouseY: number, placementMode: boolean = false) => {
     if (!cameraRef.current || !rendererRef.current) return null;
     const camera = cameraRef.current;
@@ -200,24 +215,33 @@ const VoxelScene: React.FC<VoxelSceneProps> = ({ canvasState, mode, brush, onPix
         }
       } else {
         // Left bounds, check if ray is moving away
-        if ((x < 0 && stepX <= 0) || (x >= cs.width && stepX >= 0) ||
-            (y < 0 && stepY <= 0) || (y >= cs.height && stepY >= 0) ||
-            (z < 0 && stepZ <= 0) || (z >= cs.layers && stepZ >= 0)) {
+        if (
+          (x < 0 && stepX <= 0) ||
+          (x >= cs.width && stepX >= 0) ||
+          (y < 0 && stepY <= 0) ||
+          (y >= cs.height && stepY >= 0) ||
+          (z < 0 && stepZ <= 0) ||
+          (z >= cs.layers && stepZ >= 0)
+        ) {
           break;
         }
       }
 
       if (tmaxX < tmaxY) {
         if (tmaxX < tmaxZ) {
-          x += stepX; tmaxX += tdx;
+          x += stepX;
+          tmaxX += tdx;
         } else {
-          z += stepZ; tmaxZ += tdz;
+          z += stepZ;
+          tmaxZ += tdz;
         }
       } else {
         if (tmaxY < tmaxZ) {
-          y += stepY; tmaxY += tdy;
+          y += stepY;
+          tmaxY += tdy;
         } else {
-          z += stepZ; tmaxZ += tdz;
+          z += stepZ;
+          tmaxZ += tdz;
         }
       }
     }
@@ -277,7 +301,7 @@ const VoxelScene: React.FC<VoxelSceneProps> = ({ canvasState, mode, brush, onPix
     const spatialHash = buildVoxelData();
     if (spatialHash.size === 0) return;
 
-    if (mode === 'fast-draft') {
+    if (mode === "fast-draft") {
       // Use shared geometry
       const geometry = getSharedGeometry();
       // Group voxels by color for material reuse
@@ -295,8 +319,8 @@ const VoxelScene: React.FC<VoxelSceneProps> = ({ canvasState, mode, brush, onPix
           const v = voxels[0];
           const material = getCachedMaterial(color);
           const mesh = new THREE.Mesh(geometry, material);
-mesh.position.set(v.x + 0.5, v.y + 0.5, v.z + 0.5);
-           voxelGroupRef.current!.add(mesh);
+          mesh.position.set(v.x + 0.5, v.y + 0.5, v.z + 0.5);
+          voxelGroupRef.current!.add(mesh);
           voxelMeshesRef.current.push(mesh);
         } else {
           // Multiple voxels with same color: use InstancedMesh
@@ -307,8 +331,8 @@ mesh.position.set(v.x + 0.5, v.y + 0.5, v.z + 0.5);
             matrix.setPosition(v.x + 0.5, v.y + 0.5, v.z + 0.5);
             instancedMesh.setMatrixAt(idx, matrix);
           });
-instancedMesh.instanceMatrix.needsUpdate = true;
-           voxelGroupRef.current!.add(instancedMesh);
+          instancedMesh.instanceMatrix.needsUpdate = true;
+          voxelGroupRef.current!.add(instancedMesh);
           voxelMeshesRef.current.push(instancedMesh);
         }
       }
@@ -369,7 +393,7 @@ instancedMesh.instanceMatrix.needsUpdate = true;
       color: 0xffffff,
       wireframe: true,
       transparent: true,
-      opacity: 0.6,
+      opacity: 0.6
     });
     const highlightMesh = new THREE.Mesh(highlightGeo, highlightMat);
     highlightMesh.visible = false;
@@ -392,98 +416,98 @@ instancedMesh.instanceMatrix.needsUpdate = true;
     // Editing: mouse handlers for voxel placement/removal
     raycasterRef.current = new THREE.Raycaster();
 
-      const handleMouseDown = (e: MouseEvent) => {
-        mouseDownPosRef.current = { x: e.clientX, y: e.clientY };
-      };
+    const handleMouseDown = (e: MouseEvent) => {
+      mouseDownPosRef.current = { x: e.clientX, y: e.clientY };
+    };
 
-      const handleMouseMove = (e: MouseEvent) => {
-        const cs = canvasStateRef.current;
-        if (!brushRef.current || !onPixelChangeRef.current || !cs.pixels.size) return;
-        const result = raycastVoxel(e.clientX, e.clientY, shiftHeldRef.current);
-        if (result) {
-          updateHighlight(result.x, result.y, result.z);
-        } else {
-          hideHighlight();
-        }
-      };
+    const handleMouseMove = (e: MouseEvent) => {
+      const cs = canvasStateRef.current;
+      if (!brushRef.current || !onPixelChangeRef.current || !cs.pixels.size) return;
+      const result = raycastVoxel(e.clientX, e.clientY, shiftHeldRef.current);
+      if (result) {
+        updateHighlight(result.x, result.y, result.z);
+      } else {
+        hideHighlight();
+      }
+    };
 
-      const handleMouseUp = (e: MouseEvent) => {
-        const cs = canvasStateRef.current;
-        const br = brushRef.current;
-        const onChange = onPixelChangeRef.current;
-        if (!br || !onChange || !mouseDownPosRef.current) return;
+    const handleMouseUp = (e: MouseEvent) => {
+      const cs = canvasStateRef.current;
+      const br = brushRef.current;
+      const onChange = onPixelChangeRef.current;
+      if (!br || !onChange || !mouseDownPosRef.current) return;
 
-        const dx = e.clientX - mouseDownPosRef.current.x;
-        const dy = e.clientY - mouseDownPosRef.current.y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
+      const dx = e.clientX - mouseDownPosRef.current.x;
+      const dy = e.clientY - mouseDownPosRef.current.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
 
-        // Only treat as click if mouse didn't move much (otherwise it's orbit/pan)
-        if (dist > 4) {
-          mouseDownPosRef.current = null;
-          return;
-        }
-
+      // Only treat as click if mouse didn't move much (otherwise it's orbit/pan)
+      if (dist > 4) {
         mouseDownPosRef.current = null;
+        return;
+      }
 
-        // Only handle left click (button 0)
-        if (e.button !== 0) return;
+      mouseDownPosRef.current = null;
 
-        const placementMode = shiftHeldRef.current;
-        const result = raycastVoxel(e.clientX, e.clientY, placementMode);
-        if (!result) return;
+      // Only handle left click (button 0)
+      if (e.button !== 0) return;
 
-        const canvas = voxel3DToCanvas(result.x, result.y, result.z);
-        const key = `${canvas.x},${canvas.y},${canvas.z}`;
+      const placementMode = shiftHeldRef.current;
+      const result = raycastVoxel(e.clientX, e.clientY, placementMode);
+      if (!result) return;
 
-        if (br.tool === 'eraser') {
-          if (cs.pixels.has(key)) {
-            onChange(canvas.x, canvas.y, canvas.z, '#00000000');
-          }
-        } else if (br.tool === 'point' || br.tool === 'bucket') {
-          onChange(canvas.x, canvas.y, canvas.z, br.color);
-        }
-      };
+      const canvas = voxel3DToCanvas(result.x, result.y, result.z);
+      const key = `${canvas.x},${canvas.y},${canvas.z}`;
 
-      const handleContextMenu = (e: Event) => {
-        e.preventDefault();
-        const cs = canvasStateRef.current;
-        const onChange = onPixelChangeRef.current;
-        if (!onChange || !mouseDownPosRef.current) return;
-
-        // Don't erase if mouse moved (panning)
-        const me = e as MouseEvent;
-        const dx = me.clientX - mouseDownPosRef.current.x;
-        const dy = me.clientY - mouseDownPosRef.current.y;
-        if (Math.sqrt(dx * dx + dy * dy) > 4) return;
-
-        const result = raycastVoxel(me.clientX, me.clientY);
-        if (!result) return;
-
-        const canvas = voxel3DToCanvas(result.x, result.y, result.z);
-        const key = `${canvas.x},${canvas.y},${canvas.z}`;
-
-        // Right click: eraser behavior
+      if (br.tool === "eraser") {
         if (cs.pixels.has(key)) {
-          onChange(canvas.x, canvas.y, canvas.z, '#00000000');
-          onTypeChangeRef.current?.(canvas.x, canvas.y, canvas.z, null);
+          onChange(canvas.x, canvas.y, canvas.z, "#00000000");
         }
-      };
+      } else if (br.tool === "point" || br.tool === "bucket") {
+        onChange(canvas.x, canvas.y, canvas.z, br.color);
+      }
+    };
 
-      renderer.domElement.addEventListener('mousedown', handleMouseDown);
-      renderer.domElement.addEventListener('mousemove', handleMouseMove);
-      renderer.domElement.addEventListener('mouseup', handleMouseUp);
-      renderer.domElement.addEventListener('contextmenu', handleContextMenu);
+    const handleContextMenu = (e: Event) => {
+      e.preventDefault();
+      const cs = canvasStateRef.current;
+      const onChange = onPixelChangeRef.current;
+      if (!onChange || !mouseDownPosRef.current) return;
 
-      // Return cleanup for these handlers
-      const cleanupEditing = () => {
-        renderer.domElement.removeEventListener('mousedown', handleMouseDown);
-        renderer.domElement.removeEventListener('mousemove', handleMouseMove);
-        renderer.domElement.removeEventListener('mouseup', handleMouseUp);
-        renderer.domElement.removeEventListener('contextmenu', handleContextMenu);
-      };
+      // Don't erase if mouse moved (panning)
+      const me = e as MouseEvent;
+      const dx = me.clientX - mouseDownPosRef.current.x;
+      const dy = me.clientY - mouseDownPosRef.current.y;
+      if (Math.sqrt(dx * dx + dy * dy) > 4) return;
 
-      // Store cleanup function in a ref for later use
-      editingCleanupRef.current = cleanupEditing;
+      const result = raycastVoxel(me.clientX, me.clientY);
+      if (!result) return;
+
+      const canvas = voxel3DToCanvas(result.x, result.y, result.z);
+      const key = `${canvas.x},${canvas.y},${canvas.z}`;
+
+      // Right click: eraser behavior
+      if (cs.pixels.has(key)) {
+        onChange(canvas.x, canvas.y, canvas.z, "#00000000");
+        onTypeChangeRef.current?.(canvas.x, canvas.y, canvas.z, null);
+      }
+    };
+
+    renderer.domElement.addEventListener("mousedown", handleMouseDown);
+    renderer.domElement.addEventListener("mousemove", handleMouseMove);
+    renderer.domElement.addEventListener("mouseup", handleMouseUp);
+    renderer.domElement.addEventListener("contextmenu", handleContextMenu);
+
+    // Return cleanup for these handlers
+    const cleanupEditing = () => {
+      renderer.domElement.removeEventListener("mousedown", handleMouseDown);
+      renderer.domElement.removeEventListener("mousemove", handleMouseMove);
+      renderer.domElement.removeEventListener("mouseup", handleMouseUp);
+      renderer.domElement.removeEventListener("contextmenu", handleContextMenu);
+    };
+
+    // Store cleanup function in a ref for later use
+    editingCleanupRef.current = cleanupEditing;
     const animate = () => {
       requestAnimationFrame(animate);
       controls.update();
@@ -502,10 +526,10 @@ instancedMesh.instanceMatrix.needsUpdate = true;
       camera.updateProjectionMatrix();
       renderer.setSize(w, h);
     };
-    window.addEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
 
     return () => {
-      window.removeEventListener('resize', handleResize);
+      window.removeEventListener("resize", handleResize);
       controls.dispose();
       // Cleanup editing handlers
       if (editingCleanupRef.current) {
@@ -527,7 +551,7 @@ instancedMesh.instanceMatrix.needsUpdate = true;
         sharedGeometryRef.current = null;
       }
       // Dispose cached materials
-      materialCacheRef.current.forEach(mat => mat.dispose());
+      materialCacheRef.current.forEach((mat) => mat.dispose());
       materialCacheRef.current.clear();
       if (container.contains(renderer.domElement)) {
         container.removeChild(renderer.domElement);

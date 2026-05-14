@@ -1,7 +1,7 @@
-import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { CanvasState, BrushState } from '../../types/voxel';
-import { getPixel } from '../../utils/canvasBuffer';
-import { getBrush, BrushContext } from '../../utils/brushes';
+import React, { useState, useCallback, useRef, useEffect } from "react";
+import { CanvasState, BrushState } from "../../types/voxel";
+import { getPixel } from "../../utils/canvasBuffer";
+import { getBrush, BrushContext } from "../../utils/brushes";
 
 interface MobileCanvasProps {
   canvasState: CanvasState;
@@ -17,18 +17,18 @@ interface MobileCanvasProps {
   onOffsetChange: (offset: { x: number; y: number }) => void;
 }
 
-type ViewType = 'main' | 'front' | 'left' | 'right' | 'top' | 'bottom';
+type ViewType = "main" | "front" | "left" | "right" | "top" | "bottom";
 
 const viewLabels: Record<ViewType, string> = {
-  main: 'Main',
-  front: 'Front',
-  left: 'Left',
-  right: 'Right',
-  top: 'Top',
-  bottom: 'Bottom',
+  main: "Main",
+  front: "Front",
+  left: "Left",
+  right: "Right",
+  top: "Top",
+  bottom: "Bottom"
 };
 
-const viewOrder: ViewType[] = ['main', 'front', 'left', 'right', 'top', 'bottom'];
+const viewOrder: ViewType[] = ["main", "front", "left", "right", "top", "bottom"];
 
 const MobileCanvas: React.FC<MobileCanvasProps> = ({
   canvasState,
@@ -41,13 +41,13 @@ const MobileCanvas: React.FC<MobileCanvasProps> = ({
   zoom,
   onZoomChange,
   offset,
-  onOffsetChange,
+  onOffsetChange
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const isDrawing = useRef(false);
   const lastPixel = useRef<{ x: number; y: number } | null>(null);
-  const [activeView, setActiveView] = useState<ViewType>('main');
+  const [activeView, setActiveView] = useState<ViewType>("main");
   const [containerSize, setContainerSize] = useState({ width: 300, height: 300 });
   const [showLayerSlider, setShowLayerSlider] = useState(false);
 
@@ -87,24 +87,20 @@ const MobileCanvas: React.FC<MobileCanvasProps> = ({
   // Calculate pixel size
   const viewWidth = canvasState.width;
   const viewHeight = canvasState.height;
-  const pixelSize = Math.min(
-    containerSize.width / viewWidth,
-    containerSize.height / viewHeight,
-    20
-  ) * zoom;
+  const pixelSize = Math.min(containerSize.width / viewWidth, containerSize.height / viewHeight, 20) * zoom;
 
   // Draw canvas
   const drawCanvas = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
     canvas.width = viewWidth * pixelSize;
     canvas.height = viewHeight * pixelSize;
 
     // Background
-    ctx.fillStyle = '#1a1a2e';
+    ctx.fillStyle = "#1a1a2e";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     // Draw checkerboard for transparency
@@ -112,7 +108,7 @@ const MobileCanvas: React.FC<MobileCanvasProps> = ({
     for (let py = 0; py < viewHeight; py++) {
       for (let px = 0; px < viewWidth; px++) {
         const isEven = (Math.floor(px / 2) + Math.floor(py / 2)) % 2 === 0;
-        ctx.fillStyle = isEven ? '#2a2a3e' : '#252538';
+        ctx.fillStyle = isEven ? "#2a2a3e" : "#252538";
         ctx.fillRect(px * pixelSize, py * pixelSize, pixelSize, pixelSize);
       }
     }
@@ -122,7 +118,7 @@ const MobileCanvas: React.FC<MobileCanvasProps> = ({
       for (let px = 0; px < viewWidth; px++) {
         const key = `${px},${py},${activeLayer}`;
         const color = canvasState.pixels.get(key);
-        if (!color || color === '#00000000' || (color.length === 9 && color.endsWith('00'))) {
+        if (!color || color === "#00000000" || (color.length === 9 && color.slice(7) === "00")) {
           continue;
         }
         ctx.fillStyle = color.length === 9 ? color.slice(0, 7) : color;
@@ -131,7 +127,7 @@ const MobileCanvas: React.FC<MobileCanvasProps> = ({
     }
 
     // Draw grid lines
-    ctx.strokeStyle = 'rgba(68, 68, 68, 0.5)';
+    ctx.strokeStyle = "rgba(68, 68, 68, 0.5)";
     ctx.lineWidth = 0.5;
     for (let x = 0; x <= viewWidth; x++) {
       ctx.beginPath();
@@ -150,7 +146,7 @@ const MobileCanvas: React.FC<MobileCanvasProps> = ({
     if (lastPixel.current && brush.size > 1) {
       const bx = lastPixel.current.x;
       const by = lastPixel.current.y;
-      ctx.strokeStyle = brush.tool === 'eraser' ? '#ff4444' : '#ffffff';
+      ctx.strokeStyle = brush.tool === "eraser" ? "#ff4444" : "#ffffff";
       ctx.lineWidth = 1;
       ctx.setLineDash([3, 3]);
       ctx.strokeRect(bx * pixelSize, by * pixelSize, brush.size * pixelSize, brush.size * pixelSize);
@@ -187,19 +183,19 @@ const MobileCanvas: React.FC<MobileCanvasProps> = ({
       y: canvasY,
       lastX: lastPixel.current?.x,
       lastY: lastPixel.current?.y,
-      to3D: (cx: number, cy: number) => ({ x: cx, y: cy, z: activeLayer }),
+      to3D: (cx: number, cy: number) => ({ x: cx, y: cy, z: activeLayer })
     };
 
     const changes = brushHandler.getChanges(ctx);
     for (const { x: px, y: py, color } of changes) {
       const key = `${px},${py},${activeLayer}`;
-      if (color === '#00000000' || color.endsWith('00')) {
+      if (color === "#00000000" || (color.length === 9 && color.slice(7) === "00")) {
         canvasState.pixels.delete(key);
       } else {
         canvasState.pixels.set(key, color);
       }
     }
-    onPixelChange(0, 0, 0, '');
+    onPixelChange(0, 0, 0, "");
   };
 
   // Eyedropper: pick color from canvas
@@ -208,103 +204,124 @@ const MobileCanvas: React.FC<MobileCanvasProps> = ({
     if (!coords || !onColorPick) return;
     const key = `${coords.x},${coords.y},${activeLayer}`;
     const color = canvasState.pixels.get(key);
-    if (color && color !== '#00000000') {
+    if (color && color !== "#00000000") {
       onColorPick(color.length === 9 ? color.slice(0, 7) : color);
     }
   };
 
   // Touch handlers
-  const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    e.preventDefault();
+  const handleTouchStart = useCallback(
+    (e: React.TouchEvent) => {
+      e.preventDefault();
 
-    const touches = e.touches;
+      const touches = e.touches;
 
-    // Two-finger: pinch-to-zoom or pan
-    if (touches.length === 2) {
-      isPanning.current = true;
-      const dx = touches[0].clientX - touches[1].clientX;
-      const dy = touches[0].clientY - touches[1].clientY;
-      initialPinchDistance.current = Math.sqrt(dx * dx + dy * dy);
-      initialZoom.current = zoom;
-      panStart.current = {
-        x: (touches[0].clientX + touches[1].clientX) / 2,
-        y: (touches[0].clientY + touches[1].clientY) / 2,
-      };
-      offsetStart.current = { ...offset };
-      return;
-    }
-
-    // Single finger: drawing or eyedropper
-    const touch = touches[0];
-    if (!touch) return;
-
-    // Long press for eyedropper
-    longPressPos.current = { x: touch.clientX, y: touch.clientY };
-    longPressTimer.current = setTimeout(() => {
-      setIsEyedropper(true);
-      if (longPressPos.current) {
-        pickColor(longPressPos.current.x, longPressPos.current.y);
+      // Two-finger: pinch-to-zoom or pan
+      if (touches.length === 2) {
+        isPanning.current = true;
+        const dx = touches[0].clientX - touches[1].clientX;
+        const dy = touches[0].clientY - touches[1].clientY;
+        initialPinchDistance.current = Math.sqrt(dx * dx + dy * dy);
+        initialZoom.current = zoom;
+        panStart.current = {
+          x: (touches[0].clientX + touches[1].clientX) / 2,
+          y: (touches[0].clientY + touches[1].clientY) / 2
+        };
+        offsetStart.current = { ...offset };
+        return;
       }
-      // Haptic feedback if available
-      if (navigator.vibrate) navigator.vibrate(50);
-    }, 500);
 
-    const coords = getPixelCoords(touch.clientX, touch.clientY);
-    if (!coords) return;
+      // Single finger: drawing or eyedropper
+      const touch = touches[0];
+      if (!touch) return;
 
-    isDrawing.current = true;
-    applyBrush(coords.x, coords.y);
-    lastPixel.current = coords;
-  }, [canvasState, brush, activeLayer, onPixelChange, onColorPick, zoom, offset, pixelSize, viewWidth, viewHeight]);
+      // Long press for eyedropper
+      longPressPos.current = { x: touch.clientX, y: touch.clientY };
+      longPressTimer.current = setTimeout(() => {
+        setIsEyedropper(true);
+        if (longPressPos.current) {
+          pickColor(longPressPos.current.x, longPressPos.current.y);
+        }
+        // Haptic feedback if available
+        if (navigator.vibrate) navigator.vibrate(50);
+      }, 500);
 
-  const handleTouchMove = useCallback((e: React.TouchEvent) => {
-    e.preventDefault();
+      const coords = getPixelCoords(touch.clientX, touch.clientY);
+      if (!coords) return;
 
-    const touches = e.touches;
+      isDrawing.current = true;
+      applyBrush(coords.x, coords.y);
+      lastPixel.current = coords;
+    },
+    [canvasState, brush, activeLayer, onPixelChange, onColorPick, zoom, offset, pixelSize, viewWidth, viewHeight]
+  );
 
-    // Two-finger: pinch-to-zoom or pan
-    if (touches.length === 2 && isPanning.current) {
-      const dx = touches[0].clientX - touches[1].clientX;
-      const dy = touches[0].clientY - touches[1].clientY;
-      const distance = Math.sqrt(dx * dx + dy * dy);
-      const scale = distance / initialPinchDistance.current;
-      const newZoom = Math.max(0.25, Math.min(8, initialZoom.current * scale));
-      onZoomChange(newZoom);
+  const handleTouchMove = useCallback(
+    (e: React.TouchEvent) => {
+      e.preventDefault();
 
-      // Pan with two fingers
-      const midX = (touches[0].clientX + touches[1].clientX) / 2;
-      const midY = (touches[0].clientY + touches[1].clientY) / 2;
-      if (panStart.current) {
-        const panDx = midX - panStart.current.x;
-        const panDy = midY - panStart.current.y;
-        onOffsetChange({
-          x: offsetStart.current.x + panDx,
-          y: offsetStart.current.y + panDy,
-        });
+      const touches = e.touches;
+
+      // Two-finger: pinch-to-zoom or pan
+      if (touches.length === 2 && isPanning.current) {
+        const dx = touches[0].clientX - touches[1].clientX;
+        const dy = touches[0].clientY - touches[1].clientY;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        const scale = distance / initialPinchDistance.current;
+        const newZoom = Math.max(0.25, Math.min(8, initialZoom.current * scale));
+        onZoomChange(newZoom);
+
+        // Pan with two fingers
+        const midX = (touches[0].clientX + touches[1].clientX) / 2;
+        const midY = (touches[0].clientY + touches[1].clientY) / 2;
+        if (panStart.current) {
+          const panDx = midX - panStart.current.x;
+          const panDy = midY - panStart.current.y;
+          onOffsetChange({
+            x: offsetStart.current.x + panDx,
+            y: offsetStart.current.y + panDy
+          });
+        }
+        return;
       }
-      return;
-    }
 
-    // Cancel eyedropper on significant movement
-    if (isEyedropper) {
-      setIsEyedropper(false);
-      if (longPressTimer.current) {
-        clearTimeout(longPressTimer.current);
-        longPressTimer.current = null;
+      // Cancel eyedropper on significant movement
+      if (isEyedropper) {
+        setIsEyedropper(false);
+        if (longPressTimer.current) {
+          clearTimeout(longPressTimer.current);
+          longPressTimer.current = null;
+        }
       }
-    }
 
-    if (!isDrawing.current) return;
-    const touch = touches[0];
-    if (!touch) return;
+      if (!isDrawing.current) return;
+      const touch = touches[0];
+      if (!touch) return;
 
-    const coords = getPixelCoords(touch.clientX, touch.clientY);
-    if (!coords) return;
-    if (lastPixel.current && coords.x === lastPixel.current.x && coords.y === lastPixel.current.y) return;
+      const coords = getPixelCoords(touch.clientX, touch.clientY);
+      if (!coords) return;
+      if (lastPixel.current && coords.x === lastPixel.current.x && coords.y === lastPixel.current.y) return;
 
-    applyBrush(coords.x, coords.y);
-    lastPixel.current = coords;
-  }, [isPanning.current, isEyedropper, isDrawing.current, canvasState, brush, activeLayer, onPixelChange, zoom, offset, pixelSize, viewWidth, viewHeight, onZoomChange, onOffsetChange]);
+      applyBrush(coords.x, coords.y);
+      lastPixel.current = coords;
+    },
+    [
+      isPanning.current,
+      isEyedropper,
+      isDrawing.current,
+      canvasState,
+      brush,
+      activeLayer,
+      onPixelChange,
+      zoom,
+      offset,
+      pixelSize,
+      viewWidth,
+      viewHeight,
+      onZoomChange,
+      onOffsetChange
+    ]
+  );
 
   const handleTouchEnd = useCallback((e: React.TouchEvent) => {
     e.preventDefault();
@@ -332,27 +349,30 @@ const MobileCanvas: React.FC<MobileCanvasProps> = ({
     swipeStart.current = { x: touch.clientX, y: touch.clientY, time: Date.now() };
   }, []);
 
-  const handleContainerTouchEnd = useCallback((e: React.TouchEvent) => {
-    if (!swipeStart.current) return;
-    const touch = e.changedTouches[0];
-    if (!touch) return;
+  const handleContainerTouchEnd = useCallback(
+    (e: React.TouchEvent) => {
+      if (!swipeStart.current) return;
+      const touch = e.changedTouches[0];
+      if (!touch) return;
 
-    const deltaX = touch.clientX - swipeStart.current.x;
-    const deltaY = touch.clientY - swipeStart.current.y;
-    const deltaTime = Date.now() - swipeStart.current.time;
+      const deltaX = touch.clientX - swipeStart.current.x;
+      const deltaY = touch.clientY - swipeStart.current.y;
+      const deltaTime = Date.now() - swipeStart.current.time;
 
-    // Only horizontal swipe on the view indicator area
-    if (Math.abs(deltaX) > 60 && Math.abs(deltaX) > Math.abs(deltaY) * 2 && deltaTime < 500) {
-      const currentIndex = viewOrder.indexOf(activeView);
-      if (deltaX > 0 && currentIndex > 0) {
-        setActiveView(viewOrder[currentIndex - 1]);
-      } else if (deltaX < 0 && currentIndex < viewOrder.length - 1) {
-        setActiveView(viewOrder[currentIndex + 1]);
+      // Only horizontal swipe on the view indicator area
+      if (Math.abs(deltaX) > 60 && Math.abs(deltaX) > Math.abs(deltaY) * 2 && deltaTime < 500) {
+        const currentIndex = viewOrder.indexOf(activeView);
+        if (deltaX > 0 && currentIndex > 0) {
+          setActiveView(viewOrder[currentIndex - 1]);
+        } else if (deltaX < 0 && currentIndex < viewOrder.length - 1) {
+          setActiveView(viewOrder[currentIndex + 1]);
+        }
       }
-    }
 
-    swipeStart.current = null;
-  }, [activeView]);
+      swipeStart.current = null;
+    },
+    [activeView]
+  );
 
   return (
     <div
@@ -369,8 +389,8 @@ const MobileCanvas: React.FC<MobileCanvasProps> = ({
             onClick={() => setActiveView(view)}
             className={`px-3 py-2 rounded-lg text-xs font-bold uppercase whitespace-nowrap transition-all duration-200 touch-target-min flex-shrink-0 ${
               activeView === view
-                ? 'bg-accent text-white shadow-lg shadow-accent/20'
-                : 'bg-panel-hover text-text-dim active:bg-panel-active'
+                ? "bg-accent text-white shadow-lg shadow-accent/20"
+                : "bg-panel-hover text-text-dim active:bg-panel-active"
             }`}
           >
             {viewLabels[view]}
@@ -384,7 +404,16 @@ const MobileCanvas: React.FC<MobileCanvasProps> = ({
           onClick={() => setShowLayerSlider(!showLayerSlider)}
           className="text-xs font-bold text-accent active:opacity-70 touch-target-min flex items-center gap-1"
         >
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 16 16"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
             <path d="M2 4L8 1.5L14 4L8 6.5L2 4Z" />
             <path d="M2 7.5L8 10L14 7.5" />
             <path d="M2 11L8 13.5L14 11" />
@@ -394,7 +423,10 @@ const MobileCanvas: React.FC<MobileCanvasProps> = ({
         <div className="flex items-center gap-2">
           <span className="text-[10px] text-text-dim font-mono">{zoom.toFixed(1)}x</span>
           <button
-            onClick={() => { onZoomChange(1); onOffsetChange({ x: 0, y: 0 }); }}
+            onClick={() => {
+              onZoomChange(1);
+              onOffsetChange({ x: 0, y: 0 });
+            }}
             className="text-[10px] text-accent active:opacity-70 touch-target-min"
           >
             Reset
@@ -442,8 +474,8 @@ const MobileCanvas: React.FC<MobileCanvasProps> = ({
           ref={canvasRef}
           className="cursor-crosshair touch-none"
           style={{
-            imageRendering: 'pixelated',
-            transform: `translate(${offset.x}px, ${offset.y}px)`,
+            imageRendering: "pixelated",
+            transform: `translate(${offset.x}px, ${offset.y}px)`
           }}
         />
       </div>

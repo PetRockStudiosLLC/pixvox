@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef, useEffect } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from "react";
 
 interface MobileBottomSheetProps {
   isOpen: boolean;
@@ -13,7 +13,7 @@ const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({
   onClose,
   title,
   children,
-  snapPoints = [0.5, 0.85],
+  snapPoints = [0.5, 0.85]
 }) => {
   const [currentSnap, setCurrentSnap] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
@@ -36,13 +36,16 @@ const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({
     setDragOffset(0);
   }, []);
 
-  const handleTouchMove = useCallback((e: React.TouchEvent) => {
-    if (!isDragging) return;
-    const touch = e.touches[0];
-    if (!touch) return;
-    const deltaY = touch.clientY - dragStart.y;
-    setDragOffset(deltaY);
-  }, [isDragging, dragStart.y]);
+  const handleTouchMove = useCallback(
+    (e: React.TouchEvent) => {
+      if (!isDragging) return;
+      const touch = e.touches[0];
+      if (!touch) return;
+      const deltaY = touch.clientY - dragStart.y;
+      setDragOffset(deltaY);
+    },
+    [isDragging, dragStart.y]
+  );
 
   const handleTouchEnd = useCallback(() => {
     if (!isDragging) return;
@@ -75,7 +78,7 @@ const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({
       <div
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
         onClick={onClose}
-        style={{ animation: 'fadeIn 0.2s ease-out' }}
+        style={{ animation: "fadeIn 0.2s ease-out" }}
       />
 
       {/* Sheet */}
@@ -85,8 +88,8 @@ const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({
         style={{
           maxHeight: `${maxHeightPercent}vh`,
           transform: isDragging ? `translateY(${Math.min(0, dragOffset)}px)` : undefined,
-          transition: isDragging ? 'none' : 'transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
-          animation: 'slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+          transition: isDragging ? "none" : "transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
+          animation: "slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1)"
         }}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
@@ -105,7 +108,15 @@ const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({
             className="w-10 h-10 rounded-lg bg-panel-hover flex items-center justify-center active:bg-panel-active touch-target-min"
             aria-label="Close"
           >
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 18 18"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+            >
               <path d="M4 4L14 14M14 4L4 14" />
             </svg>
           </button>

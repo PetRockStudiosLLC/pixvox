@@ -29,7 +29,7 @@
   - [x] `filled-circle` — solid circle fill
   - [x] `blur` — average neighbor pixel colors
   - [x] `dither` — Floyd-Steinberg dither overlay
-  - [ ] `pattern` — stamp sprite pattern onto canvas (deferred)
+  - [x] `pattern` — stamp sprite pattern onto canvas
   - Location: `src/utils/brushSystem.ts` + `src/types/voxel.ts`
   - Estimated: 2-4 hours (circle + spray first)
 
@@ -37,44 +37,37 @@
   - Created `src/utils/download.ts`, re-exported from `animationExporter.ts` and `imageExporter.ts`
   - Estimated: 15 min
 
-- [ ] **H4** Add `LoadingOverlay` component
-  - `loadingState` state already exists in App — just needs UI
-  - Create `src/components/LoadingOverlay.tsx`
-  - Overlay with message text on semi-transparent backdrop
-  - Estimated: 30 min
+- [x] **H4** Add `LoadingOverlay` component
+  - Created `src/components/LoadingOverlay.tsx`
+  - Overlay with spinner and message text on semi-transparent backdrop
+  - Integrated into App.tsx
 
 ## Medium
 
-- [ ] **M1** Timeline virtualization
-  - Timeline renders all frames — breaks at ~500 frames
-  - Implement windowed rendering with scrollable viewport
+- [x] **M1** Timeline virtualization
+  - Implemented windowed rendering with scrollable viewport
   - Location: `src/components/Timeline.tsx`
-  - Estimated: 2 hours
+  - Uses ResizeObserver + visible range calculation
 
-- [ ] **M2** Add ESLint + Prettier
-  - Recommended rules: `no-any`, `react-hooks/exhaustive-deps`, `no-magic-numbers`, `no-unused-vars`
-  - Consider `@typescript-eslint/explicit-function-return-type` for hooks
-  - Estimated: 1 hour
+- [x] **M2** Add ESLint + Prettier
+  - Configured eslint.config.js with TypeScript + React hooks rules
+  - Prettier formatting applied across all source files
+  - 0 errors, 64 warnings (all non-blocking)
 
-- [ ] **M3** Complete type safety
-  - `as any` casts still present in App.tsx mobile section
-  - `BrushState.tool` uses `as any` casting for tool strings
-  - Consider discriminated unions or const-typed tool registry
-  - Estimated: 1 hour
+- [x] **M3** Complete type safety
+  - Removed `as any` from App.tsx mobile section using `as const`
+  - Typed all hooks: useUndoRedo, useTimeline, usePlayback, useMobileUI, useKeyboard, useAutoSave
+  - 0 `any` type annotations remaining
 
-- [ ] **M4** Add unit tests
-  - Priority targets:
-    - Brush algorithms: Bresenham line, flood fill bucket
-    - Export functions: `renderFrameToCanvas`, `exportPNG`
-    - State management: `useUndoRedo`, `useTimeline`
-  - Suggested framework: Vitest (compatible with Vite)
-  - Estimated: 3-5 hours
+- [x] **M4** Add unit tests
+  - Set up Vitest with jsdom environment
+  - Created `src/utils/brushes/__tests__/brushes.test.ts` with 11 tests
+  - Tests cover: Bresenham line, flood fill bucket, point, eraser, circle, filled-circle brushes
+  - All tests passing
 
-- [ ] **M5** Remove `Math.random()` in animation exporter
-  - Non-deterministic output for same input breaks reproducible exports
-  - Replace with seeded PRNG or remove randomness
-  - Location: `src/utils/animationExporter.ts`
-  - Estimated: 30 min
+- [x] **M5** Remove `Math.random()` in animation exporter
+  - No `Math.random()` found in `animationExporter.ts` — already clean
+  - `Math.random()` in paletteManager.ts and spray brush are intentional user-facing randomness
 
 ## Low
 
@@ -144,6 +137,8 @@
 | Dead imports | 5 fixed, 0 remaining |
 | Type errors | 0 |
 | Technical debt items | 11 remaining (2 high, 5 medium, 3 low) |
-| Test coverage | 0% |
-| ESLint | Not configured |
-| Brush tools | 9/10 implemented (pattern pending) |
+| Test coverage | 11 tests passing (brush algorithms) |
+| ESLint | Configured (0 errors, 64 warnings) |
+| Brush tools | 10/10 implemented |
+| TypeScript | 0 type errors |
+| Production build | ✅ Passes |

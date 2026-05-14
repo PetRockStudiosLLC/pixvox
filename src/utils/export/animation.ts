@@ -1,9 +1,9 @@
-import { CanvasState, TimelineState, FrameData } from '../types/voxel';
-import { exportGLTF } from './objExporter';
-import JSZip from 'jszip';
+import { CanvasState, TimelineState, FrameData } from "../../types/voxel";
+import { exportGLTF } from "./gltf";
+import JSZip from "jszip";
 
-const ANIM_JSON_FORMAT = 'pixvox-anim';
-const ANIM_JSON_VERSION = '1.0.0';
+const ANIM_JSON_FORMAT = "pixvox-anim";
+const ANIM_JSON_VERSION = "1.0.2";
 
 export interface AnimationJSON {
   format: string;
@@ -23,14 +23,13 @@ export interface AnimationJSON {
 }
 
 export interface AlembicABCOpts {
-  compress: 'delta' | 'snapshot';
+  compress: "delta" | "snapshot";
 }
 
-// Alembic Ogawa binary format constants
-const OGAWA_MAGIC = 'Ogawa';
+const OGAWA_MAGIC = "Ogawa";
 const OGAWA_VERSION = 11;
 const OGAWA_HEADER_SIZE = 16;
-const OGAWA_DATA_REF_BIT = BigInt('0x8000000000000000');
+const OGAWA_DATA_REF_BIT = BigInt("0x8000000000000000");
 
 function pixelsToRecord(pixels: Map<string, string>): Record<string, string> {
   return Object.fromEntries(pixels);
@@ -48,7 +47,7 @@ export function exportAnimationJSON(
   const frames = timeline.frames;
 
   if (frames.length === 0) {
-    return { content: '', filename: '', mimeType: '' };
+    return { content: "", filename: "", mimeType: "" };
   }
 
   const anim: AnimationJSON = {
@@ -60,16 +59,16 @@ export function exportAnimationJSON(
     fps: timeline.fps,
     loop: timeline.loop,
     totalFrames: timeline.totalFrames,
-    frames: frames.map(f => ({
+    frames: frames.map((f) => ({
       pixels: pixelsToRecord(f.pixels),
       label: f.label,
       duration: f.duration,
-      hasKeyframe: f.hasKeyframe,
-    })),
+      hasKeyframe: f.hasKeyframe
+    }))
   };
 
   const content = JSON.stringify(anim, null, 2);
-  return { content, filename: 'animation.p2v-anim.json', mimeType: 'application/json' };
+  return { content, filename: "animation.p2v-anim.json", mimeType: "application/json" };
 }
 
 export function importAnimationJSON(
@@ -96,12 +95,12 @@ export function importAnimationJSON(
     currentFrame: 0,
     loop: anim.loop,
     playing: false,
-    frames: anim.frames.map(f => ({
+    frames: anim.frames.map((f) => ({
       pixels: recordToPixels(f.pixels),
       label: f.label,
       hasKeyframe: f.hasKeyframe,
-      duration: f.duration,
-    })),
+      duration: f.duration
+    }))
   };
 
   if (timeline.frames.length > 0) {
@@ -111,7 +110,6 @@ export function importAnimationJSON(
   return { canvasState: newCanvas, timeline };
 }
 
-// Ogawa binary writer helpers
 function writeU64LE(buffer: Uint8Array, offset: number, value: bigint): void {
   buffer[offset] = Number(value & BigInt(0xff));
   buffer[offset + 1] = Number((value >> BigInt(8)) & BigInt(0xff));
@@ -161,13 +159,10 @@ function hexToRGBA(hex: string): [number, number, number, number] {
 }
 
 function rgbaToHex(r: number, g: number, b: number, a: number): string {
-  return '#' + [r, g, b, a].map(v => v.toString(16).padStart(2, '0')).join('');
+  return "#" + [r, g, b, a].map((v) => v.toString(16).padStart(2, "0")).join("");
 }
 
-function getDeltaEntries(
-  current: Map<string, string>,
-  previous: Map<string, string>
-): Array<[string, string]> {
+function getDeltaEntries(current: Map<string, string>, previous: Map<string, string>): Array<[string, string]> {
   const deltas: Array<[string, string]> = [];
   const prevSet = new Set(previous.keys());
 
@@ -180,25 +175,21 @@ function getDeltaEntries(
 
   for (const key of prevSet) {
     if (!current.has(key)) {
-      deltas.push([key, '#00000000']);
+      deltas.push([key, "#00000000"]);
     }
   }
 
   return deltas;
 }
 
-// Build frame payload as raw bytes for Ogawa data block
-function buildFramePayload(
-  frame: FrameData,
-  prevFrame: FrameData | null,
-  compress: 'delta' | 'snapshot'
-): Uint8Array {
-  const entries = compress === 'delta' && prevFrame
-    ? getDeltaEntries(frame.pixels, prevFrame.pixels)
-    : Array.from(frame.pixels.entries());
+function buildFramePayload(frame: FrameData, prevFrame: FrameData | null, compress: "delta" | "snapshot"): Uint8Array {
+  const entries =
+    compress === "delta" && prevFrame
+      ? getDeltaEntries(frame.pixels, prevFrame.pixels)
+      : Array.from(frame.pixels.entries());
 
   const encoder = new TextEncoder();
-  let totalBytes = 4; // entry count u32
+  let totalBytes = 4;
 
   for (const [key] of entries) {
     const keyBytes = encoder.encode(key);
@@ -206,7 +197,7 @@ function buildFramePayload(
   }
 
   for (const [, color] of entries) {
-    totalBytes += 4; // rgba
+    totalBytes += 4;
   }
 
   const buffer = new Uint8Array(totalBytes);
@@ -217,43 +208,57 @@ function buildFramePayload(
 
   for (const [key, color] of entries) {
     const keyBytes = encoder.encode(key);
-    buffer[off] = keyBytes.length & 0xff; off++;
-    buffer[off] = (keyBytes.length >> 8) & 0xff; off++;
+    buffer[off] = keyBytes.length & 0xff;
+    off++;
+    buffer[off] = (keyBytes.length >> 8) & 0xff;
+    off++;
     buffer.set(keyBytes, off);
     off += keyBytes.length;
 
     const rgba = hexToRGBA(color);
-    buffer[off] = rgba[0]; off++;
-    buffer[off] = rgba[1]; off++;
-    buffer[off] = rgba[2]; off++;
-    buffer[off] = rgba[3]; off++;
+    buffer[off] = rgba[0];
+    off++;
+    buffer[off] = rgba[1];
+    off++;
+    buffer[off] = rgba[2];
+    off++;
+    buffer[off] = rgba[3];
+    off++;
   }
 
   return buffer;
 }
 
-// Build metadata payload: width, height, layers, fps, loop, totalFrames, compress mode
 function buildMetadataPayload(
-  width: number, height: number, layers: number,
-  fps: number, loop: boolean, totalFrames: number,
-  compress: 'delta' | 'snapshot'
+  width: number,
+  height: number,
+  layers: number,
+  fps: number,
+  loop: boolean,
+  totalFrames: number,
+  compress: "delta" | "snapshot"
 ): Uint8Array {
   const buffer = new Uint8Array(4 + 4 + 4 + 4 + 1 + 4 + 1);
   let off = 0;
 
-  writeU32(buffer, off, width); off += 4;
-  writeU32(buffer, off, height); off += 4;
-  writeU32(buffer, off, layers); off += 4;
-  writeF32(buffer, off, fps); off += 4;
-  buffer[off] = loop ? 1 : 0; off++;
-  writeU32(buffer, off, totalFrames); off += 4;
-  buffer[off] = compress === 'delta' ? 1 : 0; off++;
+  writeU32(buffer, off, width);
+  off += 4;
+  writeU32(buffer, off, height);
+  off += 4;
+  writeU32(buffer, off, layers);
+  off += 4;
+  writeF32(buffer, off, fps);
+  off += 4;
+  buffer[off] = loop ? 1 : 0;
+  off++;
+  writeU32(buffer, off, totalFrames);
+  off += 4;
+  buffer[off] = compress === "delta" ? 1 : 0;
+  off++;
 
   return buffer;
 }
 
-// Ogawa Writer: builds a valid .abc file using Alembic Ogawa binary format
-// Layout: [16B Header][Root Group][Frame Groups x N][Data Blocks x (N+1)]
 class OgawaWriter {
   buffer: Uint8Array;
   offset = OGAWA_HEADER_SIZE;
@@ -273,7 +278,7 @@ class OgawaWriter {
     this.buffer[2] = magic[2];
     this.buffer[3] = magic[3];
     this.buffer[4] = magic[4];
-    this.buffer[5] = 0; // frozen = false
+    this.buffer[5] = 0;
     this.buffer[6] = OGAWA_VERSION & 0xff;
     this.buffer[7] = (OGAWA_VERSION >> 8) & 0xff;
     writeU32(this.buffer, 8, OGAWA_HEADER_SIZE);
@@ -316,13 +321,13 @@ class OgawaWriter {
 export function exportAlembicABC(
   canvasState: CanvasState,
   timeline: TimelineState,
-  opts: AlembicABCOpts = { compress: 'delta' }
+  opts: AlembicABCOpts = { compress: "delta" }
 ): Promise<{ blob: Blob; filename: string }> {
   const { width, height, layers } = canvasState;
   const frames = timeline.frames;
 
   if (frames.length === 0) {
-    return Promise.resolve({ blob: new Blob([]), filename: '' });
+    return Promise.resolve({ blob: new Blob([]), filename: "" });
   }
 
   return buildAlembicABC(canvasState, timeline, opts);
@@ -337,24 +342,32 @@ async function buildAlembicABC(
   const frames = timeline.frames;
   const numFrames = frames.length;
 
-  // Calculate total size needed
-  // Header: 16
-  // Root group: 8 (child count) + 8 * (numFrames + 1) (refs: metadata + N frame groups)
-  // Frame groups: N * (8 (child count) + 8 (data ref))
-  // Data blocks: (N + 1) * (8 (size) + payload)
   let estimatedSize = OGAWA_HEADER_SIZE + 200;
   for (let i = 0; i < numFrames; i++) {
     const prevFrame = i > 0 ? frames[i - 1] : null;
     estimatedSize += buildFramePayload(frames[i], prevFrame, opts.compress).byteLength;
   }
-  estimatedSize += buildMetadataPayload(width, height, layers, timeline.fps, timeline.loop, numFrames, opts.compress).byteLength;
+  estimatedSize += buildMetadataPayload(
+    width,
+    height,
+    layers,
+    timeline.fps,
+    timeline.loop,
+    numFrames,
+    opts.compress
+  ).byteLength;
   estimatedSize += numFrames * 100;
 
   const writer = new OgawaWriter(estimatedSize);
 
-  // Build data blocks first (metadata + N frame payloads)
   const metadataPayload = buildMetadataPayload(
-    width, height, layers, timeline.fps, timeline.loop, numFrames, opts.compress
+    width,
+    height,
+    layers,
+    timeline.fps,
+    timeline.loop,
+    numFrames,
+    opts.compress
   );
   const metadataRef = writer.writeDataBlock(metadataPayload);
 
@@ -366,7 +379,6 @@ async function buildAlembicABC(
     frameDataRefs.push(ref);
   }
 
-  // Build frame groups (each has 1 child: the data block)
   const frameGroupRefs: bigint[] = [];
   for (let i = 0; i < numFrames; i++) {
     writer.writeGroup(1);
@@ -374,15 +386,14 @@ async function buildAlembicABC(
     frameGroupRefs.push(BigInt(writer.groupPositions[writer.groupPositions.length - 1]));
   }
 
-  // Build root group: children are metadata data ref + N frame group refs
   const rootChildRefs = [metadataRef, ...frameGroupRefs];
   writer.writeGroup(rootChildRefs.length);
   writer.writeGroupRefs(rootChildRefs);
 
   const finalBuffer = writer.getFinalBuffer();
   return {
-    blob: new Blob([finalBuffer], { type: 'application/abc' }),
-    filename: `animation-${numFrames}f.abc`,
+    blob: new Blob([finalBuffer], { type: "application/abc" }),
+    filename: `animation-${numFrames}f.abc`
   };
 }
 
@@ -393,9 +404,8 @@ export async function importAlembicABC(
   const buffer = await file.arrayBuffer();
   const bytes = new Uint8Array(buffer);
 
-  // Validate Ogawa magic
   const enc = new TextEncoder();
-  const magic = enc.encode('Ogawa');
+  const magic = enc.encode("Ogawa");
   for (let i = 0; i < 5; i++) {
     if (bytes[i] !== magic[i]) return null;
   }
@@ -406,7 +416,6 @@ export async function importAlembicABC(
 
   if (firstGroupPos !== OGAWA_HEADER_SIZE) return null;
 
-  // Parse root group
   let off = firstGroupPos;
   const rootChildCount = Number(readU64LE(bytes, off));
   off += 8;
@@ -417,7 +426,6 @@ export async function importAlembicABC(
     off += 8;
   }
 
-  // First ref is metadata data block
   const metadataRef = rootRefs[0];
   const isDataRef = (metadataRef & OGAWA_DATA_REF_BIT) !== BigInt(0);
   if (!isDataRef) return null;
@@ -426,24 +434,34 @@ export async function importAlembicABC(
   const dataSize = Number(readU64LE(bytes, dataPos));
   const metadataStart = dataPos + 8;
 
-  // Parse metadata
-  const metaWidth = bytes[metadataStart] | (bytes[metadataStart + 1] << 8) |
-    (bytes[metadataStart + 2] << 16) | (bytes[metadataStart + 3] << 24);
-  const metaHeight = bytes[metadataStart + 4] | (bytes[metadataStart + 5] << 8) |
-    (bytes[metadataStart + 6] << 16) | (bytes[metadataStart + 7] << 24);
-  const metaLayers = bytes[metadataStart + 8] | (bytes[metadataStart + 9] << 8) |
-    (bytes[metadataStart + 10] << 16) | (bytes[metadataStart + 11] << 24);
+  const metaWidth =
+    bytes[metadataStart] |
+    (bytes[metadataStart + 1] << 8) |
+    (bytes[metadataStart + 2] << 16) |
+    (bytes[metadataStart + 3] << 24);
+  const metaHeight =
+    bytes[metadataStart + 4] |
+    (bytes[metadataStart + 5] << 8) |
+    (bytes[metadataStart + 6] << 16) |
+    (bytes[metadataStart + 7] << 24);
+  const metaLayers =
+    bytes[metadataStart + 8] |
+    (bytes[metadataStart + 9] << 8) |
+    (bytes[metadataStart + 10] << 16) |
+    (bytes[metadataStart + 11] << 24);
 
   const fpsArr = new Uint8Array(4);
   fpsArr.set(bytes.slice(metadataStart + 12, metadataStart + 16));
   const metaFps = new DataView(fpsArr.buffer).getFloat32(0, true);
 
   const metaLoop = bytes[metadataStart + 16] === 1;
-  const metaTotalFrames = bytes[metadataStart + 17] | (bytes[metadataStart + 18] << 8) |
-    (bytes[metadataStart + 19] << 16) | (bytes[metadataStart + 20] << 24);
-  const metaCompress = bytes[metadataStart + 21] === 1 ? 'delta' : 'snapshot';
+  const metaTotalFrames =
+    bytes[metadataStart + 17] |
+    (bytes[metadataStart + 18] << 8) |
+    (bytes[metadataStart + 19] << 16) |
+    (bytes[metadataStart + 20] << 24);
+  const metaCompress = bytes[metadataStart + 21] === 1 ? "delta" : "snapshot";
 
-  // Remaining refs are frame groups
   const decoder = new TextDecoder();
   const frames: FrameData[] = [];
   let prevPixels: Map<string, string> | null = null;
@@ -467,8 +485,7 @@ export async function importAlembicABC(
     const dSize = Number(readU64LE(bytes, dPos));
     const dStart = dPos + 8;
 
-    const entryCount = bytes[dStart] | (bytes[dStart + 1] << 8) |
-      (bytes[dStart + 2] << 16) | (bytes[dStart + 3] << 24);
+    const entryCount = bytes[dStart] | (bytes[dStart + 1] << 8) | (bytes[dStart + 2] << 16) | (bytes[dStart + 3] << 24);
 
     const pixels: Map<string, string> = prevPixels ? new Map(prevPixels) : new Map();
     let fOff = dStart + 4;
@@ -479,13 +496,17 @@ export async function importAlembicABC(
       const key = decoder.decode(bytes.slice(fOff, fOff + keyLen));
       fOff += keyLen;
 
-      const r = bytes[fOff]; fOff++;
-      const g = bytes[fOff]; fOff++;
-      const b = bytes[fOff]; fOff++;
-      const a = bytes[fOff]; fOff++;
+      const r = bytes[fOff];
+      fOff++;
+      const g = bytes[fOff];
+      fOff++;
+      const b = bytes[fOff];
+      fOff++;
+      const a = bytes[fOff];
+      fOff++;
 
       const color = rgbaToHex(r, g, b, a);
-      if (color === '#00000000') {
+      if (color === "#00000000") {
         pixels.delete(key);
       } else {
         pixels.set(key, color);
@@ -496,10 +517,10 @@ export async function importAlembicABC(
       pixels,
       label: undefined,
       hasKeyframe: true,
-      duration: 1,
+      duration: 1
     });
 
-    if (metaCompress === 'delta') {
+    if (metaCompress === "delta") {
       prevPixels = new Map(pixels);
     }
   }
@@ -517,8 +538,8 @@ export async function importAlembicABC(
       currentFrame: 0,
       loop: metaLoop,
       playing: false,
-      frames,
-    },
+      frames
+    }
   };
 }
 
@@ -529,7 +550,7 @@ export async function exportFrameSequenceGLTF(
   const frames = timeline.frames;
 
   if (frames.length === 0) {
-    return Promise.resolve({ blob: new Blob([]), filename: '' });
+    return Promise.resolve({ blob: new Blob([]), filename: "" });
   }
 
   const zip = new JSZip();
@@ -537,29 +558,31 @@ export async function exportFrameSequenceGLTF(
   for (let i = 0; i < frames.length; i++) {
     const frameCanvas = {
       ...canvasState,
-      pixels: frames[i].pixels,
+      pixels: frames[i].pixels
     };
 
-    const { content } = exportGLTF(frameCanvas, 'fast-draft');
+    const { content } = exportGLTF(frameCanvas, "fast-draft");
     if (content) {
-      const padded = String(i).padStart(4, '0');
+      const padded = String(i).padStart(4, "0");
       zip.file(`frame_${padded}.gltf`, content);
     }
   }
 
-  const meta = JSON.stringify({
-    fps: timeline.fps,
-    loop: timeline.loop,
-    totalFrames: frames.length,
-    width: canvasState.width,
-    height: canvasState.height,
-    layers: canvasState.layers,
-  }, null, 2);
+  const meta = JSON.stringify(
+    {
+      fps: timeline.fps,
+      loop: timeline.loop,
+      totalFrames: frames.length,
+      width: canvasState.width,
+      height: canvasState.height,
+      layers: canvasState.layers
+    },
+    null,
+    2
+  );
 
-  zip.file('meta.json', meta);
+  zip.file("meta.json", meta);
 
-  const blob = await zip.generateAsync({ type: 'blob' });
-  return { blob, filename: 'frame-sequence.gltf.zip' };
+  const blob = await zip.generateAsync({ type: "blob" });
+  return { blob, filename: "frame-sequence.gltf.zip" };
 }
-
-export { downloadBlob } from './download';

@@ -1,6 +1,6 @@
-import React from 'react';
-import { BrushState, BrushTool } from '../types/voxel';
-import { getAllBrushes, BrushHandler } from '../utils/brushes';
+import React from "react";
+import { BrushState, BrushTool } from "../types/voxel";
+import { getAllBrushes, BrushHandler } from "../utils/brushes";
 
 interface ToolbarProps {
   brush: BrushState;
@@ -16,14 +16,14 @@ const Toolbar: React.FC<ToolbarProps> = ({ brush, onBrushChange, onCanvasResize,
     return (
       <div className="flex items-center gap-3">
         <div className="flex gap-1 overflow-x-auto no-scrollbar py-1">
-          {tools.map(tool => (
+          {tools.map((tool) => (
             <button
               key={tool.tool}
               onClick={() => onBrushChange({ ...brush, tool: tool.tool })}
               className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
                 brush.tool === tool.tool
-                  ? 'bg-cyan-500 text-white shadow-lg shadow-cyan-500/30 scale-105'
-                  : 'bg-gray-700/50 text-gray-400'
+                  ? "bg-cyan-500 text-white shadow-lg shadow-cyan-500/30 scale-105"
+                  : "bg-gray-700/50 text-gray-400"
               }`}
             >
               {tool.name}
@@ -46,14 +46,14 @@ const Toolbar: React.FC<ToolbarProps> = ({ brush, onBrushChange, onCanvasResize,
       <div>
         <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 block">Brush Tool</label>
         <div className="grid grid-cols-2 gap-2">
-          {tools.map(tool => (
+          {tools.map((tool) => (
             <button
               key={tool.tool}
               onClick={() => onBrushChange({ ...brush, tool: tool.tool })}
               className={`px-3 py-3 rounded-xl text-sm font-bold transition-all ${
                 brush.tool === tool.tool
-                  ? 'bg-cyan-500 text-white shadow-lg shadow-cyan-500/40'
-                  : 'bg-gray-700/50 text-gray-400 hover:bg-gray-700'
+                  ? "bg-cyan-500 text-white shadow-lg shadow-cyan-500/40"
+                  : "bg-gray-700/50 text-gray-400 hover:bg-gray-700"
               }`}
               title={tool.name}
             >
@@ -64,7 +64,9 @@ const Toolbar: React.FC<ToolbarProps> = ({ brush, onBrushChange, onCanvasResize,
       </div>
 
       <div>
-        <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 block">Color & Size</label>
+        <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 block">
+          Color & Size
+        </label>
         <div className="bg-gray-900/50 p-3 rounded-2xl border border-white/5 space-y-4">
           <div className="flex items-center gap-3">
             <input
@@ -74,26 +76,41 @@ const Toolbar: React.FC<ToolbarProps> = ({ brush, onBrushChange, onCanvasResize,
               className="w-12 h-12 rounded-xl cursor-pointer border-2 border-gray-600 bg-transparent"
             />
             <div className="flex-1 min-w-0">
-               <span className="block text-[10px] font-mono text-gray-500 mb-1">{brush.color.toUpperCase()}</span>
-               <input
+              <span className="block text-[10px] font-mono text-gray-500 mb-1">{brush.color.toUpperCase()}</span>
+              <input
                 type="range"
                 min={1}
-                max={8}
+                max={32}
                 value={brush.size}
                 onChange={(e) => onBrushChange({ ...brush, size: parseInt(e.target.value) })}
                 className="w-full accent-cyan-500 h-1.5"
               />
+              <div className="flex gap-1.5 mt-2 flex-wrap">
+                {[1, 2, 4, 8, 16, 32].map((s) => (
+                  <button
+                    key={s}
+                    onClick={() => onBrushChange({ ...brush, size: s })}
+                    className={`px-2 py-0.5 rounded text-[10px] font-mono transition-colors ${
+                      brush.size === s
+                        ? "bg-cyan-500 text-white"
+                        : "bg-gray-700/50 text-gray-400 hover:bg-gray-700"
+                    }`}
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
             </div>
             <span className="w-6 text-center font-bold text-cyan-400">{brush.size}</span>
           </div>
-          
+
           <div className="grid grid-cols-4 gap-2">
-            {(brush.palette || []).map(color => (
+            {(brush.palette || []).map((color) => (
               <button
                 key={color}
                 onClick={() => onBrushChange({ ...brush, color })}
                 className={`aspect-square rounded-lg border-2 transition-all ${
-                  brush.color === color ? 'border-white scale-110 shadow-lg' : 'border-transparent'
+                  brush.color === color ? "border-white scale-110 shadow-lg" : "border-transparent"
                 }`}
                 style={{ backgroundColor: color }}
                 title={color}
@@ -120,7 +137,7 @@ const CanvasSizeSelector: React.FC<CanvasSizeSelectorProps> = ({ brush, onCanvas
   const sizes = [16, 32, 64];
   return (
     <div className="grid grid-cols-3 gap-2">
-      {sizes.map(size => (
+      {sizes.map((size) => (
         <button
           key={size}
           onClick={() => onCanvasResize(size, size)}

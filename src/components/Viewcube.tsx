@@ -1,19 +1,19 @@
-import React from 'react';
-import { CanvasState } from '../types/voxel';
+import React from "react";
+import { CanvasState } from "../types/voxel";
 
 interface ViewcubeProps {
-  onViewChange: (view: 'main' | 'front' | 'left' | 'right' | 'top' | 'bottom') => void;
+  onViewChange: (view: "main" | "front" | "left" | "right" | "top" | "bottom") => void;
   currentView: string;
 }
 
 const Viewcube: React.FC<ViewcubeProps> = ({ onViewChange, currentView }) => {
   const views = [
-    { id: 'main', label: 'Main', position: 'center' },
-    { id: 'front', label: 'Front', position: 'front' },
-    { id: 'left', label: 'Left', position: 'left' },
-    { id: 'right', label: 'Right', position: 'right' },
-    { id: 'top', label: 'Top', position: 'top' },
-    { id: 'bottom', label: 'Bottom', position: 'bottom' },
+    { id: "main", label: "Main", position: "center" },
+    { id: "front", label: "Front", position: "front" },
+    { id: "left", label: "Left", position: "left" },
+    { id: "right", label: "Right", position: "right" },
+    { id: "top", label: "Top", position: "top" },
+    { id: "bottom", label: "Bottom", position: "bottom" }
   ];
 
   return (
@@ -21,9 +21,9 @@ const Viewcube: React.FC<ViewcubeProps> = ({ onViewChange, currentView }) => {
       <div className="w-20 h-20 relative bg-gray-800/80 backdrop-blur-sm rounded-lg border border-gray-700">
         {/* Main/Isometric view */}
         <button
-          onClick={() => onViewChange('main')}
+          onClick={() => onViewChange("main")}
           className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded border-2 transition-all ${
-            currentView === 'main' ? 'bg-cyan-600 border-cyan-400' : 'bg-gray-700 border-gray-600 hover:bg-gray-600'
+            currentView === "main" ? "bg-cyan-600 border-cyan-400" : "bg-gray-700 border-gray-600 hover:bg-gray-600"
           }`}
           title="Main View"
         >
@@ -32,9 +32,9 @@ const Viewcube: React.FC<ViewcubeProps> = ({ onViewChange, currentView }) => {
 
         {/* Front */}
         <button
-          onClick={() => onViewChange('front')}
+          onClick={() => onViewChange("front")}
           className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 mt-10 w-6 h-6 rounded border transition-all ${
-            currentView === 'front' ? 'bg-cyan-600 border-cyan-400' : 'bg-gray-700 border-gray-600 hover:bg-gray-600'
+            currentView === "front" ? "bg-cyan-600 border-cyan-400" : "bg-gray-700 border-gray-600 hover:bg-gray-600"
           }`}
           title="Front View"
         >
@@ -43,9 +43,9 @@ const Viewcube: React.FC<ViewcubeProps> = ({ onViewChange, currentView }) => {
 
         {/* Left */}
         <button
-          onClick={() => onViewChange('left')}
+          onClick={() => onViewChange("left")}
           className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 -ml-10 w-6 h-6 rounded border transition-all ${
-            currentView === 'left' ? 'bg-cyan-600 border-cyan-400' : 'bg-gray-700 border-gray-600 hover:bg-gray-600'
+            currentView === "left" ? "bg-cyan-600 border-cyan-400" : "bg-gray-700 border-gray-600 hover:bg-gray-600"
           }`}
           title="Left View"
         >
@@ -54,9 +54,9 @@ const Viewcube: React.FC<ViewcubeProps> = ({ onViewChange, currentView }) => {
 
         {/* Right */}
         <button
-          onClick={() => onViewChange('right')}
+          onClick={() => onViewChange("right")}
           className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 ml-10 w-6 h-6 rounded border transition-all ${
-            currentView === 'right' ? 'bg-cyan-600 border-cyan-400' : 'bg-gray-700 border-gray-600 hover:bg-gray-600'
+            currentView === "right" ? "bg-cyan-600 border-cyan-400" : "bg-gray-700 border-gray-600 hover:bg-gray-600"
           }`}
           title="Right View"
         >
@@ -65,9 +65,9 @@ const Viewcube: React.FC<ViewcubeProps> = ({ onViewChange, currentView }) => {
 
         {/* Top */}
         <button
-          onClick={() => onViewChange('top')}
+          onClick={() => onViewChange("top")}
           className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 -mt-10 w-6 h-6 rounded border transition-all ${
-            currentView === 'top' ? 'bg-cyan-600 border-cyan-400' : 'bg-gray-700 border-gray-600 hover:bg-gray-600'
+            currentView === "top" ? "bg-cyan-600 border-cyan-400" : "bg-gray-700 border-gray-600 hover:bg-gray-600"
           }`}
           title="Top View"
         >
@@ -76,9 +76,9 @@ const Viewcube: React.FC<ViewcubeProps> = ({ onViewChange, currentView }) => {
 
         {/* Bottom */}
         <button
-          onClick={() => onViewChange('bottom')}
+          onClick={() => onViewChange("bottom")}
           className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 mt-16 w-6 h-6 rounded border transition-all ${
-            currentView === 'bottom' ? 'bg-cyan-600 border-cyan-400' : 'bg-gray-700 border-gray-600 hover:bg-gray-600'
+            currentView === "bottom" ? "bg-cyan-600 border-cyan-400" : "bg-gray-700 border-gray-600 hover:bg-gray-600"
           }`}
           title="Bottom View"
         >

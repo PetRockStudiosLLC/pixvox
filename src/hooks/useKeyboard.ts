@@ -1,13 +1,14 @@
-import { useEffect, useRef } from 'react';
-import type { ToastType } from '../components/Toast';
+import { useEffect, useRef } from "react";
+import type { TimelineState } from "../types/voxel";
+import type { ToastType } from "../components/Toast";
 
 export function useKeyboard(
   handleUndo: () => void,
   handleRedo: () => void,
   handleFrameChange: (frame: number) => void,
   handleKeyframeAdd: () => void,
-  setRenderMode: (mode: '2d' | '3d' | ((prev: '2d' | '3d') => '2d' | '3d')) => void,
-  setTimeline: (updater: (prev: any) => any) => void,
+  setRenderMode: (mode: "2d" | "3d" | ((prev: "2d" | "3d") => "2d" | "3d")) => void,
+  setTimeline: React.Dispatch<React.SetStateAction<TimelineState>>,
   totalFrames: number,
   currentFrameRef: React.MutableRefObject<number>
 ) {
@@ -15,62 +16,71 @@ export function useKeyboard(
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Control') {
+      if (e.key === "Control") {
         isCtrlPressed.current = true;
-        document.body.classList.add('ctrl-pressed');
+        document.body.classList.add("ctrl-pressed");
       }
-      if (e.ctrlKey && e.key === 'z') {
+      if (e.ctrlKey && e.key === "z") {
         e.preventDefault();
         handleUndo();
       }
-      if ((e.ctrlKey && e.key === 'y') || (e.ctrlKey && e.shiftKey && e.key === 'z')) {
+      if ((e.ctrlKey && e.key === "y") || (e.ctrlKey && e.shiftKey && e.key === "z")) {
         e.preventDefault();
         handleRedo();
       }
-      if (e.key === 'Tab') {
+      if (e.key === "Tab") {
         e.preventDefault();
-        setRenderMode(prev => prev === '2d' ? '3d' : '2d');
+        setRenderMode((prev) => (prev === "2d" ? "3d" : "2d"));
       }
-      if (e.key === ' ') {
+      if (e.key === " ") {
         e.preventDefault();
-        setTimeline(prev => ({ ...prev, playing: !prev.playing }));
+        setTimeline((prev) => ({ ...prev, playing: !prev.playing }));
       }
-      if (e.key === 'k' && !e.ctrlKey) {
+      if (e.key === "k" && !e.ctrlKey) {
         handleKeyframeAdd();
       }
-      if (e.key === 'ArrowLeft') {
+      if (e.key === "ArrowLeft") {
         e.preventDefault();
         handleFrameChange(Math.max(0, currentFrameRef.current - 1));
       }
-      if (e.key === 'ArrowRight') {
+      if (e.key === "ArrowRight") {
         e.preventDefault();
         handleFrameChange(Math.min(totalFrames - 1, currentFrameRef.current + 1));
       }
-      if (e.key === 'Home') {
+      if (e.key === "Home") {
         e.preventDefault();
         handleFrameChange(0);
       }
-      if (e.key === 'End') {
+      if (e.key === "End") {
         e.preventDefault();
         handleFrameChange(totalFrames - 1);
       }
     };
 
     const handleKeyUp = (e: KeyboardEvent) => {
-      if (e.key === 'Control') {
+      if (e.key === "Control") {
         isCtrlPressed.current = false;
-        document.body.classList.remove('ctrl-pressed');
+        document.body.classList.remove("ctrl-pressed");
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('keyup', handleKeyUp);
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keyup", handleKeyUp);
     return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('keyup', handleKeyUp);
-      document.body.classList.remove('ctrl-pressed');
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
+      document.body.classList.remove("ctrl-pressed");
     };
-  }, [handleUndo, handleRedo, handleFrameChange, handleKeyframeAdd, setRenderMode, setTimeline, totalFrames, currentFrameRef]);
+  }, [
+    handleUndo,
+    handleRedo,
+    handleFrameChange,
+    handleKeyframeAdd,
+    setRenderMode,
+    setTimeline,
+    totalFrames,
+    currentFrameRef
+  ]);
 
   return isCtrlPressed;
 }

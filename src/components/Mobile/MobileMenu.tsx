@@ -18,6 +18,9 @@ interface MobileMenuProps {
   onExportAlembicABC: (compress: "delta" | "snapshot") => void;
   onExportFrameSequence: () => void;
   onImportAnimation: (format: "json" | "abc") => void;
+  onImportModel: () => void;
+  onVoxelizeModel: () => void;
+  hasImportedModel: boolean;
   // Canvas actions
   onCanvasResize: (width: number, height: number) => void;
   canvasWidth: number;
@@ -45,6 +48,9 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
   onExportAlembicABC,
   onExportFrameSequence,
   onImportAnimation,
+  onImportModel,
+  onVoxelizeModel,
+  hasImportedModel,
   onCanvasResize,
   canvasWidth,
   canvasHeight,
@@ -389,15 +395,36 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
               Animation JSON
             </button>
             <button
-              onClick={() => {
-                onImportAnimation("abc");
-                setShowImportSubmenu(false);
-                onClose();
-              }}
-              className="w-full py-4 px-4 bg-panel-hover active:bg-panel-active rounded-lg text-left text-sm font-bold text-text touch-target-min"
-            >
-              Alembic ABC
-            </button>
+               onClick={() => {
+                 onImportAnimation("abc");
+                 setShowImportSubmenu(false);
+                 onClose();
+               }}
+               className="w-full py-4 px-4 bg-panel-hover active:bg-panel-active rounded-lg text-left text-sm font-bold text-text touch-target-min"
+             >
+               Alembic ABC
+             </button>
+             <button
+               onClick={() => {
+                 onImportModel();
+                 setShowImportSubmenu(false);
+                 onClose();
+               }}
+               className="w-full py-4 px-4 bg-panel-hover active:bg-panel-active rounded-lg text-left text-sm font-bold text-text touch-target-min"
+             >
+               3D Model (.gltf, .glb, .obj)
+             </button>
+             <button
+               onClick={() => {
+                 onVoxelizeModel();
+                 setShowImportSubmenu(false);
+                 onClose();
+               }}
+               disabled={!hasImportedModel}
+               className="w-full py-4 px-4 bg-panel-hover active:bg-panel-active rounded-lg text-left text-sm font-bold text-text touch-target-min disabled:opacity-30 disabled:cursor-not-allowed"
+             >
+               Voxelize Model
+             </button>
             <button
               onClick={() => setShowImportSubmenu(false)}
               className="w-full py-4 bg-transparent text-text-dim font-bold text-sm touch-target-min"

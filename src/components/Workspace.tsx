@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from "react";
+import * as THREE from "three";
 import { CanvasState, BrushState, TimelineState } from "../types/voxel";
 import MultiCanvasView from "./MultiCanvasView";
 import VoxelScene from "./VoxelScene";
@@ -32,6 +33,10 @@ interface WorkspaceProps {
   handleSaveProject: () => void;
   handleLoadProject: () => void;
   handleLoadDemo: () => void;
+  onImportModel: () => void;
+  onVoxelizeModel: () => void;
+  hasImportedModel: boolean;
+  importedModel: THREE.Group | null;
   handleAddLayer: () => void;
   handleDuplicateLayer: () => void;
   handleMoveLayerUp: () => void;
@@ -80,6 +85,10 @@ const Workspace: React.FC<WorkspaceProps> = ({
   handleSaveProject,
   handleLoadProject,
   handleLoadDemo,
+  onImportModel,
+  onVoxelizeModel,
+  hasImportedModel,
+  importedModel,
   handleAddLayer,
   handleDuplicateLayer,
   handleMoveLayerUp,
@@ -120,6 +129,9 @@ const Workspace: React.FC<WorkspaceProps> = ({
         onSaveProject={handleSaveProject}
         onLoadProject={handleLoadProject}
         onLoadDemo={handleLoadDemo}
+         onImportModel={onImportModel}
+          onVoxelizeModel={onVoxelizeModel}
+          hasImportedModel={hasImportedModel}
         onImportAnimation={handleImportAnimation}
         onExportGLTF={handleExportGLTF}
         onExportAnimationJSON={handleExportAnimationJSON}
@@ -182,7 +194,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
                 isCtrlPressed={isCtrlPressed}
               />
             ) : (
-              <VoxelScene canvasState={canvasState} mode={voxelMode} brush={brush} onPixelChange={handlePixelChange} />
+              <VoxelScene canvasState={canvasState} mode={voxelMode} brush={brush} onPixelChange={handlePixelChange} importedModel={importedModel} />
             )}
           </div>
 

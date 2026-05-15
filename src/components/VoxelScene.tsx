@@ -14,6 +14,7 @@ interface VoxelSceneProps {
   onPixelChange?: (x: number, y: number, z: number, color: string) => void;
   onTypeChange?: (x: number, y: number, z: number, type: string | null) => void;
   onSceneReady?: (scene: THREE.Scene) => void;
+  importedModel?: THREE.Group | null;
 }
 
 const VoxelScene: React.FC<VoxelSceneProps> = ({
@@ -22,10 +23,12 @@ const VoxelScene: React.FC<VoxelSceneProps> = ({
   brush,
   onPixelChange,
   onTypeChange,
-  onSceneReady
+  onSceneReady,
+  importedModel
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
+  const importedModelInternal = useRef<THREE.Group | null>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
   const controlsRef = useRef<OrbitControls | null>(null);
@@ -38,6 +41,8 @@ const VoxelScene: React.FC<VoxelSceneProps> = ({
   const raycasterRef = useRef<THREE.Raycaster | null>(null);
   const editingCleanupRef = useRef<(() => void) | null>(null);
   const voxelGroupRef = useRef<THREE.Group | null>(null);
+  const importedModelRef_internal = useRef<THREE.Group | null>(null);
+  const importedModelPropRef = useRef<THREE.Group | null>(null);
   const brushRef = useRef(brush);
   const onPixelChangeRef = useRef(onPixelChange);
   const onTypeChangeRef = useRef(onTypeChange);
@@ -56,6 +61,18 @@ const VoxelScene: React.FC<VoxelSceneProps> = ({
   useEffect(() => {
     canvasStateRef.current = canvasState;
   }, [canvasState]);
+
+ useEffect(() => {
+    importedModelPropRef.current = importedModel ?? null;
+    // importedModel prop changed
+    if (importedModel) {
+      let meshCount = 0;
+      importedModel.traverse((child) => {
+        if ((child as THREE.Mesh).isMesh) meshCount++;
+      });
+      // mesh count in imported model
+    }
+  });
 
   // Track Shift key
   useEffect(() => {
@@ -508,9 +525,63 @@ const VoxelScene: React.FC<VoxelSceneProps> = ({
 
     // Store cleanup function in a ref for later use
     editingCleanupRef.current = cleanupEditing;
-    const animate = () => {
+const animate = () => {
       requestAnimationFrame(animate);
       controls.update();
+      
+      // Update imported model from ref (avoids closure staleness)
+      const model = importedModelPropRef.current;
+      if (model) {
+        if (!importedModelRef_internal.current) {
+          // First time seeing this model - build wireframe
+          // building wireframe for imported model
+          const group = new THREE.Group();
+          model.traverse((child) => {
+            if ((child as THREE.Mesh).isMesh) {
+              const mesh = child as THREE.Mesh;
+              const cloned = mesh.clone();
+              cloned.material = new THREE.MeshBasicMaterial({
+                color: 0x00ff88,
+                wireframe: true,
+                transparent: true,
+                opacity: 0.3,
+                depthWrite: false
+              });
+              cloned.visible = true;
+              group.add(cloned);
+            }
+          });
+          scene.add(group);
+          importedModelRef_internal.current = group;
+// wireframe added to scene
+          
+          // Center camera on model
+          const bbox = new THREE.Box3().setFromObject(model);
+          const size = new THREE.Vector3();
+          bbox.getSize(size);
+          const center = new THREE.Vector3();
+          bbox.getCenter(center);
+          
+          const maxDim = Math.max(size.x, size.y, size.z);
+          const camDist = maxDim * 1.5;
+          camera.position.set(
+            center.x + camDist,
+            center.y + Math.max(5, camDist * 0.7),
+            center.z + camDist
+          );
+          camera.lookAt(center);
+          controls.target.copy(center);
+          controls.minDistance = Math.max(1, camDist * 0.2);
+          controls.maxDistance = camDist * 5;
+          controls.update();
+        }
+        importedModelRef_internal.current.visible = true;
+      } else {
+        if (importedModelRef_internal.current) {
+          importedModelRef_internal.current.visible = false;
+        }
+      }
+      
       renderer.render(scene, camera);
     };
     animate();
@@ -545,6 +616,19 @@ const VoxelScene: React.FC<VoxelSceneProps> = ({
         highlightMeshRef.current = null;
       }
       renderer.dispose();
+      // Dispose imported model meshes
+      if (importedModelRef_internal.current) {
+        scene.remove(importedModelRef_internal.current);
+        importedModelRef_internal.current.traverse((child) => {
+          if (child instanceof THREE.Mesh) {
+            child.geometry.dispose();
+            if (child.material instanceof THREE.Material) {
+              child.material.dispose();
+            }
+          }
+        });
+        importedModelRef_internal.current = null;
+      }
       // Dispose shared geometry
       if (sharedGeometryRef.current) {
         sharedGeometryRef.current.dispose();

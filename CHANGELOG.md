@@ -6,6 +6,32 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [1.1.0] — 2026-05-15
+
+### Added
+- **3D model import** — Import GLTF, GLB, and OBJ models directly into the voxel canvas
+- **OBJ + MTL support** — Full OBJ loading with MTL material parsing, per-material color extraction, and texture file selection
+- **Blender-style voxelization** — Multi-directional surface sampling that accurately captures model geometry from all angles (not just +Z raycasting)
+- **Per-mesh color preservation** — Models retain their original material colors through voxelization (trunk=brown, leaves=green, etc.)
+- **Wireframe model preview** — Imported models display as wireframe in the 3D viewer before voxelization
+- **Multi-format pipeline** — Two-step workflow: import model first, then voxelize separately with configurable resolution
+
+### Fixed
+- **Voxel grid alignment** — Corrected `Math.floor` shift in grid coordinate calculation, fixed bounding box return values
+- **Triangle-box intersection** — Replaced flawed Separating Axis Theorem with robust AABB + vertex/edge intersection tests
+- **Y-axis orientation** — Imported models now render upright (corrected coordinate system transform)
+- **OBJ quad triangulation** — Triangle counter accounts for quads becoming 2 triangles, matching Three.js OBJLoader triangulation exactly
+
+### Technical
+- `src/utils/import/voxelize.ts` — Core voxelization with spatial hash, per-mesh triangle extraction, color sampling
+- `src/utils/import/modelLoader.ts` — OBJ/GLTF/GLB loaders with MTL parsing, per-material mesh splitting, texture loading
+- `src/hooks/useImportActions.ts` — Import/voxelize handlers with progress tracking, Y-axis flip, canvas centering
+- `src/components/ModelImportDialog.tsx` — UI for model selection, MTL/texture file inputs, format detection
+- `src/components/VoxelScene.tsx` — 3D viewer with wireframe preview, multi-mesh group traversal, camera auto-centering
+- TypeScript compiles clean — 0 type errors
+
+---
+
 ## [Unreleased]
 
 ---

@@ -95,3 +95,23 @@ export function loadFromLocalStorage(key: string = "p2v-project"): CanvasState |
   if (!data) return null;
   return importProject(data);
 }
+
+export function setPixelsBulk(state: CanvasState, voxels: { x: number; y: number; z: number; color: string }[]): void {
+  const isTransparent = (color: string) => color === DEFAULT_COLOR || (color.length === 9 && color.slice(7) === "00");
+
+  for (const v of voxels) {
+    if (v.x < 0 || v.x >= state.width || v.y < 0 || v.y >= state.height || v.z < 0 || v.z >= state.layers) {
+      continue;
+    }
+    if (isTransparent(v.color)) {
+      state.pixels.delete(getPixelKey(v.x, v.y, v.z));
+    } else {
+      state.pixels.set(getPixelKey(v.x, v.y, v.z), v.color);
+    }
+  }
+}
+
+export function computeOptimalLayers(boundingBox: { minX: number; minY: number; minZ: number; maxX: number; maxY: number; maxZ: number }, canvasSize: number): number {
+  const depth = Math.max(1, Math.ceil(boundingBox.maxZ - boundingBox.minZ));
+  return Math.min(128, Math.max(8, Math.min(depth, canvasSize)));
+}

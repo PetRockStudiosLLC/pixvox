@@ -17,6 +17,9 @@ interface TopBarProps {
   onSaveProject: () => void;
   onLoadProject: () => void;
   onLoadDemo: () => void;
+  onImportModel: () => void;
+  onVoxelizeModel: () => void;
+  hasImportedModel: boolean;
   onImportAnimation: (format: "json" | "abc") => void;
   onExportGLTF: () => void;
   onExportAnimationJSON: () => void;
@@ -40,6 +43,9 @@ const TopBar: React.FC<TopBarProps> = ({
   onSaveProject,
   onLoadProject,
   onLoadDemo,
+  onImportModel,
+  onVoxelizeModel,
+  hasImportedModel,
   onImportAnimation,
   onExportGLTF,
   onExportAnimationJSON,
@@ -142,6 +148,26 @@ const TopBar: React.FC<TopBarProps> = ({
               <IconLoad size={12} /> Load Demo (.json)
             </button>
             <div className="my-0.5 h-px bg-border" />
+          <button
+               onClick={() => {
+                 onImportModel();
+                 setFileMenuOpen(false);
+               }}
+               className="w-full px-3 py-1.5 text-left text-xs hover:bg-panel-hover flex items-center gap-2"
+             >
+               <IconCube size={12} /> Import 3D Model (.gltf, .glb, .obj)
+             </button>
+             <button
+               onClick={() => {
+                 onVoxelizeModel();
+                 setFileMenuOpen(false);
+               }}
+               disabled={!hasImportedModel}
+               className="w-full px-3 py-1.5 text-left text-xs hover:bg-panel-hover flex items-center gap-2 disabled:opacity-30 disabled:cursor-not-allowed"
+             >
+               <IconCube size={12} /> Voxelize Model
+             </button>
+             <div className="my-0.5 h-px bg-border" />
             <div className="relative">
               <button
                 onClick={() => {

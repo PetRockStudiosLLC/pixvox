@@ -111,21 +111,26 @@ export function useImportActions(
   // Import 3D model - just loads it into the ref, doesn't voxelize
   const handleImportModel = useCallback(
     async (options: ImportOptions, file: File) => {
-      console.log("Importing model:", file.name, file.size, "bytes");
+      // importing model
       try {
         setLoadingState({ isLoading: true, message: "Loading 3D model..." });
 
-        const result = await loadModel(file, (progress, message) => {
-          console.log("Progress:", progress, message);
-          setLoadingState({ isLoading: true, message: message || "Loading..." });
-        });
+        const result = await loadModel(
+          file,
+          (progress, message) => {
+            // progress
+            setLoadingState({ isLoading: true, message: message || "Loading..." });
+          },
+          options.mtlFile,
+          options.textureFiles
+        );
 
-        console.log("Model loaded:", result.name, "size:", result.originalSize);
+        // model loaded
 
         // Store in both state (triggers re-render) and ref (for callbacks)
         setImportedModel(result.mesh as THREE.Group);
         modelRef.current = result.mesh as THREE.Group;
-        console.log("Model stored");
+        // model stored
 
         setLoadingState({ isLoading: false });
         onToast(`Model loaded: ${file.name} (${result.originalSize.x.toFixed(1)} x ${result.originalSize.y.toFixed(1)} x ${result.originalSize.z.toFixed(1)})`, "success");
@@ -144,7 +149,7 @@ export function useImportActions(
   const handleVoxelize = useCallback(
     async (options: ImportOptions) => {
       const mesh = modelRef.current;
-      console.log("Voxelize: modelRef.current =", mesh ? "YES" : "NO");
+      // voxelize check
       if (!mesh) {
         onToast("No model loaded. Import a 3D model first.", "error");
         return;
@@ -163,7 +168,7 @@ export function useImportActions(
         const voxelResult = voxelizeMesh(mesh, voxelizeOptions, (progress, message) => {
           setLoadingState({ isLoading: true, message: message || "Processing..." });
         });
-        console.log("Voxelize: result =", voxelResult ? `voxels: ${voxelResult.voxels.length}` : "NULL");
+        // voxelize result
 
         if (!voxelResult || voxelResult.voxels.length === 0) {
           onToast("No voxels generated. Try a lower resolution.", "error");

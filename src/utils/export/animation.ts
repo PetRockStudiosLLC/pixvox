@@ -3,7 +3,7 @@ import { exportGLTF } from "./gltf";
 import JSZip from "jszip";
 
 const ANIM_JSON_FORMAT = "pixvox-anim";
-const ANIM_JSON_VERSION = "1.0.2";
+const ANIM_JSON_VERSION = "1.1.0";
 
 export interface AnimationJSON {
   format: string;

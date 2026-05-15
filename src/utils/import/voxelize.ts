@@ -20,7 +20,15 @@ interface Triangle {
   v0: THREE.Vector3;
   v1: THREE.Vector3;
   v2: THREE.Vector3;
-  color: string;
+  color: string | [number, number, number];
+}
+
+function colorToString(color: string | [number, number, number]): string {
+  if (typeof color === "string") return color;
+  const r = Math.round(Math.min(1, Math.max(0, color[0])) * 255);
+  const g = Math.round(Math.min(1, Math.max(0, color[1])) * 255);
+  const b = Math.round(Math.min(1, Math.max(0, color[2])) * 255);
+  return `#${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${b.toString(16).padStart(2, "0")}`;
 }
 
 export function voxelizeMesh(
@@ -35,54 +43,49 @@ export function voxelizeMesh(
     solidColor = DEFAULT_SOLID_COLOR,
   } = options;
 
-  // Collect all geometries and their world matrices
-  const geometries: { geo: THREE.BufferGeometry; matrix: THREE.Matrix4 }[] = [];
   const group = mesh as THREE.Group;
+
+  // Collect per-mesh data: geometry, color, texture
+  const meshData: Array<{
+    geo: THREE.BufferGeometry;
+    color: string;
+    texture: THREE.Texture | null;
+  }> = [];
+
   group.traverse((child) => {
     if ((child as THREE.Mesh).isMesh) {
       const m = child as THREE.Mesh;
-      const worldMatrix = new THREE.Matrix4();
-      m.updateWorldMatrix(true, false);
-      worldMatrix.copy(m.matrixWorld);
-      geometries.push({ geo: m.geometry, matrix: worldMatrix });
+      const mat = m.material;
+      let color = solidColor;
+
+      // Get color from material
+      if (mat instanceof THREE.MeshStandardMaterial || mat instanceof THREE.MeshLambertMaterial || mat instanceof THREE.MeshPhongMaterial) {
+        const c = mat.color;
+        color = colorToString([c.r, c.g, c.b]);
+      }
+      const tex = (mat && mat instanceof THREE.MeshStandardMaterial && mat.map)
+        ? mat.map as THREE.Texture
+        : null;
+
+      meshData.push({ geo: m.geometry, color, texture: tex });
     }
   });
 
-  if (geometries.length === 0) {
+  if (meshData.length === 0) {
     return null;
   }
 
-  // Merge all geometries with world transforms applied
+  // Merge all geometries (positions only)
   const positions: number[] = [];
-  const colors: number[] = [];
-
-  for (const { geo, matrix } of geometries) {
+  for (const { geo } of meshData) {
     const pos = geo.getAttribute("position");
-    const col = geo.getAttribute("color");
-    const elements = matrix.elements;
-
     for (let i = 0; i < pos.count; i++) {
-      const x = pos.getX(i);
-      const y = pos.getY(i);
-      const z = pos.getZ(i);
-
-      positions.push(
-        elements[0] * x + elements[4] * y + elements[8] * z + elements[12],
-        elements[1] * x + elements[5] * y + elements[9] * z + elements[13],
-        elements[2] * x + elements[6] * y + elements[10] * z + elements[14]
-      );
-
-      if (col) {
-        colors.push(col.getX(i), col.getY(i), col.getZ(i));
-      }
+      positions.push(pos.getX(i), pos.getY(i), pos.getZ(i));
     }
   }
 
   const mergedGeometry = new THREE.BufferGeometry();
   mergedGeometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
-  if (colors.length > 0) {
-    mergedGeometry.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
-  }
 
   // Compute bounding box
   mergedGeometry.computeBoundingBox();
@@ -100,41 +103,37 @@ export function voxelizeMesh(
   mergedGeometry.computeBoundingBox();
   const tBbox = mergedGeometry.boundingBox!;
 
-const tSize = new THREE.Vector3();
+  const tSize = new THREE.Vector3();
   tBbox.getSize(tSize);
-  console.log("Voxelize: bbox after center+scale:", tBbox.min, tBbox.max, "size:", tSize);
+  // console.log("Voxelize: bbox after center+scale:", tBbox.min, tBbox.max, "size:", tSize);
 
   onProgress?.(0.1, "Extracting triangles...");
 
-  // Extract triangles from merged geometry
+  // Extract triangles per mesh with its own color, applying center+scale transform
   const triangles: Triangle[] = [];
-  const posAttr = mergedGeometry.getAttribute("position");
-  const colAttr = mergedGeometry.getAttribute("color");
+  const transformMatrix = new THREE.Matrix4()
+    .multiply(centerMatrix)
+    .multiply(scaleMatrix);
 
-  // Get index buffer if available, otherwise use position count
-  const index = mergedGeometry.getIndex();
-  const triCount = index ? index.count / 3 : posAttr.count / 3;
+  for (const { geo, color } of meshData) {
+    const pos = geo.getAttribute("position");
+    const index = geo.getIndex();
+    const triCount = index ? index.count / 3 : pos.count / 3;
 
-  for (let i = 0; i < triCount; i++) {
-    const i0 = index ? index.getX(i * 3) : i * 3;
-    const i1 = index ? index.getX(i * 3 + 1) : i * 3 + 1;
-    const i2 = index ? index.getX(i * 3 + 2) : i * 3 + 2;
+    for (let i = 0; i < triCount; i++) {
+      const i0 = index ? index.getX(i * 3) : i * 3;
+      const i1 = index ? index.getX(i * 3 + 1) : i * 3 + 1;
+      const i2 = index ? index.getX(i * 3 + 2) : i * 3 + 2;
 
-    const v0 = new THREE.Vector3(posAttr.getX(i0), posAttr.getY(i0), posAttr.getZ(i0));
-    const v1 = new THREE.Vector3(posAttr.getX(i1), posAttr.getY(i1), posAttr.getZ(i1));
-    const v2 = new THREE.Vector3(posAttr.getX(i2), posAttr.getY(i2), posAttr.getZ(i2));
+      const v0 = new THREE.Vector3(pos.getX(i0), pos.getY(i0), pos.getZ(i0)).applyMatrix4(transformMatrix);
+      const v1 = new THREE.Vector3(pos.getX(i1), pos.getY(i1), pos.getZ(i1)).applyMatrix4(transformMatrix);
+      const v2 = new THREE.Vector3(pos.getX(i2), pos.getY(i2), pos.getZ(i2)).applyMatrix4(transformMatrix);
 
-    // Sample color from triangle centroid
-    let color = DEFAULT_SOLID_COLOR;
-    if (colAttr) {
-      const cr = Math.max(0, Math.min(255, Math.round(colAttr.getX(i0) * 255)));
-      const cg = Math.max(0, Math.min(255, Math.round(colAttr.getY(i0) * 255)));
-      const cb = Math.max(0, Math.min(255, Math.round(colAttr.getZ(i0) * 255)));
-      color = "#" + [cr, cg, cb].map(c => c.toString(16).padStart(2, "0")).join("");
+      triangles.push({ v0, v1, v2, color });
     }
-
-    triangles.push({ v0, v1, v2, color });
   }
+
+  // triangles extracted
 
   onProgress?.(0.2, `Found ${triangles.length} triangles, building voxel grid...`);
 
@@ -159,7 +158,7 @@ const tSize = new THREE.Vector3();
   const minX = tBbox.min.x;
   const minY = tBbox.min.y;
   const minZ = tBbox.min.z;
-  console.log("Voxelize: gridW:", gridW, "gridH:", gridH, "gridD:", gridD, "voxelSize:", voxelSize, "minX:", minX, "minY:", minY, "minZ:", minZ);
+  // grid dimensions calculated
 
   onProgress?.(0.3, `Voxelizing ${gridW}x${gridH}x${gridD} grid...`);
 
@@ -231,7 +230,7 @@ const tSize = new THREE.Vector3();
 
             // Check if triangle overlaps voxel cell using distance test
             if (triangleOverlapsBox(tri, cellMinX, cellMinY, cellMinZ, cellMaxX, cellMaxY, cellMaxZ)) {
-              voxelSet.set(`${ix},${iy},${iz}`, tri.color);
+              voxelSet.set(`${ix},${iy},${iz}`, colorToString(tri.color));
               break;
             }
           }
@@ -253,7 +252,7 @@ const tSize = new THREE.Vector3();
     voxels.push({ x, y, z, color });
   }
 
-  console.log("Voxelize: generated", voxels.length, "voxels in", gridW, "x", gridH, "x", gridD, "grid");
+  // voxels generated
   onProgress?.(0.95, `Generated ${voxels.length} voxels`);
 
   return {
@@ -346,4 +345,47 @@ function lineSegmentIntersectsBox(
   } else if (ax.z < boxMinZ || ax.z > boxMaxZ) return false;
 
   return tmin <= tmax;
+}
+
+// Sample a texture at given UV coordinates and return hex color
+function sampleTextureAtUV(texture: THREE.Texture, u: number, v: number, cache: { canvas: HTMLCanvasElement; ctx: CanvasRenderingContext2D } | null): string {
+  const image = texture.image;
+  if (!image) return DEFAULT_SOLID_COLOR;
+
+  let canvas: HTMLCanvasElement;
+  let ctx: CanvasRenderingContext2D;
+
+  if (cache) {
+    canvas = cache.canvas;
+    ctx = cache.ctx;
+  } else {
+    canvas = document.createElement("canvas");
+    ctx = canvas.getContext("2d")!;
+    canvas.width = image.width;
+    canvas.height = image.height;
+    ctx.drawImage(image, 0, 0);
+  }
+
+  const px = Math.max(0, Math.min(image.width - 1, Math.floor(u * image.width)));
+  const py = Math.max(0, Math.min(image.height - 1, Math.floor((1 - v) * image.height)));
+
+  const pixel = ctx.getImageData(px, py, 1, 1).data;
+  const r = pixel[0], g = pixel[1], b = pixel[2];
+  return "#" + [r, g, b].map(c => c.toString(16).padStart(2, "0")).join("");
+}
+
+// Create cached canvas for texture sampling
+function createTextureCanvas(texture: THREE.Texture): { canvas: HTMLCanvasElement; ctx: CanvasRenderingContext2D } | null {
+  const image = texture.image;
+  if (!image) return null;
+
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return null;
+
+  canvas.width = image.width;
+  canvas.height = image.height;
+  ctx.drawImage(image, 0, 0);
+
+  return { canvas, ctx };
 }

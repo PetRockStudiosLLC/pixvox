@@ -6,6 +6,8 @@ export interface ImportOptions {
   colorMode: "vertex" | "solid";
   solidColor: string;
   fillHoles?: boolean;
+  mtlFile?: File | null;
+  textureFiles?: File[];
 }
 
 export interface ModelImportResult {
@@ -39,6 +41,10 @@ const ModelImportDialog: React.FC<ModelImportDialogProps> = ({ onImport, onClose
   const [progress, setProgress] = useState<{ value: number; message: string }>({ value: 0, message: "" });
   const [error, setError] = useState<string>("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [mtlFile, setMtlFile] = useState<File | null>(null);
+  const [textureFiles, setTextureFiles] = useState<File[]>([]);
+
+  const isObj = selectedFile?.name.toLowerCase().endsWith(".obj");
 
   const handleFileSelect = useCallback(() => {
     setError("");
@@ -50,7 +56,34 @@ const ModelImportDialog: React.FC<ModelImportDialogProps> = ({ onImport, onClose
       const file = target.files?.[0];
       if (file) {
         setSelectedFile(file);
+        setMtlFile(null);
+        setTextureFiles([]);
       }
+    };
+    input.click();
+  }, []);
+
+  const handleMtlSelect = useCallback(() => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".mtl";
+    input.onchange = (e) => {
+      const target = e.target as HTMLInputElement;
+      const file = target.files?.[0];
+      if (file) setMtlFile(file);
+    };
+    input.click();
+  }, []);
+
+  const handleTextureSelect = useCallback(() => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".png,.jpg,.jpeg,.bmp,.tga";
+    input.multiple = true;
+    input.onchange = (e) => {
+      const target = e.target as HTMLInputElement;
+      const files = Array.from(target.files || []);
+      if (files.length) setTextureFiles(files);
     };
     input.click();
   }, []);
@@ -66,7 +99,12 @@ const ModelImportDialog: React.FC<ModelImportDialogProps> = ({ onImport, onClose
     setError("");
 
     try {
-      await onImport(options, selectedFile);
+      const importOpts: ImportOptions = {
+        ...options,
+        mtlFile,
+        textureFiles,
+      };
+      await onImport(importOpts, selectedFile);
       setProgress({ value: 1, message: "Complete!" });
       setTimeout(() => {
         onClose();
@@ -75,7 +113,7 @@ const ModelImportDialog: React.FC<ModelImportDialogProps> = ({ onImport, onClose
       setError(err instanceof Error ? err.message : "Import failed");
       setIsImporting(false);
     }
-  }, [options, selectedFile, onImport, onClose]);
+  }, [options, selectedFile, mtlFile, textureFiles, onImport, onClose]);
 
   const fileName = selectedFile?.name || "";
 
@@ -117,6 +155,29 @@ const ModelImportDialog: React.FC<ModelImportDialogProps> = ({ onImport, onClose
               <p className="text-[10px] text-text-dim mt-1">
                 Supports GLTF, GLB, and OBJ formats
               </p>
+            )}
+
+            {/* MTL file selection for OBJ */}
+            {isObj && (
+              <div className="mt-3 space-y-2">
+                <p className="text-[10px] text-text-dim">
+                  OBJ files need material data for colors. Select your MTL file and texture images below.
+                </p>
+                <button
+                  onClick={handleMtlSelect}
+                  disabled={isImporting}
+                  className="w-full px-3 py-2 text-xs bg-surface text-text rounded transition-colors disabled:opacity-50 hover:bg-panel-hover border border-border"
+                >
+                  {mtlFile ? `MTL: ${mtlFile.name}` : "Select MTL File (optional)"}
+                </button>
+                <button
+                  onClick={handleTextureSelect}
+                  disabled={isImporting}
+                  className="w-full px-3 py-2 text-xs bg-surface text-text rounded transition-colors disabled:opacity-50 hover:bg-panel-hover border border-border"
+                >
+                  {textureFiles.length ? `Textures: ${textureFiles.length} file(s)` : "Select Texture Images (optional)"}
+                </button>
+              </div>
             )}
           </div>
 

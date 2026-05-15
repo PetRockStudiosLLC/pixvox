@@ -12,7 +12,9 @@ const MAX_VERTEX_COUNT = 500000;
 
 export async function loadModel(
   file: File,
-  onProgress?: (progress: number, message?: string) => void
+  onProgress?: (progress: number, message?: string) => void,
+  mtlFile?: File | null,
+  textureFiles?: File[]
 ): Promise<ModelLoadResult> {
   const ext = file.name.split(".").pop()?.toLowerCase();
 
@@ -27,7 +29,7 @@ export async function loadModel(
 
   try {
     if (ext === "obj") {
-      mesh = await loadOBJ(arrayBuffer);
+      mesh = await loadOBJ(arrayBuffer, mtlFile, textureFiles);
     } else if (ext === "gltf" || ext === "glb") {
       mesh = await loadGLTF(arrayBuffer);
     } else {
@@ -113,13 +115,78 @@ async function loadGLTF(data: ArrayBuffer): Promise<THREE.Mesh> {
   });
 }
 
-async function loadOBJ(data: ArrayBuffer): Promise<THREE.Group> {
+async function loadOBJ(
+  data: ArrayBuffer,
+  mtlFile?: File | null,
+  textureFiles?: File[]
+): Promise<THREE.Group> {
   const { OBJLoader } = await import("three/addons/loaders/OBJLoader.js");
 
-  // OBJLoader expects text, so convert from arraybuffer
-  const text = new TextDecoder("utf-8").decode(data);
+  // Build texture map from provided texture files
+  const textureMap = new Map<string, THREE.Texture>();
+  if (textureFiles?.length) {
+    for (const tf of textureFiles) {
+      const img = await loadImageFile(tf);
+      const tex = new THREE.Texture(img);
+      tex.needsUpdate = true;
+      textureMap.set(tf.name.toLowerCase(), tex);
+    }
+  }
+
+  // Decode OBJ text
+  const objText = new TextDecoder().decode(data);
+
+  // Parse MTL manually to extract material colors
+  const mtlMaterials: Map<string, THREE.Color> = new Map();
+  if (mtlFile) {
+    const mtlText = await mtlFile.text();
+    const lines = mtlText.split("\n");
+    let currentMatName = "";
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (trimmed.startsWith("newmtl ")) {
+        currentMatName = trimmed.substring(7).trim();
+      } else if (trimmed.startsWith("Kd ") && currentMatName) {
+        const parts = trimmed.substring(3).trim().split(/\s+/);
+        if (parts.length >= 3) {
+          const r = parseFloat(parts[0]);
+          const g = parseFloat(parts[1]);
+          const b = parseFloat(parts[2]);
+          mtlMaterials.set(currentMatName, new THREE.Color(r, g, b));
+        }
+      }
+    }
+  }
+
+// Parse OBJ text to get triangle ranges per material
+  // OBJLoader triangulates quads, so we count triangles not faces
+  const objLines = objText.split("\n");
+  const materialTriRanges: Array<{ name: string; startTri: number; endTri: number }> = [];
+  let currentMat = "";
+  let triCount = 0;
+  let triStart = 0;
+  for (const line of objLines) {
+    const trimmed = line.trim();
+    if (trimmed.startsWith("usemtl ")) {
+      if (currentMat && triStart < triCount) {
+        materialTriRanges.push({ name: currentMat, startTri: triStart, endTri: triCount });
+      }
+      currentMat = trimmed.substring(7).trim();
+      triStart = triCount;
+    } else if (trimmed.startsWith("f ")) {
+      const parts = trimmed.split(/\s+/);
+      const vertsInFace = parts.slice(1).length;
+      // Tri = 1 triangle, quad = 2 triangles, n-gon = n-2 triangles
+      triCount += Math.max(1, vertsInFace - 2);
+    }
+  }
+  if (currentMat && triStart < triCount) {
+    materialTriRanges.push({ name: currentMat, startTri: triStart, endTri: triCount });
+  }
+
+  // Load OBJ
   const loader = new OBJLoader();
-  const object = loader.parse(text);
+  const object = loader.parse(objText);
 
   const allMeshes: THREE.Mesh[] = [];
   object.traverse((child) => {
@@ -132,15 +199,82 @@ async function loadOBJ(data: ArrayBuffer): Promise<THREE.Group> {
     throw new Error("OBJ file contains no meshes");
   }
 
-  if (allMeshes.length === 1) {
-    const mesh = allMeshes[0];
-    ensureVertexColors(mesh);
-    return mesh as unknown as THREE.Group;
+  // If no MTL materials, just merge and return
+  if (mtlMaterials.size === 0 || materialTriRanges.length === 0) {
+    const merged = allMeshes.length === 1 ? allMeshes[0] : mergeMeshes(allMeshes);
+    ensureVertexColors(merged);
+    return merged as unknown as THREE.Group;
   }
 
-  const merged = mergeMeshes(allMeshes);
-  ensureVertexColors(merged);
-  return merged as unknown as THREE.Group;
+  // Split single mesh into per-material meshes
+  const sourceMesh = allMeshes[0];
+  const sourceGeo = sourceMesh.geometry;
+  const sourcePos = sourceGeo.getAttribute("position");
+  const sourceIndex = sourceGeo.getIndex();
+  const sourceTriCount = sourceIndex ? sourceIndex.count / 3 : sourcePos.count / 3;
+
+  const group = new THREE.Group();
+
+  for (const range of materialTriRanges) {
+    const mtlColor = mtlMaterials.get(range.name);
+    if (!mtlColor) continue;
+
+    const positions: number[] = [];
+    const indices: number[] = [];
+    let vertOffset = 0;
+
+    for (let fi = range.startTri; fi < range.endTri; fi++) {
+      const i0 = sourceIndex ? sourceIndex.getX(fi * 3) : fi * 3;
+      const i1 = sourceIndex ? sourceIndex.getX(fi * 3 + 1) : fi * 3 + 1;
+      const i2 = sourceIndex ? sourceIndex.getX(fi * 3 + 2) : fi * 3 + 2;
+
+      for (const vi of [i0, i1, i2]) {
+        positions.push(
+          sourcePos.getX(vi),
+          sourcePos.getY(vi),
+          sourcePos.getZ(vi)
+        );
+      }
+
+      indices.push(vertOffset, vertOffset + 1, vertOffset + 2);
+      vertOffset += 3;
+    }
+
+    if (positions.length === 0) continue;
+
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+    geo.setIndex(indices);
+    geo.computeVertexNormals();
+
+    const mesh = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({
+      color: mtlColor,
+    }));
+    mesh.name = range.name;
+    group.add(mesh);
+  }
+
+  if (group.children.length === 0) {
+    const merged = mergeMeshes(allMeshes);
+    ensureVertexColors(merged);
+    return merged as unknown as THREE.Group;
+  }
+
+  return group;
+}
+
+function loadImageFile(file: File): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = reject;
+      img.src = reader.result as string;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
 }
 
 function ensureVertexColors(mesh: THREE.Mesh): void {
@@ -172,12 +306,14 @@ function mergeMeshes(meshes: THREE.Mesh[]): THREE.Mesh {
   const positions: number[] = [];
   const normals: number[] = [];
   const colors: number[] = [];
+  const uvs: number[] = [];
 
   for (const mesh of meshes) {
     const geo = mesh.geometry;
     const pos = geo.getAttribute("position");
     const norm = geo.getAttribute("normal");
     const col = geo.getAttribute("color");
+    const uv = geo.getAttribute("uv");
     const mat = mesh.material;
 
     // Apply mesh transform to vertices
@@ -204,6 +340,10 @@ function mergeMeshes(meshes: THREE.Mesh[]): THREE.Mesh {
         normals.push(nx, ny, nz);
       }
 
+      if (uv) {
+        uvs.push(uv.getX(i), uv.getY(i));
+      }
+
       if (col) {
         colors.push(col.getX(i), col.getY(i), col.getZ(i));
       } else if (mat) {
@@ -222,6 +362,9 @@ function mergeMeshes(meshes: THREE.Mesh[]): THREE.Mesh {
   geometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
   if (normals.length > 0) {
     geometry.setAttribute("normal", new THREE.Float32BufferAttribute(normals, 3));
+  }
+  if (uvs.length > 0) {
+    geometry.setAttribute("uv", new THREE.Float32BufferAttribute(uvs, 2));
   }
   if (colors.length > 0) {
     geometry.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));

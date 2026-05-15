@@ -1,7 +1,7 @@
 import { CanvasState, BrushState, TimelineState, FrameData, LayerInfo } from "../types/voxel";
 
 const PROJECT_FORMAT = "pixvox-project";
-const PROJECT_VERSION = "1.0.0";
+const PROJECT_VERSION = "1.1.0";
 const STORAGE_KEY = "p2v-project";
 const AUTOSAVE_KEY = "p2v-autosave";
 const AUTOSAVE_DEBOUNCE = 5000;

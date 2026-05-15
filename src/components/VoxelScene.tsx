@@ -64,13 +64,13 @@ const VoxelScene: React.FC<VoxelSceneProps> = ({
 
  useEffect(() => {
     importedModelPropRef.current = importedModel ?? null;
-    console.log("VoxelScene: importedModel prop changed:", importedModel ? "YES" : "NO");
+    // importedModel prop changed
     if (importedModel) {
       let meshCount = 0;
       importedModel.traverse((child) => {
         if ((child as THREE.Mesh).isMesh) meshCount++;
       });
-      console.log("VoxelScene: mesh count in imported model:", meshCount);
+      // mesh count in imported model
     }
   });
 
@@ -534,7 +534,7 @@ const animate = () => {
       if (model) {
         if (!importedModelRef_internal.current) {
           // First time seeing this model - build wireframe
-          console.log("VoxelScene animate: building wireframe for imported model");
+          // building wireframe for imported model
           const group = new THREE.Group();
           model.traverse((child) => {
             if ((child as THREE.Mesh).isMesh) {
@@ -553,9 +553,7 @@ const animate = () => {
           });
           scene.add(group);
           importedModelRef_internal.current = group;
-          console.log("VoxelScene animate: wireframe added to scene, children:", group.children.length);
-          console.log("VoxelScene animate: wireframe added to scene, children:", group.children.length);
-          console.log("VoxelScene animate: wireframe added to scene, children:", group.children.length);
+// wireframe added to scene
           
           // Center camera on model
           const bbox = new THREE.Box3().setFromObject(model);

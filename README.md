@@ -2,7 +2,7 @@
 
 🎨 **Transform 2D pixel art into 3D voxel models** - A cross-platform pixel art editor with real-time 3D preview and GLTF/OBJ export.
 
-![PixVox Banner](https://img.shields.io/badge/PixVox-1.0.2-cyan?style=for-the-badge)
+![PixVox Banner](https://img.shields.io/badge/PixVox-1.1.0-cyan?style=for-the-badge)
 ![License](https://img.shields.io/github/license/PetRockStudiosLLC/pixvox?style=for-the-badge)
 ![Stars](https://img.shields.io/github/stars/PetRockStudiosLLC/pixvox?style=for-the-badge)
 
@@ -52,7 +52,7 @@ npm run tauri:build
 ```bash
 npx tauri android init
 npx tauri android build
-# Output: PixVox-v1.0.0-signed.apk
+# Output: PixVox-v1.1.0-signed.apk
 ```
 
 ## 🎮 Controls
@@ -99,7 +99,7 @@ npx tauri android build
 ## 🖥️ Desktop App
 
 ### Windows (Working ✓)
-- MSI installer: `src-tauri/target/release/bundle/msi/PixVox_1.0.0_x64_en-US.msi`
+- MSI installer: `src-tauri/target/release/bundle/msi/PixVox_1.1.0_x64_en-US.msi`
 - NSIS installer: `src-tauri/target/release/bundle/nsis/`
 - Auto-updater support via Vercel Blob
 
@@ -111,7 +111,7 @@ npx tauri android build
 
 # Sign APK:
 # keytool -genkeypair -v -keystore android-key.keystore -alias pixvox ...
-# apksigner sign --ks android-key.keystore PixVox-v1.0.0-signed.apk
+# apksigner sign --ks android-key.keystore PixVox-v1.1.0-signed.apk
 ```
 
 ### iOS (Planned)

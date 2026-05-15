@@ -1,4 +1,5 @@
-import { useCallback, useState } from "react";
+import { useCallback, useState, useRef, useEffect } from "react";
+import * as THREE from "three";
 import { IconClose } from "./components/Icons";
 import { BrushState } from "./types/voxel";
 import type { ToastType } from "./components/Toast";
@@ -23,6 +24,7 @@ import MobileBottomNav from "./components/Mobile/MobileBottomNav";
 import MobileTimeline from "./components/Mobile/MobileTimeline";
 import MobileMenu from "./components/Mobile/MobileMenu";
 import LoadingOverlay from "./components/LoadingOverlay";
+import ModelImportDialog, { VoxelizeDialog, type ImportOptions } from "./components/ModelImportDialog";
 
 function AppInner() {
   const { toast } = useToast();
@@ -83,12 +85,17 @@ function AppInner() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [loadingState, setLoadingState] = useState<{ isLoading: boolean; message?: string }>({ isLoading: false });
   const [paletteManagerOpen, setPaletteManagerOpen] = useState(false);
+  const [modelImportOpen, setModelImportOpen] = useState(false);
+  const [voxelizeOpen, setVoxelizeOpen] = useState(false);
+  const [lastImportOptions, setLastImportOptions] = useState<ImportOptions | null>(null);
+  const [hasImportedModel, setHasImportedModel] = useState(false);
+  const [importedModel, setImportedModel] = useState<THREE.Group | null>(null);
 
   // Export actions
   const exportActions = useExportActions(canvasState, timeline, voxelMode, setLoadingState, toast);
 
   // Import actions
-  const importActions = useImportActions(canvasState, setCanvasState, setTimeline, setLoadingState, toast);
+  const importActions = useImportActions(canvasState, setCanvasState, setTimeline, setLoadingState, toast, setImportedModel);
 
   // Save actions
   const saveActions = useSaveActions(
@@ -104,6 +111,48 @@ function AppInner() {
 
   // Canvas actions
   const canvasActions = useCanvasActions(canvasState, setCanvasState, setLoadingState, toast, saveToHistory);
+
+  // Model import handler
+  const handleImportModel = useCallback(() => {
+    setModelImportOpen(true);
+  }, []);
+
+  // Open voxelize dialog
+  const handleOpenVoxelize = useCallback(() => {
+    setLastImportOptions({
+      scale: 1,
+      resolution: 64,
+      colorMode: "vertex",
+      solidColor: "#808080",
+    });
+    setVoxelizeOpen(true);
+  }, []);
+
+  // Actually voxelize the model
+  const doVoxelize = useCallback(async (options: ImportOptions) => {
+    setVoxelizeOpen(false);
+    setLoadingState({ isLoading: true, message: "Voxelizing..." });
+    try {
+      await importActions.handleVoxelize(options);
+    } catch {
+      setLoadingState({ isLoading: false });
+    }
+  }, [importActions]);
+
+// Clear imported model when canvas is cleared or new project
+  const clearImportedModel = useCallback(() => {
+    setImportedModel(null);
+    setHasImportedModel(false);
+  }, []);
+
+  // Auto-clear imported model when canvas is empty
+  const hadPixelsRef = useRef(canvasState.pixels.size > 0);
+  useEffect(() => {
+    if (hadPixelsRef.current && canvasState.pixels.size === 0) {
+      clearImportedModel();
+    }
+    hadPixelsRef.current = canvasState.pixels.size > 0;
+  }, [canvasState.pixels.size, clearImportedModel]);
 
   // Mobile UI
   const mobileUI = useMobileUI(setCanvasState, setBrush);
@@ -163,6 +212,10 @@ function AppInner() {
           handleSaveProject={saveActions.handleSaveProject}
           handleLoadProject={saveActions.handleLoadProject}
           handleLoadDemo={importActions.handleLoadDemo}
+onImportModel={handleImportModel}
+          onVoxelizeModel={handleOpenVoxelize}
+          hasImportedModel={hasImportedModel}
+          importedModel={importedModel}
           handleAddLayer={canvasActions.handleAddLayer}
           handleDuplicateLayer={canvasActions.handleDuplicateLayer}
           handleMoveLayerUp={canvasActions.handleMoveLayerUp}
@@ -421,6 +474,7 @@ if (color === "#00000000" || (color.length === 9 && color.slice(7) === "00")) {
                     return saveToHistoryFromState(next);
                   });
                 }}
+                importedModel={importedModel}
               />
               <div className="absolute top-4 right-4 z-10 flex flex-col gap-2">
                 <button
@@ -466,7 +520,10 @@ if (color === "#00000000" || (color.length === 9 && color.slice(7) === "00")) {
         onExportAlembicABC={exportActions.handleExportAlembicABC}
         onExportFrameSequence={exportActions.handleExportFrameSequence}
         onImportAnimation={importActions.handleImportAnimation}
-        onCanvasResize={canvasActions.handleCanvasResize}
+onImportModel={handleImportModel}
+         onVoxelizeModel={handleOpenVoxelize}
+         hasImportedModel={hasImportedModel}
+         onCanvasResize={canvasActions.handleCanvasResize}
         canvasWidth={canvasState.width}
         canvasHeight={canvasState.height}
         canvasLayers={canvasState.layers}
@@ -497,6 +554,39 @@ if (color === "#00000000" || (color.length === 9 && color.slice(7) === "00")) {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Model Import Dialog */}
+      {modelImportOpen && (
+        <ModelImportDialog
+          onImport={async (options, file) => {
+            setModelImportOpen(false);
+            setLastImportOptions(options);
+            setLoadingState({ isLoading: true, message: "Importing model..." });
+            try {
+              await importActions.handleImportModel(options, file);
+              setHasImportedModel(true);
+            } catch {
+              setLoadingState({ isLoading: false });
+            }
+          }}
+          onClose={() => setModelImportOpen(false)}
+        />
+      )}
+
+     {/* Voxelize Dialog */}
+      {voxelizeOpen && (
+        <VoxelizeDialog
+          onVoxelize={async (options) => {
+            setVoxelizeOpen(false);
+            try {
+              await doVoxelize(options);
+            } catch {
+              setLoadingState({ isLoading: false });
+            }
+          }}
+          onClose={() => setVoxelizeOpen(false)}
+        />
       )}
     </div>
   );
